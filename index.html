@@ -302,6 +302,7 @@
         function previewStyleOnChange(styleId) {
             db.restaurant.style = styleId;
             saveState();
+            render();
         }
 
         function saveBuilder() {
@@ -502,7 +503,7 @@
             } else if (type === 'burgers') {
                 items = [
                     { name: 'بيف برجر دبل تشيز', price: 140, categoryName: 'البرجر', icon: '🍔', desc: 'شريحتين لحم مع الجبن المذيب', selected: true },
-                    { name: 'تشيكن زنگر', price: 110, categoryName: 'البرجر', icon: '🍔', desc: 'دجاج مقرمش حار', selected: true },
+                    { name: 'تشيكن زنجر', price: 110, categoryName: 'البرجر', icon: '🍔', desc: 'دجاج مقرمش حار', selected: true },
                     { name: 'ساندوتش شاورما لحم', price: 75, categoryName: 'الساندوتشات', icon: '🌯', desc: 'خبز صاج مع الطحينة', selected: true }
                 ];
             } else if (type === 'pizza') {
@@ -751,7 +752,7 @@
                             </div>
 
                             ${filtered.length === 0 ? `
-                                <div class="bg-white p-8 rounded-3xl text-center border border-stone-200">
+                                <div class="bg-white p-8 rounded-3xl text-center border border-stone-200 text-stone-900">
                                     <div class="text-4xl mb-2">🍽️</div>
                                     <h4 class="font-black text-sm mb-1">المنيو فارغ حالياً</h4>
                                     <p class="text-xs text-stone-500 mb-4">استخدم زر تعديل المطعم بالأعلى لاختيار قائمة جاهزة أو إضافة أطباقك.</p>
@@ -1309,7 +1310,7 @@
             const name = prompt('اسم الطبق الجديد:');
             if (!name) return;
             const price = Number(prompt('السعر بالجنيه:', '80')) || 50;
-            db.menu.push({ id: Date.now(), name, cat: 'meals', price, rating: '5.0', reviews: 'جديد', badge: 'جديد', desc: 'محضر طازجاً يومياً', img: '🍽️' };
+            db.menu.push({ id: Date.now(), name, cat: 'meals', price, rating: '5.0', reviews: 'جديد', badge: 'جديد', desc: 'محضر طازجاً يومياً', img: '🍽️' });
             saveState();
             render();
         }
