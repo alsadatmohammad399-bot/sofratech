@@ -30,7 +30,7 @@
     <script>
         const DEFAULT_DATA = {
             restaurant: {
-                name: 'مطعمي الجديد',
+                name: 'مطعمي المميز',
                 taglet: 'أجود وأطعم الأطباق الطازجة',
                 logo: '🍽️',
                 themeColor: '#d97706',
@@ -53,7 +53,7 @@
 
         function loadState() {
             try {
-                const saved = localStorage.getItem('sofratech_db_v5');
+                const saved = localStorage.getItem('sofratech_db_v6');
                 if (saved) {
                     const parsed = JSON.parse(saved);
                     if (parsed && parsed.restaurant && Array.isArray(parsed.menu)) {
@@ -62,13 +62,13 @@
                 }
             } catch (e) {
                 console.error('LocalStorage parse error, resetting:', e);
-                localStorage.removeItem('sofratech_db_v5');
+                localStorage.removeItem('sofratech_db_v6');
             }
             return JSON.parse(JSON.stringify(DEFAULT_DATA));
         }
 
         function saveState() {
-            localStorage.setItem('sofratech_db_v5', JSON.stringify(db));
+            localStorage.setItem('sofratech_db_v6', JSON.stringify(db));
         }
 
         let db = loadState();
@@ -128,7 +128,7 @@
 
         window.addEventListener('hashchange', syncRouteFromHash);
         window.addEventListener('storage', (e) => {
-            if (e.key === 'sofratech_db_v5') {
+            if (e.key === 'sofratech_db_v6') {
                 db = loadState();
                 render();
             }
@@ -179,7 +179,7 @@
                     <section class="container mx-auto px-6 py-16 text-center max-w-4xl">
                         <span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-4 py-1.5 rounded-full text-xs font-bold inline-block mb-5">منصة بناء مواقع المطاعم والمنيو الذكي</span>
                         <h1 class="text-4xl md:text-6xl font-black leading-tight mb-6">امتلك موقع مطعمك الخاص مع <span class="text-amber-500">نظام طلبات وكاشير متكامل</span></h1>
-                        <p class="text-slate-400 text-lg mb-10">ارفع صور المنيو الورقي (صورة أو عدة صور) ليتم دمجها وتقسيمها تلقائياً، واستقبل الطلبات فوراً.</p>
+                        <p class="text-slate-400 text-lg mb-10">استخرج المنيو الورقي بدقة عالية عبر رفع الصور أو التعديل الفوري الذكي.</p>
 
                         <div class="flex flex-wrap justify-center gap-4 mb-14">
                             <button onclick="navigate('#builder')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-8 py-4 rounded-2xl text-base shadow-xl shadow-amber-500/20 transition">🛠️ تخصيص وبناء المطعم</button>
@@ -234,12 +234,12 @@
 
                         <div class="mb-6 bg-gradient-to-l from-amber-500/15 via-orange-500/10 to-amber-50 border border-amber-300 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                             <div>
-                                <span class="bg-amber-500 text-slate-950 text-[10px] font-black px-2.5 py-0.5 rounded-full">ميزة ذكية ⚡</span>
-                                <h3 class="font-black text-sm text-slate-900 mt-1">عندك منيو ورقي (صورة أو عدة صور)؟ ارفعهم دفعة واحدة!</h3>
-                                <p class="text-xs text-slate-600">اختر عدة صور لصفحات المنيو وسيقوم النظام باستخراج الأصناف والأسعار وتقسيمها تلقائياً.</p>
+                                <span class="bg-amber-500 text-slate-950 text-[10px] font-black px-2.5 py-0.5 rounded-full">استخراج ذكي ⚡</span>
+                                <h3 class="font-black text-sm text-slate-900 mt-1">رفع صور المنيو الورقي بدقة عالية</h3>
+                                <p class="text-xs text-slate-600">اختر صور صفحات المنيو وسيتم قراءة الأصناف وتصنيفها بدقة فورية.</p>
                             </div>
                             <button onclick="openPaperMenuImporter()" class="bg-slate-950 hover:bg-slate-800 text-amber-400 font-black px-4 py-3 rounded-xl text-xs whitespace-nowrap shadow-md flex items-center gap-2 shrink-0">
-                                <i class="fa-solid fa-file-arrow-up"></i> رفع صور المنيو الورقي
+                                <i class="fa-solid fa-file-arrow-up"></i> رفع صور المنيو
                             </button>
                         </div>
 
@@ -315,6 +315,7 @@
             ui.importProgress = 0;
             ui.parsedMenuDraft = [];
             ui.importPreviewImages = [];
+            ui.importTab = 'image';
             render();
         }
 
@@ -330,9 +331,9 @@
                         <div class="flex justify-between items-center pb-4 mb-5 border-b border-slate-800">
                             <div>
                                 <h2 class="text-lg md:text-xl font-black text-amber-400 flex items-center gap-2">
-                                    <i class="fa-solid fa-wand-magic-sparkles"></i> استيراد وتقسيم المنيو الورقي (عدة صور)
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> استيراد وتقسيم المنيو الورقي بدقة
                                 </h2>
-                                <p class="text-xs text-slate-400 mt-0.5">ارفع صورة واحدة أو عدة صور لصفحات المنيو وسيتم دمجها وتصنيفها فوراً</p>
+                                <p class="text-xs text-slate-400 mt-0.5">ارفع صور المنيو أو عدلها مباشرة في جدول المعاينة لضمان دقة 100%</p>
                             </div>
                             <button onclick="closePaperMenuImporter()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300">
                                 <i class="fa-solid fa-xmark"></i>
@@ -341,10 +342,10 @@
 
                         <div class="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-2xl mb-5 border border-slate-800">
                             <button onclick="ui.importTab='image'; render();" class="py-2.5 rounded-xl text-xs font-black transition ${ui.importTab === 'image' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'}">
-                                📸 رفع صور المنيو (متعددة)
+                                📸 رفع صور المنيو (OCR)
                             </button>
                             <button onclick="ui.importTab='text'; render();" class="py-2.5 rounded-xl text-xs font-black transition ${ui.importTab === 'text' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'}">
-                                📝 لصق نص المنيو يدوياً
+                                📝 إدخال / لصق نص المنيو
                             </button>
                         </div>
 
@@ -355,8 +356,8 @@
                                     <div class="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-2xl mx-auto mb-3">
                                         <i class="fa-solid fa-images"></i>
                                     </div>
-                                    <h4 class="font-black text-sm mb-1">اختر صورة أو عدة صور من هاتفك</h4>
-                                    <p class="text-xs text-slate-400">يمكنك تحديد أكثر من صورة في نفس الوقت لصفحات المنيو المختلفة</p>
+                                    <h4 class="font-black text-sm mb-1">اختر صورة أو عدة صور صفحات المنيو</h4>
+                                    <p class="text-xs text-slate-400">سيقوم المحرك بمسح وقراءة النصوص واستخراج الأقسام والأسعار بدقة</p>
                                 </label>
 
                                 ${ui.importPreviewImages.length > 0 ? `
@@ -385,12 +386,12 @@
                         ` : `
                             <div class="space-y-3">
                                 <div class="flex justify-between items-center">
-                                    <label class="text-xs font-bold text-slate-300">اكتب أو الصق أصناف المنيو الورقي (كل صنف وسعره في سطر):</label>
-                                    <button onclick="fillSamplePaperMenuText()" class="text-[11px] text-amber-400 font-bold hover:underline">✨ تعبئة نموذج تجريبي</button>
+                                    <label class="text-xs font-bold text-slate-300">أو اكتب اسم القسم ثم الأطباق وأمامها الأسعار:</label>
+                                    <button onclick="fillSamplePaperMenuText()" class="text-[11px] text-amber-400 font-bold hover:underline">✨ تحميل مثال جاهز</button>
                                 </div>
-                                <textarea id="raw_menu_textarea" oninput="ui.importRawText=this.value" rows="6" placeholder="مثال:&#10;قسم المشويات&#10;كباب مشوي على الفحم 220&#10;كفتة ضاني 180" class="w-full bg-slate-950 border border-slate-700 rounded-2xl p-4 text-xs leading-relaxed text-white outline-none focus:border-amber-500">${ui.importRawText}</textarea>
+                                <textarea id="raw_menu_textarea" oninput="ui.importRawText=this.value" rows="6" placeholder="مثال:&#10;المشويات&#10;كباب مشوي 220&#10;كفتة ضاني 180&#10;المشروبات&#10;عصير مانجو 40" class="w-full bg-slate-950 border border-slate-700 rounded-2xl p-4 text-xs leading-relaxed text-white outline-none focus:border-amber-500">${ui.importRawText}</textarea>
                                 <button onclick="parseAndCategorizeMenuText(ui.importRawText)" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs transition">
-                                    ⚡ تحليل وتقسيم الأصناف تلقائياً
+                                    ⚡ تحليل وتقسيم الأصناف بدقة
                                 </button>
                             </div>
                         `}
@@ -399,11 +400,11 @@
                             <div class="mt-6 pt-5 border-t border-slate-800 space-y-4">
                                 <div class="flex flex-wrap justify-between items-center gap-2">
                                     <h3 class="font-black text-sm text-emerald-400">
-                                        ✅ تم استخراج وتصنيف (${ui.parsedMenuDraft.length}) صنف بنجاح!
+                                        ✅ تم استخراج (${ui.parsedMenuDraft.length}) صنف — يمكنك مراجعتها أو تعديلها قبل الاعتماد:
                                     </h3>
                                     <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
                                         <input type="checkbox" ${ui.replaceExistingMenu ? 'checked' : ''} onchange="ui.replaceExistingMenu=this.checked" class="accent-amber-500">
-                                        <span>استبدال المنيو الحالي بالكامل</span>
+                                        <span>استبدال المنيو القديم بالكامل</span>
                                     </label>
                                 </div>
 
@@ -413,7 +414,7 @@
                                             <div class="flex items-center gap-2 flex-1 min-w-[160px]">
                                                 <input type="checkbox" ${item.selected ? 'checked' : ''} onchange="ui.parsedMenuDraft[${i}].selected=this.checked" class="accent-amber-500">
                                                 <span class="text-lg">${item.icon}</span>
-                                                <input type="text" value="${item.name}" onchange="ui.parsedMenuDraft[${i}].name=this.value" class="bg-transparent border-b border-slate-700 focus:border-amber-500 font-bold text-white w-full py-0.5 outline-none">
+                                                <input type="text" value="${item.name}" onchange="ui.parsedMenuDraft[${i}].name=this.value" class="bg-transparent border-b border-slate-700 focus:border-amber-500 font-bold text-white w-full py-0.5 outline-none" placeholder="اسم الصنف">
                                             </div>
                                             <div class="flex items-center gap-2">
                                                 <input type="text" value="${item.categoryName}" onchange="ui.parsedMenuDraft[${i}].categoryName=this.value" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-amber-400 font-bold w-28 text-center outline-none" title="القسم">
@@ -427,7 +428,7 @@
                                 </div>
 
                                 <button onclick="confirmImportParsedMenu()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3.5 rounded-2xl text-sm shadow-lg transition">
-                                    🚀 اعتماد المنيو المقسم ونشره في الموقع الآن
+                                    🚀 اعتماد الأصناف ونشرها في المنيو الآن
                                 </button>
                             </div>
                         ` : ''}
@@ -437,18 +438,15 @@
         }
 
         function fillSamplePaperMenuText() {
-            ui.importRawText = `المشويات والطواجن
-كباب بتلو مشوي 240
-كفتة الحاتي 180
-شيش طاووق مشوي 165
-البيتزا والفطائر
+            ui.importRawText = `المشويات
+كباب بتلو 240
+كفتة ضاني 180
+شيش طاووق 165
+البيتزا
 بيتزا مارجريتا 95
-بيتزا فراخ رانش 135
-الساندوتشات والبرجر
-ساندوتش شاورما لحم 65
-بيف برجر كلاسيك 110
-المشروبات والحلويات
-عصير مانجو فريش 40
+بيتزا فراخ 135
+المشروبات
+عصير مانجو 40
 بيبسي كانز 20`;
             parseAndCategorizeMenuText(ui.importRawText);
         }
@@ -458,7 +456,7 @@
             if (files.length === 0) return;
 
             ui.importPreviewImages = [];
-            ui.importStatus = 'جاري تحضير الصور وقراءتها بالذكاء الاصطناعي...';
+            ui.importStatus = 'جاري تحليل صور المنيو بذكاء...';
             ui.importProgress = 10;
             render();
 
@@ -474,8 +472,8 @@
 
                         try {
                             if (typeof Tesseract !== 'undefined') {
-                                ui.importStatus = `جاري قراءة وتحليل الصورة (${i + 1} من ${files.length})...`;
-                                ui.importProgress = Math.round(((i + 1) / files.length) * 80);
+                                ui.importStatus = `قراءة الصورة (${i + 1} من ${files.length})...`;
+                                ui.importProgress = Math.round(((i + 1) / files.length) * 85);
                                 render();
 
                                 const result = await Tesseract.recognize(e.target.result, 'ara+eng');
@@ -484,7 +482,7 @@
                                 }
                             }
                         } catch (err) {
-                            console.error('OCR Error on image:', err);
+                            console.error('OCR Error:', err);
                         }
                         resolve();
                     };
@@ -493,57 +491,63 @@
             }
 
             ui.importRawText = combinedText;
-            ui.importStatus = 'تمت قراءة جميع الصور بنجاح! جاري تقسيم الأصناف والأقسام...';
+            ui.importStatus = 'تم استخراج النصوص! جاري تنظيم الأقسام والأسعار بدقة...';
             ui.importProgress = 100;
             render();
 
             setTimeout(() => {
                 parseAndCategorizeMenuText(combinedText);
-            }, 400);
+            }, 300);
         }
 
         function detectSmartCategory(itemName, currentSectionHeader) {
             const text = (itemName + ' ' + (currentSectionHeader || '')).toLowerCase();
             if (/مشوي|كباب|كفتة|ستيك|ريش|طرب|شيش|طاجن|لحم|فراخ مشوية|مشويات|grill|steak|kebab/.test(text)) {
-                return { name: currentSectionHeader || 'المشويات والطواجن', icon: '🥩' };
+                return { name: currentSectionHeader && !/قائمة|قسم|menu/i.test(currentSectionHeader) ? currentSectionHeader : 'المشويات', icon: '🥩' };
             }
             if (/بيتزا|فطير|فطائر|كريب|مكرونة|باستا|pizza|pasta|crepe/.test(text)) {
-                return { name: currentSectionHeader || 'البيتزا والفطائر', icon: '🍕' };
+                return { name: currentSectionHeader && !/قائمة|قسم|menu/i.test(currentSectionHeader) ? currentSectionHeader : 'البيتزا والمعجنات', icon: '🍕' };
             }
             if (/برجر|شاورما|ساندوتش|سندوتش|هوت دوج|زنجر|burger|shawarma|sandwich/.test(text)) {
-                return { name: currentSectionHeader || 'ساندوتشات وبرجر', icon: '🍔' };
+                return { name: currentSectionHeader && !/قائمة|قسم|menu/i.test(currentSectionHeader) ? currentSectionHeader : 'الساندوتشات والبرجر', icon: '🍔' };
             }
             if (/فول|فلافل|طعمية|بيض|فطور|إفطار|جبنة|breakfast|omelette/.test(text)) {
-                return { name: currentSectionHeader || 'الفطور الصباحي', icon: '🍳' };
+                return { name: currentSectionHeader && !/قائمة|قسم|menu/i.test(currentSectionHeader) ? currentSectionHeader : 'الفطور الصباحي', icon: '🍳' };
             }
             if (/عصير|مشروب|بيبسي|كولا|شاي|قهوة|موهيتو|مياه|سموزي|drink|juice|coffee|tea/.test(text)) {
-                return { name: currentSectionHeader || 'المشروبات', icon: '🥤' };
+                return { name: currentSectionHeader && !/قائمة|قسم|menu/i.test(currentSectionHeader) ? currentSectionHeader : 'المشروبات', icon: '🥤' };
             }
             if (/حلو|حلويات|كنافة|بسبوسة|أم علي|وافل|بان كيك|آيس كريم|dessert|cake/.test(text)) {
-                return { name: currentSectionHeader || 'الحلويات', icon: '🍰' };
+                return { name: currentSectionHeader && !/قائمة|قسم|menu/i.test(currentSectionHeader) ? currentSectionHeader : 'الحلويات', icon: '🍰' };
             }
             if (/سلطة|شوربة|مقبلات|بطاطس|طحينة|ثومية|salad|soup|fries/.test(text)) {
-                return { name: currentSectionHeader || 'المقبلات والسلطات', icon: '🥗' };
+                return { name: currentSectionHeader && !/قائمة|قسم|menu/i.test(currentSectionHeader) ? currentSectionHeader : 'المقبلات والسلطات', icon: '🥗' };
             }
-            return { name: currentSectionHeader || 'أطباق رئيسية', icon: '🍽️' };
+            return { name: currentSectionHeader && !/قائمة|قسم|menu/i.test(currentSectionHeader) ? currentSectionHeader : 'الأطباق الرئيسية', icon: '🍽️' };
         }
 
         function parseAndCategorizeMenuText(rawText) {
             if (!rawText || !rawText.trim()) return;
             const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
             const draft = [];
-            let currentHeader = '';
+            let currentHeader = 'الأطباق الرئيسية';
 
             const normalizeDigits = (str) => str.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
 
             for (let rawLine of lines) {
                 const line = normalizeDigits(rawLine).replace(/[\.\-_•\*]+/g, ' ').trim();
-                const priceMatch = line.match(/(\d+(?:\.\d+)?)\s*(?:ج\.م|جنيه|egp|eg|sr|sar|ريال)?$/i);
+                if (line.length < 2) continue;
 
-                if (priceMatch) {
+                // Look for price at the end or anywhere in the line
+                const priceMatch = line.match(/(\d+(?:\.\d+)?)\s*(?:ج\.م|جنيه|جنية|egp|eg|sr|sar|ريال)?$/i);
+
+                if (priceMatch && priceMatch[1]) {
                     const price = parseFloat(priceMatch[1]);
                     let itemName = line.slice(0, priceMatch.index).trim();
-                    if (itemName.length >= 2 && price > 0) {
+                    // Clean trailing numbers or symbols from item name
+                    itemName = itemName.replace(/\b\d+\b/g, '').trim();
+
+                    if (itemName.length >= 2 && price > 0 && price < 5000) {
                         const catInfo = detectSmartCategory(itemName, currentHeader);
                         draft.push({
                             name: itemName,
@@ -555,14 +559,11 @@
                         });
                     }
                 } else {
-                    if (line.length >= 2 && line.length <= 40 && !/\d/.test(line)) {
+                    // Check if line is a section header (no numbers, reasonable length)
+                    if (line.length >= 2 && line.length <= 30 && !/\d/.test(line)) {
                         currentHeader = line.replace(/^(قسم|قائمة|القسم)\s+/i, '').trim();
                     }
                 }
-            }
-
-            if (draft.length === 0) {
-                alert('لم يتم العثور على أصناف بأسعار واضحة. تأكد أن النص يحتوي على أسماء أصناف وبجانبها الأسعار.');
             }
 
             ui.parsedMenuDraft = draft;
@@ -572,7 +573,7 @@
         function confirmImportParsedMenu() {
             const selectedItems = ui.parsedMenuDraft.filter(i => i.selected);
             if (selectedItems.length === 0) {
-                alert('يرجى تحديد صنف واحد على الأقل لإضافته.');
+                alert('يرجى تحديد صنف واحد على الأقل للاستيراد.');
                 return;
             }
 
@@ -604,7 +605,7 @@
 
             saveState();
             ui.showImportModal = false;
-            alert(`🎉 تم إضافة وتقسيم ${selectedItems.length} صنف بنجاح إلى الأقسام الخاصة بها!`);
+            alert(`🎉 تم استيراد وتصنيف ${selectedItems.length} صنف بنجاح!`);
             render();
         }
 
@@ -684,7 +685,7 @@
                                 <div class="bg-white p-8 rounded-3xl text-center border border-stone-200">
                                     <div class="text-4xl mb-2">🍽️</div>
                                     <h4 class="font-black text-sm mb-1">المنيو فارغ حالياً</h4>
-                                    <p class="text-xs text-stone-500 mb-4">قم برفع صور المنيو الورقي من إعدادات المطعم أو الكاشير لتعبئة الأصناف تلقائياً.</p>
+                                    <p class="text-xs text-stone-500 mb-4">قم برفع صور المنيو الورقي من إعدادات المطعم لتعبئة الأصناف تلقائياً.</p>
                                     <button onclick="navigate('#builder')" class="bg-amber-500 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-xs">رفع صور المنيو الآن</button>
                                 </div>
                             ` : `
@@ -1107,7 +1108,7 @@
                             </div>
                             <nav class="space-y-1.5 text-xs font-bold">
                                 <button onclick="ui.cashierTab='orders'; render();" class="w-full text-right px-4 py-3 rounded-xl transition ${ui.cashierTab === 'orders' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:bg-slate-800'}">📥 الطلبات الواردة (${db.orders.length})</button>
-                                <button onclick="ui.cashierTab='menu'; render();" class="w-full text-right px-4 py-3 rounded-xl transition ${ui.cashierTab === 'menu' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:bg-slate-800'}">🍔 إدارة المنيو والأصناف (${db.menu.length})</button>
+                                <button onclick="ui.cashierTab='menu'; render();" class="w-full text-right px-4 py-3 rounded-xl transition ${ui.cashierTab === 'menu' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:bg-slate-800'}">🍔 إدارة أصناف المنيو (${db.menu.length})</button>
                                 <button onclick="ui.cashierTab='qr'; render();" class="w-full text-right px-4 py-3 rounded-xl transition ${ui.cashierTab === 'qr' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:bg-slate-800'}">📱 باركود الطاولات (QR)</button>
                             </nav>
                         </div>
