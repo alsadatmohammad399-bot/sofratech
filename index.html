@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <!-- Tesseract.js for Arabic + English Paper Menu OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -80,7 +82,7 @@
         };
 
         function loadState() {
-            const saved = localStorage.getItem('sofratech_db_v3');
+            const saved = localStorage.getItem('sofratech_db_v4');
             if (saved) {
                 try {
                     return JSON.parse(saved);
@@ -90,7 +92,7 @@
         }
 
         function saveState() {
-            localStorage.setItem('sofratech_db_v3', JSON.stringify(db));
+            localStorage.setItem('sofratech_db_v4', JSON.stringify(db));
         }
 
         let db = loadState();
@@ -105,17 +107,26 @@
             phone: '',
             customerName: '',
             notes: '',
-            deliveryMethod: 'branch', // 'branch' or 'home'
+            deliveryMethod: 'branch',
             tableNo: '1',
             address: '',
             gpsCoords: '',
             couponInput: '',
             appliedDiscountPercent: 0,
-            paymentMethod: 'cash', // 'cash' or 'online'
+            paymentMethod: 'cash',
             lastOrder: null,
             // Cashier auth & tabs
             cashierUnlocked: false,
-            cashierTab: 'orders'
+            cashierTab: 'orders',
+            // Paper Menu Importer Modal State
+            showImportModal: false,
+            importTab: 'image', // 'image' or 'text'
+            importStatus: '',
+            importProgress: 0,
+            importRawText: '',
+            importPreviewImage: null,
+            parsedMenuDraft: [], // { name, price, categoryName, categoryId, icon, desc, selected }
+            replaceExistingMenu: false
         };
 
         function syncRouteFromHash() {
@@ -144,7 +155,7 @@
 
         window.addEventListener('hashchange', syncRouteFromHash);
         window.addEventListener('storage', (e) => {
-            if (e.key === 'sofratech_db_v3') {
+            if (e.key === 'sofratech_db_v4') {
                 db = loadState();
                 render();
             }
@@ -156,13 +167,19 @@
 
         function render() {
             const app = document.getElementById('app');
-            if (ui.route === 'landing') app.innerHTML = renderLanding();
-            else if (ui.route === 'builder') app.innerHTML = renderBuilder();
-            else if (ui.route === 'menu') app.innerHTML = renderCustomerMenu();
-            else if (ui.route === 'cart') app.innerHTML = renderCartPage();
-            else if (ui.route === 'checkout') app.innerHTML = renderCheckoutPage();
-            else if (ui.route === 'order_success') app.innerHTML = renderOrderSuccess();
-            else if (ui.route === 'cashier') app.innerHTML = renderCashier();
+            let content = '';
+            if (ui.route === 'landing') content = renderLanding();
+            else if (ui.route === 'builder') content = renderBuilder();
+            else if (ui.route === 'menu') content = renderCustomerMenu();
+            else if (ui.route === 'cart') content = renderCartPage();
+            else if (ui.route === 'checkout') content = renderCheckoutPage();
+            else if (ui.route === 'order_success') content = renderOrderSuccess();
+            else if (ui.route === 'cashier') content = renderCashier();
+
+            if (ui.showImportModal) {
+                content += renderPaperMenuImportModal();
+            }
+            app.innerHTML = content;
         }
 
         // ================= 1. LANDING PAGE =================
@@ -181,7 +198,7 @@
                     <section class="container mx-auto px-6 py-16 text-center max-w-4xl">
                         <span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-4 py-1.5 rounded-full text-xs font-bold inline-block mb-5">منصة بناء مواقع المطاعم والمنيو الذكي</span>
                         <h1 class="text-4xl md:text-6xl font-black leading-tight mb-6">امتلك موقع مطعمك الخاص مع <span class="text-amber-500">نظام طلبات وكاشير متكامل</span></h1>
-                        <p class="text-slate-400 text-lg mb-10">اختر استايل مطعمك، شارك رابط المنيو المستقل مع عملائك، واستقبل الطلبات فوراً على شاشة الكاشير.</p>
+                        <p class="text-slate-400 text-lg mb-10">ارفع صورة المنيو الورقي ليتم تقسيمه تلقائياً، اختر استايل مطعمك، واستقبل الطلبات فوراً على شاشة الكاشير.</p>
 
                         <div class="flex flex-wrap justify-center gap-4 mb-14">
                             <button onclick="navigate('#builder')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-8 py-4 rounded-2xl text-base shadow-xl shadow-amber-500/20 transition">🛠️ تخصيص وبناء المطعم</button>
@@ -189,7 +206,6 @@
                             <button onclick="navigate('#cashier')" class="bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold px-8 py-4 rounded-2xl text-base border border-amber-500/30 transition">🖥️ دخول شاشة الكاشير</button>
                         </div>
 
-                        <!-- Separated Links Box -->
                         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 text-right max-w-2xl mx-auto">
                             <h3 class="font-black text-amber-400 mb-4 flex items-center gap-2"><i class="fa-solid fa-link"></i> الروابط المستقلة لمطعمك الحالي (${db.restaurant.name}):</h3>
                             <div class="space-y-3 text-xs">
@@ -234,6 +250,18 @@
                         <div class="flex justify-between items-center pb-4 mb-6 border-b border-slate-100">
                             <h2 class="text-xl font-black text-slate-900">🎨 تخصيص هوية واستايل المطعم</h2>
                             <button onclick="navigate('')" class="text-slate-400 hover:text-slate-700 font-bold text-sm">رجوع للرئيسية</button>
+                        </div>
+
+                        <!-- Smart Paper Menu Upload Banner inside Builder -->
+                        <div class="mb-6 bg-gradient-to-l from-amber-500/15 via-orange-500/10 to-amber-50 border border-amber-300 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                            <div>
+                                <span class="bg-amber-500 text-slate-950 text-[10px] font-black px-2.5 py-0.5 rounded-full">ميزة ذكية ⚡</span>
+                                <h3 class="font-black text-sm text-slate-900 mt-1">عندك منيو ورقي جاهز؟ ارفعه بضغطة زر!</h3>
+                                <p class="text-xs text-slate-600">ارفع صورة المنيو الورقي وسيقوم النظام باستخراج الأصناف والأسعار وتقسيمها تلقائياً.</p>
+                            </div>
+                            <button onclick="openPaperMenuImporter()" class="bg-slate-950 hover:bg-slate-800 text-amber-400 font-black px-4 py-3 rounded-xl text-xs whitespace-nowrap shadow-md flex items-center gap-2 shrink-0">
+                                <i class="fa-solid fa-file-arrow-up"></i> رفع المنيو الورقي
+                            </button>
                         </div>
 
                         <div class="space-y-5">
@@ -302,6 +330,309 @@
             navigate('#menu');
         }
 
+        // ================= SMART PAPER MENU IMPORTER (OCR + AUTO CATEGORIZER) =================
+        function openPaperMenuImporter() {
+            ui.showImportModal = true;
+            ui.importStatus = '';
+            ui.importProgress = 0;
+            ui.parsedMenuDraft = [];
+            ui.importPreviewImage = null;
+            render();
+        }
+
+        function closePaperMenuImporter() {
+            ui.showImportModal = false;
+            render();
+        }
+
+        function renderPaperMenuImportModal() {
+            return `
+                <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-6 overflow-y-auto">
+                    <div class="bg-slate-900 text-white border border-slate-700 rounded-3xl max-w-2xl w-full p-5 md:p-7 shadow-2xl my-auto max-h-[92vh] overflow-y-auto">
+                        <!-- Modal Header -->
+                        <div class="flex justify-between items-center pb-4 mb-5 border-b border-slate-800">
+                            <div>
+                                <h2 class="text-lg md:text-xl font-black text-amber-400 flex items-center gap-2">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> استيراد وتقسيم المنيو الورقي تلقائياً
+                                </h2>
+                                <p class="text-xs text-slate-400 mt-0.5">ارفع صورة المنيو الورقي أو الصق النص وسيتم تصنيف الأقسام والأسعار فوراً</p>
+                            </div>
+                            <button onclick="closePaperMenuImporter()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <!-- Mode Tabs -->
+                        <div class="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-2xl mb-5 border border-slate-800">
+                            <button onclick="ui.importTab='image'; render();" class="py-2.5 rounded-xl text-xs font-black transition ${ui.importTab === 'image' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'}">
+                                📸 رفع صورة المنيو الورقي
+                            </button>
+                            <button onclick="ui.importTab='text'; render();" class="py-2.5 rounded-xl text-xs font-black transition ${ui.importTab === 'text' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'}">
+                                📝 لصق نص المنيو أو تجربة نموذج
+                            </button>
+                        </div>
+
+                        ${ui.importTab === 'image' ? `
+                            <!-- Image Upload Area -->
+                            <div class="space-y-4">
+                                <label class="block border-2 border-dashed border-slate-700 hover:border-amber-500 rounded-2xl p-6 text-center cursor-pointer transition bg-slate-950/60">
+                                    <input type="file" accept="image/*" onchange="handlePaperMenuImageUpload(event)" class="hidden">
+                                    ${ui.importPreviewImage ? `
+                                        <img src="${ui.importPreviewImage}" class="max-h-48 mx-auto rounded-xl mb-3 border border-slate-700 object-contain">
+                                        <span class="text-xs text-amber-400 font-bold">اضغط لاختيار صورة منيو أخرى</span>
+                                    ` : `
+                                        <div class="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-2xl mx-auto mb-3">
+                                            <i class="fa-solid fa-camera"></i>
+                                        </div>
+                                        <h4 class="font-black text-sm mb-1">اختر صورة المنيو الورقي من هاتفك</h4>
+                                        <p class="text-xs text-slate-400">يدعم القراءة التلقائية للأصناف والأسعار باللغة العربية والإنجليزية</p>
+                                    `}
+                                </label>
+
+                                ${ui.importStatus ? `
+                                    <div class="bg-slate-950 border border-slate-800 p-4 rounded-2xl">
+                                        <div class="flex justify-between text-xs font-bold mb-2">
+                                            <span class="text-amber-400">${ui.importStatus}</span>
+                                            <span>${ui.importProgress}%</span>
+                                        </div>
+                                        <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                                            <div class="h-full bg-amber-500 transition-all" style="width: ${ui.importProgress}%"></div>
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        ` : `
+                            <!-- Text Paste / Sample Area -->
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <label class="text-xs font-bold text-slate-300">اكتب أو الصق أصناف المنيو الورقي (كل صنف وسعره في سطر):</label>
+                                    <button onclick="fillSamplePaperMenuText()" class="text-[11px] text-amber-400 font-bold hover:underline">✨ تعبئة نموذج منيو تجريبي</button>
+                                </div>
+                                <textarea id="raw_menu_textarea" oninput="ui.importRawText=this.value" rows="6" placeholder="مثال:&#10;قسم المشويات&#10;كباب مشوي على الفحم 220&#10;كفتة ضاني 180&#10;قسم البيتزا&#10;بيتزا مارجريتا 95&#10;بيتزا سوبر سوبريم 135&#10;قسم المشروبات&#10;عصير برتقال فريش 35" class="w-full bg-slate-950 border border-slate-700 rounded-2xl p-4 text-xs leading-relaxed text-white outline-none focus:border-amber-500">${ui.importRawText}</textarea>
+                                <button onclick="parseAndCategorizeMenuText(ui.importRawText)" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs transition">
+                                    ⚡ تحليل وتقسيم الأصناف تلقائياً
+                                </button>
+                            </div>
+                        `}
+
+                        <!-- Parsed Preview & Editable Categorization Table -->
+                        ${ui.parsedMenuDraft.length > 0 ? `
+                            <div class="mt-6 pt-5 border-t border-slate-800 space-y-4">
+                                <div class="flex flex-wrap justify-between items-center gap-2">
+                                    <h3 class="font-black text-sm text-emerald-400">
+                                        ✅ تم استخراج وتصنيف (${ui.parsedMenuDraft.length}) صنف بنجاح!
+                                    </h3>
+                                    <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                                        <input type="checkbox" ${ui.replaceExistingMenu ? 'checked' : ''} onchange="ui.replaceExistingMenu=this.checked" class="accent-amber-500">
+                                        <span>استبدال المنيو القديم بالكامل</span>
+                                    </label>
+                                </div>
+
+                                <div class="max-h-64 overflow-y-auto space-y-2 pr-1">
+                                    ${ui.parsedMenuDraft.map((item, i) => `
+                                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-2xl flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 text-xs">
+                                            <div class="flex items-center gap-2 flex-1 min-w-[160px]">
+                                                <input type="checkbox" ${item.selected ? 'checked' : ''} onchange="ui.parsedMenuDraft[${i}].selected=this.checked" class="accent-amber-500">
+                                                <span class="text-lg">${item.icon}</span>
+                                                <input type="text" value="${item.name}" onchange="ui.parsedMenuDraft[${i}].name=this.value" class="bg-transparent border-b border-slate-700 focus:border-amber-500 font-bold text-white w-full py-0.5 outline-none">
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <input type="text" value="${item.categoryName}" onchange="ui.parsedMenuDraft[${i}].categoryName=this.value" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-amber-400 font-bold w-28 text-center outline-none" title="القسم">
+                                                <div class="flex items-center bg-slate-900 border border-slate-700 rounded-lg px-2 py-1">
+                                                    <input type="number" value="${item.price}" onchange="ui.parsedMenuDraft[${i}].price=Number(this.value)" class="bg-transparent w-14 text-center font-black text-emerald-400 outline-none">
+                                                    <span class="text-[10px] text-slate-400">ج.م</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+
+                                <button onclick="confirmImportParsedMenu()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3.5 rounded-2xl text-sm shadow-lg transition">
+                                    🚀 اعتماد المنيو المقسم ونشره في الموقع الآن
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function fillSamplePaperMenuText() {
+            ui.importRawText = `المشويات والطواجن
+كباب بتلو مشوي 240
+كفتة الحاتي 180
+شيش طاووق مشوي 165
+طاجن لحمة بالبصل 190
+البيتزا والفطائر
+بيتزا مارجريتا 95
+بيتزا فراخ رانش 135
+فطير مشلتت بلدي 80
+الساندوتشات والبرجر
+ساندوتش شاورما لحم 65
+ساندوتش شاورما فراخ 55
+بيف برجر كلاسيك 110
+المشروبات والحلويات
+عصير مانجو فريش 40
+بيبسي كانز 20
+أم علي بالمكسرات 50`;
+            parseAndCategorizeMenuText(ui.importRawText);
+        }
+
+        async function handlePaperMenuImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                ui.importPreviewImage = e.target.result;
+                ui.importStatus = 'جاري تجهيز محرك القراءة الذكي للمنيو الورقي...';
+                ui.importProgress = 10;
+                render();
+
+                try {
+                    if (typeof Tesseract !== 'undefined') {
+                        const result = await Tesseract.recognize(
+                            e.target.result,
+                            'ara+eng',
+                            {
+                                logger: m => {
+                                    if (m.status === 'recognizing text') {
+                                        ui.importStatus = 'جاري قراءة الأصناف والأسعار من الصورة...';
+                                        ui.importProgress = Math.max(15, Math.round(m.progress * 100));
+                                        render();
+                                    }
+                                }
+                            }
+                        );
+                        const extractedText = result.data.text || '';
+                        ui.importRawText = extractedText;
+                        ui.importStatus = 'تمت قراءة الصورة! جاري تقسيم الأصناف...';
+                        ui.importProgress = 100;
+                        parseAndCategorizeMenuText(extractedText);
+                    } else {
+                        throw new Error('OCR library unavailable');
+                    }
+                } catch (err) {
+                    ui.importStatus = 'تعذر الاتصال بمحرك OCR، يمكنك لصق النص في التبويب الثاني أو تعديل النموذج.';
+                    ui.importProgress = 0;
+                    render();
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function detectSmartCategory(itemName, currentSectionHeader) {
+            const text = (itemName + ' ' + (currentSectionHeader || '')).toLowerCase();
+            if (/مشوي|كباب|كفتة|ستيك|ريش|طرب|شيش|طاجن|لحم|فراخ مشوية|مشويات|grill|steak|kebab/.test(text)) {
+                return { name: currentSectionHeader || 'المشويات والطواجن', icon: '🥩' };
+            }
+            if (/بيتزا|فطير|فطائر|كريب|مكرونة|باستا|pizza|pasta|crepe/.test(text)) {
+                return { name: currentSectionHeader || 'البيتزا والفطائر', icon: '🍕' };
+            }
+            if (/برجر|شاورما|ساندوتش|سندوتش|هوت دوج|زنجر|burger|shawarma|sandwich/.test(text)) {
+                return { name: currentSectionHeader || 'ساندوتشات وبرجر', icon: '🍔' };
+            }
+            if (/فول|فلافل|طعمية|بيض|فطور|إفطار|جبنة|breakfast|omelette/.test(text)) {
+                return { name: currentSectionHeader || 'الفطور الصباحي', icon: '🍳' };
+            }
+            if (/عصير|مشروب|بيبسي|كولا|شاي|قهوة|موهيتو|مياه|سموزي|drink|juice|coffee|tea/.test(text)) {
+                return { name: currentSectionHeader || 'المشروبات', icon: '🥤' };
+            }
+            if (/حلو|حلويات|كنافة|بسبوسة|أم علي|وافل|بان كيك|آيس كريم|dessert|cake/.test(text)) {
+                return { name: currentSectionHeader || 'الحلويات', icon: '🍰' };
+            }
+            if (/سلطة|شوربة|مقبلات|بطاطس|طحينة|ثومية|salad|soup|fries/.test(text)) {
+                return { name: currentSectionHeader || 'المقبلات والسلطات', icon: '🥗' };
+            }
+            return { name: currentSectionHeader || 'أطباق رئيسية', icon: '🍽️' };
+        }
+
+        function parseAndCategorizeMenuText(rawText) {
+            if (!rawText || !rawText.trim()) return;
+            const lines = rawText.split(/
+?
+/).map(l => l.trim()).filter(Boolean);
+            const draft = [];
+            let currentHeader = '';
+
+            // Convert Arabic-Indic digits (٠١٢٣٤٥٦٧٨٩) to Western digits
+            const normalizeDigits = (str) => str.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+
+            for (let rawLine of lines) {
+                const line = normalizeDigits(rawLine).replace(/[\.\-_•\*]+/g, ' ').trim();
+                // Check if line has a price number at the end or anywhere
+                const priceMatch = line.match(/(\d+(?:\.\d+)?)\s*(?:ج\.م|جنيه|egp|eg|sr|sar|ريال)?$/i);
+
+                if (priceMatch) {
+                    const price = parseFloat(priceMatch[1]);
+                    let itemName = line.slice(0, priceMatch.index).trim();
+                    if (itemName.length >= 2 && price > 0) {
+                        const catInfo = detectSmartCategory(itemName, currentHeader);
+                        draft.push({
+                            name: itemName,
+                            price: price,
+                            categoryName: catInfo.name,
+                            icon: catInfo.icon,
+                            desc: `محضر طازجاً من قسم ${catInfo.name}`,
+                            selected: true
+                        });
+                    }
+                } else {
+                    // Treat short non-priced lines as section headers (e.g. "قسم المشويات")
+                    if (line.length >= 3 && line.length <= 35 && !/\d/.test(line)) {
+                        currentHeader = line.replace(/^(قسم|قائمة)\s+/i, '').trim();
+                    }
+                }
+            }
+
+            if (draft.length === 0) {
+                alert('لم يتم العثور على أصناف بأسعار واضحة. تأكد أن كل سطر يحتوي على اسم الصنف وبجانبه السعر (مثال: شاورما لحم 65).');
+            }
+
+            ui.parsedMenuDraft = draft;
+            render();
+        }
+
+        function confirmImportParsedMenu() {
+            const selectedItems = ui.parsedMenuDraft.filter(i => i.selected);
+            if (selectedItems.length === 0) {
+                alert('يرجى تحديد صنف واحد على الأقل لإضافته.');
+                return;
+            }
+
+            if (ui.replaceExistingMenu) {
+                db.categories = [{ id: 'all', name: 'الكل', icon: '🍽️' }];
+                db.menu = [];
+            }
+
+            selectedItems.forEach((item, idx) => {
+                // Find or create category
+                let catObj = db.categories.find(c => c.name === item.categoryName);
+                if (!catObj) {
+                    const newCatId = 'cat_' + Date.now() + '_' + idx;
+                    catObj = { id: newCatId, name: item.categoryName, icon: item.icon || '🍽️' };
+                    db.categories.push(catObj);
+                }
+
+                db.menu.push({
+                    id: Date.now() + idx + Math.floor(Math.random() * 1000),
+                    name: item.name,
+                    cat: catObj.id,
+                    price: item.price,
+                    rating: '4.9',
+                    reviews: 'جديد',
+                    badge: idx === 0 ? 'مميز' : '',
+                    desc: item.desc,
+                    img: item.icon || '🍽️'
+                });
+            });
+
+            saveState();
+            ui.showImportModal = false;
+            alert(`🎉 تم إضافة وتقسيم ${selectedItems.length} صنف بنجاح إلى الأقسام الخاصة بها!`);
+            render();
+        }
+
         // ================= 3. CUSTOMER STOREFRONT (NO CASHIER BUTTONS!) =================
         function renderCustomerMenu() {
             const st = db.restaurant.style;
@@ -321,7 +652,6 @@
 
             return `
                 <div class="min-h-screen pb-28 ${bgMain}">
-                    <!-- Header -->
                     <header class="sticky top-0 z-30 backdrop-blur-md border-b ${isDark ? 'bg-slate-950/90 border-slate-800' : 'bg-white/90 border-stone-200'} px-4 py-3">
                         <div class="max-w-3xl mx-auto flex justify-between items-center">
                             <div class="flex items-center gap-2.5">
@@ -339,13 +669,11 @@
                     </header>
 
                     <div class="max-w-3xl mx-auto px-4 pt-4 space-y-5">
-                        <!-- Search Bar -->
                         <div class="relative">
                             <input type="text" oninput="ui.searchQuery=this.value; render();" value="${ui.searchQuery}" placeholder="ابحث في المنيو أو الأطباق..." class="w-full pl-4 pr-10 py-3 rounded-2xl border text-sm outline-none ${isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-stone-200 text-stone-800 shadow-sm'}">
                             <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-3.5 opacity-40"></i>
                         </div>
 
-                        <!-- Table Banner if scanned via QR -->
                         ${ui.tableParam ? `
                             <div class="p-3.5 rounded-2xl border flex justify-between items-center ${isDark ? 'bg-amber-500/10 border-amber-500/30' : 'bg-amber-50 border-amber-200'}">
                                 <div class="text-xs font-bold">📍 طاولة رقم <span class="text-amber-600 font-black">#${ui.tableParam}</span></div>
@@ -356,7 +684,6 @@
                             </div>
                         ` : ''}
 
-                        <!-- Hero Promo Banner (Luxury / Warm Style) -->
                         ${st === 'luxury' || st === 'warm' ? `
                             <div class="rounded-3xl p-6 text-white relative overflow-hidden shadow-lg" style="background: linear-gradient(135deg, #1c1917 0%, ${color} 100%);">
                                 <span class="text-[11px] uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full font-bold">عرض خاص اليوم</span>
@@ -366,7 +693,6 @@
                             </div>
                         ` : ''}
 
-                        <!-- Circular Categories (Like Prime Cut UI) -->
                         <div>
                             <div class="flex gap-3 overflow-x-auto hide-scrollbar py-1">
                                 ${db.categories.map(cat => {
@@ -383,7 +709,6 @@
                             </div>
                         </div>
 
-                        <!-- Dishes Grid -->
                         <div>
                             <div class="flex justify-between items-center mb-3">
                                 <h3 class="font-black text-base">الأطباق المميزة</h3>
@@ -416,7 +741,6 @@
                         </div>
                     </div>
 
-                    <!-- Floating Bottom Checkout Bar -->
                     ${cartCount > 0 ? `
                         <div class="fixed bottom-4 left-4 right-4 max-w-lg mx-auto z-40">
                             <button onclick="ui.route='cart'; render();" class="w-full py-3.5 px-5 rounded-2xl text-white font-black shadow-2xl flex justify-between items-center transition hover:opacity-95" style="background-color: ${color}">
@@ -446,7 +770,7 @@
             alert('✅ تم إرسال طلبك للكاشير وسيصلك الويتر فوراً!');
         }
 
-        // ================= 4. CART PAGE (MATCHING SCREENSHOT 1) =================
+        // ================= 4. CART PAGE =================
         function renderCartPage() {
             const subtotal = ui.cart.reduce((s, i) => s + (i.price * i.qty), 0);
             const remainingForDiscount = Math.max(0, db.restaurant.discountThreshold - subtotal);
@@ -454,7 +778,6 @@
 
             return `
                 <div class="min-h-screen bg-[#f7f7f7] text-stone-900 pb-32">
-                    <!-- Header -->
                     <div class="bg-white px-4 py-4 flex justify-between items-center shadow-sm sticky top-0 z-20">
                         <button onclick="ui.route='menu'; render();" class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-stone-100">
                             <i class="fa-solid fa-arrow-right text-lg"></i>
@@ -464,7 +787,6 @@
                     </div>
 
                     <div class="max-w-lg mx-auto px-4 pt-5 space-y-4">
-                        <!-- Discount Progress Card -->
                         <div class="bg-gradient-to-l from-amber-50 to-white p-4 rounded-2xl border border-amber-100 shadow-sm">
                             <div class="flex items-center justify-between text-xs font-bold mb-2.5">
                                 <span class="flex items-center gap-2">
@@ -478,7 +800,6 @@
                             </div>
                         </div>
 
-                        <!-- Cart Items -->
                         ${ui.cart.length === 0 ? `
                             <div class="bg-white rounded-3xl p-10 text-center shadow-sm">
                                 <div class="text-5xl mb-3">🛒</div>
@@ -510,7 +831,6 @@
                         `).join('')}
                     </div>
 
-                    <!-- Fixed Bottom Bar -->
                     ${ui.cart.length > 0 ? `
                         <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 p-4 shadow-lg z-30">
                             <div class="max-w-lg mx-auto">
@@ -534,7 +854,7 @@
             render();
         }
 
-        // ================= 5. CHECKOUT PAGE (MATCHING SCREENSHOTS WITHOUT CAR PICKUP) =================
+        // ================= 5. CHECKOUT PAGE =================
         function renderCheckoutPage() {
             const subtotal = ui.cart.reduce((s, i) => s + (i.price * i.qty), 0);
             const deliveryFee = ui.deliveryMethod === 'home' ? db.restaurant.deliveryFee : 0;
@@ -545,7 +865,6 @@
 
             return `
                 <div class="min-h-screen bg-[#f5f5f5] text-stone-900 pb-36">
-                    <!-- Top Header -->
                     <div class="bg-white px-4 py-4 flex justify-between items-center shadow-sm sticky top-0 z-20">
                         <button onclick="ui.route='cart'; render();" class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-stone-100">
                             <i class="fa-solid fa-arrow-right text-lg"></i>
@@ -555,7 +874,6 @@
                     </div>
 
                     <div class="max-w-lg mx-auto px-4 pt-5 space-y-4">
-                        <!-- 1. Contact Information -->
                         <div class="bg-white p-5 rounded-3xl shadow-sm border border-stone-100 space-y-3">
                             <h2 class="font-black text-sm flex items-center gap-2">
                                 <i class="fa-solid fa-address-book text-stone-800"></i> معلومات الاتصال <span class="text-red-500">*</span>
@@ -570,7 +888,6 @@
                             </div>
                         </div>
 
-                        <!-- 2. Notes -->
                         <div class="bg-white p-5 rounded-3xl shadow-sm border border-stone-100 space-y-3">
                             <h2 class="font-black text-sm flex items-center gap-2">
                                 <i class="fa-solid fa-file-lines text-stone-800"></i> ملاحظات
@@ -581,7 +898,6 @@
                             </div>
                         </div>
 
-                        <!-- 3. Delivery / Pickup Method (ONLY Branch & Home - Car Removed!) -->
                         <div class="bg-white p-5 rounded-3xl shadow-sm border border-stone-100 space-y-3">
                             <h2 class="font-black text-sm flex items-center gap-2">
                                 <i class="fa-solid fa-store text-stone-800"></i> طريقة الاستلام <span class="text-red-500">*</span>
@@ -598,7 +914,6 @@
                             </label>
                         </div>
 
-                        <!-- 4A. Conditional: Table Number (If Branch) -->
                         ${ui.deliveryMethod === 'branch' ? `
                             <div class="bg-white p-5 rounded-3xl shadow-sm border border-stone-100 space-y-3">
                                 <h2 class="font-black text-sm flex items-center gap-2">
@@ -614,7 +929,6 @@
                             </div>
                         ` : ''}
 
-                        <!-- 4B. Conditional: Home Address & GPS (If Home) -->
                         ${ui.deliveryMethod === 'home' ? `
                             <div class="bg-white p-5 rounded-3xl shadow-sm border border-stone-100 space-y-3">
                                 <h2 class="font-black text-sm flex items-center gap-2">
@@ -631,7 +945,6 @@
                             </div>
                         ` : ''}
 
-                        <!-- 5. Discount Code -->
                         <div class="bg-white p-5 rounded-3xl shadow-sm border border-stone-100 space-y-3">
                             <h2 class="font-black text-sm flex items-center gap-2">
                                 <i class="fa-solid fa-tag text-stone-800"></i> كود الخصم
@@ -645,7 +958,6 @@
                             </div>
                         </div>
 
-                        <!-- 6. Payment Method -->
                         <div class="bg-white p-5 rounded-3xl shadow-sm border border-stone-100 space-y-3">
                             <h2 class="font-black text-sm flex items-center gap-2">
                                 <i class="fa-regular fa-credit-card text-stone-800"></i> طريقة الدفع <span class="text-red-500">*</span>
@@ -660,7 +972,6 @@
                             </label>
                         </div>
 
-                        <!-- 7. Order Summary -->
                         <div class="bg-stone-200/70 p-5 rounded-3xl border border-stone-300/70 space-y-2.5">
                             <h2 class="font-black text-sm flex items-center gap-2 mb-3">
                                 <i class="fa-solid fa-receipt text-stone-800"></i> ملخص الطلب
@@ -690,7 +1001,6 @@
                         </div>
                     </div>
 
-                    <!-- Fixed Bottom Submit Bar -->
                     <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 p-4 shadow-lg z-30">
                         <div class="max-w-lg mx-auto flex items-center justify-between gap-4">
                             <button onclick="submitFinalOrder()" class="flex-1 bg-stone-950 hover:bg-stone-800 text-white font-black py-4 rounded-2xl text-base transition">تأكيد وإرسال الطلب</button>
@@ -797,7 +1107,7 @@
             `;
         }
 
-        // ================= 6. CASHIER DASHBOARD (SEPARATE LINK #cashier) =================
+        // ================= 6. CASHIER DASHBOARD =================
         function renderCashier() {
             if (!ui.cashierUnlocked) {
                 return `
@@ -815,7 +1125,6 @@
 
             return `
                 <div class="min-h-screen bg-slate-950 text-white flex flex-col md:flex-row">
-                    <!-- Sidebar -->
                     <aside class="w-full md:w-64 bg-slate-900 border-b md:border-b-0 md:border-l border-slate-800 p-5 flex flex-col justify-between">
                         <div>
                             <div class="flex items-center gap-3 mb-6">
@@ -837,7 +1146,6 @@
                         </div>
                     </aside>
 
-                    <!-- Main Panel -->
                     <main class="flex-1 p-5 md:p-8 overflow-y-auto">
                         ${db.serviceAlerts.length > 0 ? `
                             <div class="mb-6 bg-amber-500/15 border border-amber-500/40 rounded-2xl p-4 flex justify-between items-center">
@@ -909,23 +1217,34 @@
         function renderCashierMenuTab() {
             return `
                 <div>
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-black">🍔 أصناف المنيو</h2>
-                        <button onclick="cashierAddDish()" class="bg-amber-500 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-black">➕ إضافة صنف</button>
+                    <div class="flex flex-wrap justify-between items-center gap-3 mb-6">
+                        <h2 class="text-xl font-black">🍔 أصناف المنيو (${db.menu.length})</h2>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="openPaperMenuImporter()" class="bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 px-4 py-2.5 rounded-xl text-xs font-black flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-arrow-up"></i> رفع المنيو الورقي وتقسيمه
+                            </button>
+                            <button onclick="cashierAddDish()" class="bg-amber-500 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-black">➕ إضافة صنف يدوي</button>
+                        </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        ${db.menu.map((m, idx) => `
-                            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex justify-between items-center">
-                                <div class="flex items-center gap-3">
-                                    <span class="text-3xl">${m.img}</span>
-                                    <div>
-                                        <h4 class="font-bold text-sm">${m.name}</h4>
-                                        <span class="text-xs text-amber-400 font-bold">EG ${m.price}</span>
+                        ${db.menu.map((m, idx) => {
+                            const catName = (db.categories.find(c => c.id === m.cat) || {}).name || 'عام';
+                            return `
+                                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex justify-between items-center">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-3xl">${m.img}</span>
+                                        <div>
+                                            <h4 class="font-bold text-sm">${m.name}</h4>
+                                            <div class="flex items-center gap-2 mt-0.5">
+                                                <span class="text-xs text-amber-400 font-bold">EG ${m.price}</span>
+                                                <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md">${catName}</span>
+                                            </div>
+                                        </div>
                                     </div>
+                                    <button onclick="db.menu.splice(${idx},1); saveState(); render();" class="text-red-400 text-xs font-bold hover:underline">حذف</button>
                                 </div>
-                                <button onclick="db.menu.splice(${idx},1); saveState(); render();" class="text-red-400 text-xs font-bold hover:underline">حذف</button>
-                            </div>
-                        `).join('')}
+                            `;
+                        }).join('')}
                     </div>
                 </div>
             `;
