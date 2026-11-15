@@ -82,11 +82,17 @@
         };
 
         function loadState() {
-            const saved = localStorage.getItem('sofratech_db_v4');
-            if (saved) {
-                try {
-                    return JSON.parse(saved);
-                } catch (e) {}
+            try {
+                const saved = localStorage.getItem('sofratech_db_v4');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed && parsed.restaurant && parsed.menu) {
+                        return parsed;
+                    }
+                }
+            } catch (e) {
+                console.error('LocalStorage parse error, resetting:', e);
+                localStorage.removeItem('sofratech_db_v4');
             }
             return JSON.parse(JSON.stringify(DEFAULT_DATA));
         }
@@ -167,19 +173,28 @@
 
         function render() {
             const app = document.getElementById('app');
-            let content = '';
-            if (ui.route === 'landing') content = renderLanding();
-            else if (ui.route === 'builder') content = renderBuilder();
-            else if (ui.route === 'menu') content = renderCustomerMenu();
-            else if (ui.route === 'cart') content = renderCartPage();
-            else if (ui.route === 'checkout') content = renderCheckoutPage();
-            else if (ui.route === 'order_success') content = renderOrderSuccess();
-            else if (ui.route === 'cashier') content = renderCashier();
+            try {
+                let content = '';
+                if (ui.route === 'landing') content = renderLanding();
+                else if (ui.route === 'builder') content = renderBuilder();
+                else if (ui.route === 'menu') content = renderCustomerMenu();
+                else if (ui.route === 'cart') content = renderCartPage();
+                else if (ui.route === 'checkout') content = renderCheckoutPage();
+                else if (ui.route === 'order_success') content = renderOrderSuccess();
+                else if (ui.route === 'cashier') content = renderCashier();
 
-            if (ui.showImportModal) {
-                content += renderPaperMenuImportModal();
+                if (ui.showImportModal) {
+                    content += renderPaperMenuImportModal();
+                }
+                app.innerHTML = content;
+            } catch (err) {
+                console.error('Render error:', err);
+                app.innerHTML = `<div style="padding:40px; text-align:center; font-family:Cairo,sans-serif; color:#333;">
+                    <h2 style="color:#e11d48; margin-bottom:10px;">عذراً، حدث خطأ مؤقت في العرض</h2>
+                    <p style="color:#666; font-size:14px; margin-bottom:20px;">${err.message}</p>
+                    <button onclick="localStorage.clear(); window.location.hash=''; window.location.reload();" style="background:#0f172a; color:#fff; padding:12px 24px; border:none; border-radius:12px; font-weight:bold; cursor:pointer;">إعادة ضبط النظام وتشغيل من جديد</button>
+                </div>`;
             }
-            app.innerHTML = content;
         }
 
         // ================= 1. LANDING PAGE =================
