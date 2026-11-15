@@ -23,7 +23,7 @@
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased">
+<body class="bg-slate-950 text-slate-100 antialiased">
     <div id="app"></div>
 
     <script>
@@ -33,7 +33,7 @@
                 taglet: 'أصل المذاق المصري',
                 logo: '🍽️',
                 themeColor: '#d97706',
-                style: 'luxury',
+                style: 'foodie_app',
                 whatsapp: '201015861991',
                 deliveryFee: 15,
                 taxRate: 0,
@@ -52,7 +52,7 @@
 
         function loadState() {
             try {
-                const saved = localStorage.getItem('sofratech_db_v8');
+                const saved = localStorage.getItem('sofratech_db_v9');
                 if (saved) {
                     const parsed = JSON.parse(saved);
                     if (parsed && parsed.restaurant && Array.isArray(parsed.menu)) {
@@ -61,13 +61,13 @@
                 }
             } catch (e) {
                 console.error('LocalStorage parse error, resetting:', e);
-                localStorage.removeItem('sofratech_db_v8');
+                localStorage.removeItem('sofratech_db_v9');
             }
             return JSON.parse(JSON.stringify(DEFAULT_DATA));
         }
 
         function saveState() {
-            localStorage.setItem('sofratech_db_v8', JSON.stringify(db));
+            localStorage.setItem('sofratech_db_v9', JSON.stringify(db));
         }
 
         let db = loadState();
@@ -127,7 +127,7 @@
 
         window.addEventListener('hashchange', syncRouteFromHash);
         window.addEventListener('storage', (e) => {
-            if (e.key === 'sofratech_db_v8') {
+            if (e.key === 'sofratech_db_v9') {
                 db = loadState();
                 render();
             }
@@ -217,6 +217,7 @@
 
         function renderBuilder() {
             const styles = [
+                { id: 'foodie_app', name: 'استايل تطبيق فودي الاحترافي (Foodie App Dark)', desc: 'تصميم مطابق لتطبيقات التوصيل العالمية ببانر فخم وأقسام دائرية' },
                 { id: 'luxury', name: 'الاستايل الفاخر (Steakhouse Luxury)', desc: 'تصميم راقٍ بلمسات ذهبية وبانر عروض وتقييمات أطباق' },
                 { id: 'warm', name: 'استايل المطاعم الشرقية (Warm Heritage)', desc: 'ألوان دافئة بالبرتقالي والأحمر مع إبراز العروض' },
                 { id: 'modern_dark', name: 'الاستايل الليلي العصري (Dark Modern)', desc: 'واجهة داكنة مريحة للعين مثالية للبرجر والوجبات السريعة' },
@@ -224,7 +225,7 @@
             ];
 
             return `
-                <div class="min-h-screen bg-slate-100 py-8 px-4">
+                <div class="min-h-screen bg-slate-100 py-8 px-4 text-slate-900">
                     <div class="max-w-2xl mx-auto bg-white rounded-3xl shadow-xl p-6 md:p-8 border border-slate-200">
                         <div class="flex justify-between items-center pb-4 mb-6 border-b border-slate-100">
                             <h2 class="text-xl font-black text-slate-900">🎨 تخصيص هوية واستايل المطعم</h2>
@@ -679,7 +680,8 @@
         function renderCustomerMenu() {
             const st = db.restaurant.style;
             const color = db.restaurant.themeColor;
-            const isDark = st === 'modern_dark';
+            const isFoodieApp = st === 'foodie_app';
+            const isDark = st === 'modern_dark' || isFoodieApp;
             const bgMain = isDark ? 'bg-slate-950 text-white' : (st === 'luxury' ? 'bg-[#faf8f5] text-stone-900' : (st === 'warm' ? 'bg-amber-50/40 text-stone-900' : 'bg-white text-slate-900'));
             const cardBg = isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-stone-200/80';
 
@@ -704,7 +706,7 @@
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
-                                <button onclick="navigate('#builder')" class="text-xs font-bold px-3 py-1.5 rounded-xl border ${isDark ? 'border-slate-700 bg-slate-900 text-amber-400' : 'border-stone-300 bg-stone-100 text-stone-800'}">🛠️ تعديل المطعم</button>
+                                <button onclick="navigate('#builder')" class="text-xs font-bold px-3 py-1.5 rounded-xl border ${isDark ? 'border-slate-700 bg-slate-900 text-amber-400' : 'border-stone-300 bg-stone-100 text-stone-800'}">🛠️ لوحة التحكم</button>
                                 <button onclick="ui.route='cart'; render();" class="relative p-2.5 rounded-full ${isDark ? 'bg-slate-800' : 'bg-stone-100'}">
                                     <i class="fa-solid fa-bag-shopping text-lg"></i>
                                     ${cartCount > 0 ? `<span class="absolute -top-1 -right-1 w-5 h-5 rounded-full text-[11px] font-black text-white flex items-center justify-center" style="background-color: ${color}">${cartCount}</span>` : ''}
@@ -718,6 +720,19 @@
                             <input type="text" oninput="ui.searchQuery=this.value; render();" value="${ui.searchQuery}" placeholder="ابحث في المنيو أو الأطباق..." class="w-full pl-4 pr-10 py-3 rounded-2xl border text-sm outline-none ${isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-stone-200 text-stone-800 shadow-sm'}">
                             <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-3.5 opacity-40"></i>
                         </div>
+
+                        ${isFoodieApp ? `
+                            <div class="relative rounded-3xl overflow-hidden p-6 bg-gradient-to-r from-slate-900 via-amber-950/40 to-slate-900 border border-amber-500/30 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <div class="space-y-2 text-right">
+                                    <span class="text-amber-400 text-xs font-black bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">🔥 طازج ولذيذ دائماً</span>
+                                    <h2 class="text-2xl md:text-3xl font-black text-white">وجبات تحضر بعناية <br><span class="text-amber-500">وتصلك ساخنة</span></h2>
+                                    <p class="text-xs text-slate-300">أسرع خدمة توصيل وأجود المكونات الطازجة يومياً.</p>
+                                </div>
+                                <div class="w-24 h-24 rounded-2xl bg-amber-500/20 flex items-center justify-center text-5xl shrink-0 border border-amber-500/40 shadow-inner">
+                                    🍔
+                                </div>
+                            </div>
+                        ` : ''}
 
                         ${ui.tableParam ? `
                             <div class="p-3.5 rounded-2xl border flex justify-between items-center ${isDark ? 'bg-amber-500/10 border-amber-500/30' : 'bg-amber-50 border-amber-200'}">
@@ -734,11 +749,11 @@
                                 ${db.categories.map(cat => {
                                     const active = ui.activeCategory === cat.id;
                                     return `
-                                        <button onclick="ui.activeCategory='${cat.id}'; render();" class="flex flex-col items-center gap-1.5 min-w-[72px] transition">
-                                            <div class="w-14 h-14 rounded-full flex items-center justify-center text-2xl border-2 transition shadow-sm ${active ? 'scale-105 text-white' : (isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-stone-200')}" style="${active ? `background-color: ${color}; border-color: ${color};` : ''}">
+                                        <button onclick="ui.activeCategory='${cat.id}'; render();" class="flex flex-col items-center gap-1.5 min-w-[76px] transition">
+                                            <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl border-2 transition shadow-md ${active ? 'scale-105 text-slate-950 font-black' : (isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-stone-200')}" style="${active ? `background-color: ${color}; border-color: ${color};` : ''}">
                                                 ${cat.icon}
                                             </div>
-                                            <span class="text-xs font-bold whitespace-nowrap ${active ? '' : 'opacity-70'}" style="${active ? `color: ${color}` : ''}">${cat.name}</span>
+                                            <span class="text-xs font-bold whitespace-nowrap ${active ? '' : 'opacity-75'}" style="${active ? `color: ${color}` : ''}">${cat.name}</span>
                                         </button>
                                     `;
                                 }).join('')}
@@ -747,16 +762,45 @@
 
                         <div>
                             <div class="flex justify-between items-center mb-3">
-                                <h3 class="font-black text-base">الأطباق المتاحة</h3>
+                                <h3 class="font-black text-base flex items-center gap-2">
+                                    ${isFoodieApp ? '🔥 الأكثر طلباً الآن (Popular Right Now)' : 'الأطباق المتاحة'}
+                                </h3>
                                 <span class="text-xs opacity-60">${filtered.length} صنف</span>
                             </div>
 
                             ${filtered.length === 0 ? `
-                                <div class="bg-white p-8 rounded-3xl text-center border border-stone-200 text-stone-900">
+                                <div class="bg-slate-900 p-8 rounded-3xl text-center border border-slate-800 text-white">
                                     <div class="text-4xl mb-2">🍽️</div>
                                     <h4 class="font-black text-sm mb-1">المنيو فارغ حالياً</h4>
-                                    <p class="text-xs text-stone-500 mb-4">استخدم زر تعديل المطعم بالأعلى لاختيار قائمة جاهزة أو إضافة أطباقك.</p>
+                                    <p class="text-xs text-slate-400 mb-4">استخدم زر لوحة التحكم بالأعلى لاستيراد المنيو أو إضافة الأطباق.</p>
                                     <button onclick="navigate('#builder')" class="bg-amber-500 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-xs">إدارة المنيو الآن</button>
+                                </div>
+                            ` : isFoodieApp ? `
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    ${filtered.map(item => `
+                                        <div class="bg-slate-900 border border-slate-800 p-4 rounded-3xl shadow-lg relative flex flex-col justify-between group">
+                                            <button onclick="alert('❤️ تم إضافة الصنف للمفضلة')" class="absolute top-4 left-4 w-9 h-9 rounded-full bg-slate-950/80 backdrop-blur-md flex items-center justify-center text-slate-300 hover:text-amber-400 transition shadow">
+                                                <i class="fa-regular fa-heart text-sm"></i>
+                                            </button>
+                                            <div class="w-full h-36 rounded-2xl bg-slate-950 flex items-center justify-center text-6xl mb-3 shadow-inner relative overflow-hidden">
+                                                ${item.img}
+                                                ${item.badge ? `<span class="absolute top-2 right-2 text-[10px] font-black px-2.5 py-0.5 rounded-full text-white shadow" style="background-color: ${color}">${item.badge}</span>` : ''}
+                                            </div>
+                                            <div class="space-y-1 mb-3">
+                                                <h4 class="font-black text-base text-white truncate">${item.name}</h4>
+                                                <p class="text-xs text-slate-400 line-clamp-1">${item.desc}</p>
+                                                <div class="flex items-center gap-1 text-[11px] text-amber-400 font-bold pt-1">
+                                                    <i class="fa-solid fa-star"></i> <span>${item.rating}</span> <span class="text-slate-500">(${item.reviews})</span>
+                                                </div>
+                                            </div>
+                                            <div class="flex justify-between items-center pt-2 border-t border-slate-800">
+                                                <span class="font-black text-base text-amber-400">EG ${item.price.toFixed(2)}</span>
+                                                <button onclick="addItemToCart(${item.id})" class="w-10 h-10 rounded-2xl text-slate-950 font-black flex items-center justify-center shadow-lg hover:scale-105 transition" style="background-color: ${color}">
+                                                    <i class="fa-solid fa-plus text-sm"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    `).join('')}
                                 </div>
                             ` : `
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -821,68 +865,68 @@
             const progressPct = Math.min(100, (subtotal / db.restaurant.discountThreshold) * 100);
 
             return `
-                <div class="min-h-screen bg-[#f7f7f7] text-stone-900 pb-32">
-                    <div class="bg-white px-4 py-4 flex justify-between items-center shadow-sm sticky top-0 z-20">
-                        <button onclick="ui.route='menu'; render();" class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-stone-100">
+                <div class="min-h-screen bg-slate-950 text-white pb-32">
+                    <div class="bg-slate-900 border-b border-slate-800 px-4 py-4 flex justify-between items-center shadow-sm sticky top-0 z-20">
+                        <button onclick="ui.route='menu'; render();" class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-slate-700">
                             <i class="fa-solid fa-arrow-right text-lg"></i>
                         </button>
                         <h1 class="font-black text-lg">السلة</h1>
-                        <button onclick="ui.cart=[]; render();" class="text-xs font-bold text-red-500 hover:underline">مسح الكل</button>
+                        <button onclick="ui.cart=[]; render();" class="text-xs font-bold text-red-400 hover:underline">مسح الكل</button>
                     </div>
 
                     <div class="max-w-lg mx-auto px-4 pt-5 space-y-4">
-                        <div class="bg-gradient-to-l from-amber-50 to-white p-4 rounded-2xl border border-amber-100 shadow-sm">
+                        <div class="bg-gradient-to-l from-amber-500/15 to-slate-900 p-4 rounded-2xl border border-amber-500/30 shadow-sm">
                             <div class="flex items-center justify-between text-xs font-bold mb-2.5">
                                 <span class="flex items-center gap-2">
-                                    <span class="w-6 h-6 rounded-full bg-stone-900 text-white flex items-center justify-center text-[10px]"><i class="fa-solid fa-award"></i></span>
+                                    <span class="w-6 h-6 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center text-[10px]"><i class="fa-solid fa-award"></i></span>
                                     ${remainingForDiscount > 0 ? `أضف EG ${remainingForDiscount} للحصول على خصم ${db.restaurant.discountPercent}%` : `🎉 مبروك! حصلت على خصم ${db.restaurant.discountPercent}%`}
                                 </span>
                                 <span class="text-xl">🎁</span>
                             </div>
-                            <div class="w-full h-2 bg-stone-200 rounded-full overflow-hidden">
+                            <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
                                 <div class="h-full bg-amber-500 rounded-full transition-all" style="width: ${progressPct}%"></div>
                             </div>
                         </div>
 
                         ${ui.cart.length === 0 ? `
-                            <div class="bg-white rounded-3xl p-10 text-center shadow-sm">
+                            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-10 text-center shadow-sm">
                                 <div class="text-5xl mb-3">🛒</div>
                                 <h3 class="font-black text-base mb-1">سلتك فارغة حالياً</h3>
-                                <p class="text-xs text-stone-500 mb-5">تصفح المنيو وأضف وجباتك المفضلة</p>
-                                <button onclick="ui.route='menu'; render();" class="bg-stone-900 text-white font-bold px-6 py-3 rounded-xl text-sm">العودة للمنيو</button>
+                                <p class="text-xs text-slate-400 mb-5">تصفح المنيو وأضف وجباتك المفضلة</p>
+                                <button onclick="ui.route='menu'; render();" class="bg-amber-500 text-slate-950 font-bold px-6 py-3 rounded-xl text-sm">العودة للمنيو</button>
                             </div>
                         ` : ui.cart.map(item => `
-                            <div class="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex items-center justify-between gap-3">
+                            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-sm flex items-center justify-between gap-3">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-16 h-16 rounded-2xl bg-stone-100 flex items-center justify-center text-3xl shrink-0">${item.img}</div>
+                                    <div class="w-16 h-16 rounded-2xl bg-slate-950 flex items-center justify-center text-3xl shrink-0">${item.img}</div>
                                     <div>
-                                        <h3 class="font-black text-sm">${item.name}</h3>
-                                        <p class="text-xs text-stone-500 mt-1">السعر EG ${item.price.toFixed(2)}</p>
+                                        <h3 class="font-black text-sm text-white">${item.name}</h3>
+                                        <p class="text-xs text-slate-400 mt-1">السعر EG ${item.price.toFixed(2)}</p>
                                     </div>
                                 </div>
 
                                 <div class="flex flex-col items-end gap-2">
-                                    <div class="flex items-center gap-2 bg-stone-100 p-1 rounded-xl">
-                                        <button onclick="updateCartQty(${item.id}, 1)" class="w-7 h-7 rounded-lg bg-stone-900 text-white flex items-center justify-center text-xs"><i class="fa-solid fa-plus"></i></button>
-                                        <span class="font-black text-sm w-5 text-center">${item.qty}</span>
-                                        <button onclick="updateCartQty(${item.id}, -1)" class="w-7 h-7 rounded-lg bg-stone-900 text-white flex items-center justify-center text-xs">
-                                            <i class="fa-solid ${item.qty === 1 ? 'fa-trash' : 'fa-minus'}"></i>
+                                    <div class="flex items-center gap-2 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                                        <button onclick="updateCartQty(${item.id}, 1)" class="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 font-black flex items-center justify-center text-xs"><i class="fa-solid fa-plus"></i></button>
+                                        <span class="font-black text-sm w-5 text-center text-white">${item.qty}</span>
+                                        <button onclick="updateCartQty(${item.id}, -1)" class="w-7 h-7 rounded-lg bg-slate-800 text-white flex items-center justify-center text-xs">
+                                            <i class="fa-solid ${item.qty === 1 ? 'fa-trash text-red-400' : 'fa-minus'}"></i>
                                         </button>
                                     </div>
-                                    <span class="font-black text-xs">EG ${(item.price * item.qty).toFixed(2)}</span>
+                                    <span class="font-black text-xs text-amber-400">EG ${(item.price * item.qty).toFixed(2)}</span>
                                 </div>
                             </div>
                         `).join('')}
                     </div>
 
                     ${ui.cart.length > 0 ? `
-                        <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 p-4 shadow-lg z-30">
+                        <div class="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 p-4 shadow-2xl z-30">
                             <div class="max-w-lg mx-auto">
                                 <div class="flex justify-between items-center mb-3">
-                                    <span class="font-bold text-stone-600 text-sm">الإجمالي</span>
-                                    <span class="font-black text-lg">EG ${subtotal.toFixed(2)}</span>
+                                    <span class="font-bold text-slate-400 text-sm">الإجمالي</span>
+                                    <span class="font-black text-lg text-amber-400">EG ${subtotal.toFixed(2)}</span>
                                 </div>
-                                <button onclick="ui.route='checkout'; render();" class="w-full bg-stone-950 hover:bg-stone-800 text-white font-black py-4 rounded-2xl text-base transition">إتمام الطلب</button>
+                                <button onclick="ui.route='checkout'; render();" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 rounded-2xl text-base transition">إتمام الطلب</button>
                             </div>
                         </div>
                     ` : ''}
@@ -907,9 +951,9 @@
             const grandTotal = Math.max(0, subtotal + deliveryFee - discountAmount);
 
             return `
-                <div class="min-h-screen bg-[#f5f5f5] text-stone-900 pb-36">
-                    <div class="bg-white px-4 py-4 flex justify-between items-center shadow-sm sticky top-0 z-20">
-                        <button onclick="ui.route='cart'; render();" class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-stone-100">
+                <div class="min-h-screen bg-slate-950 text-white pb-36">
+                    <div class="bg-slate-900 border-b border-slate-800 px-4 py-4 flex justify-between items-center shadow-sm sticky top-0 z-20">
+                        <button onclick="ui.route='cart'; render();" class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-slate-700">
                             <i class="fa-solid fa-arrow-right text-lg"></i>
                         </button>
                         <h1 class="font-black text-lg">إتمام الطلب والدفع</h1>
@@ -917,54 +961,54 @@
                     </div>
 
                     <div class="max-w-lg mx-auto px-4 pt-5 space-y-4">
-                        <div class="bg-white p-5 rounded-3xl shadow-sm border border-stone-100 space-y-3">
-                            <h2 class="font-black text-sm flex items-center gap-2">
-                                <i class="fa-solid fa-address-book text-stone-800"></i> معلومات الاتصال <span class="text-red-500">*</span>
+                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-sm space-y-3">
+                            <h2 class="font-black text-sm flex items-center gap-2 text-amber-400">
+                                <i class="fa-solid fa-address-book"></i> معلومات الاتصال <span class="text-red-500">*</span>
                             </h2>
                             <div class="relative">
-                                <input type="tel" oninput="ui.phone=this.value" value="${ui.phone}" placeholder="رقم الهاتف (مطلوب)" class="w-full pr-10 pl-4 py-3.5 rounded-2xl border border-stone-300 text-sm font-bold outline-none focus:border-stone-900">
-                                <i class="fa-solid fa-phone absolute right-3.5 top-4 text-stone-500"></i>
+                                <input type="tel" oninput="ui.phone=this.value" value="${ui.phone}" placeholder="رقم الهاتف (مطلوب)" class="w-full pr-10 pl-4 py-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-sm font-bold text-white outline-none focus:border-amber-500">
+                                <i class="fa-solid fa-phone absolute right-3.5 top-4 text-slate-500"></i>
                             </div>
                             <div class="relative">
-                                <input type="text" oninput="ui.customerName=this.value" value="${ui.customerName}" placeholder="الاسم (اختياري)" class="w-full pr-10 pl-4 py-3.5 rounded-2xl border border-stone-300 text-sm outline-none focus:border-stone-900">
-                                <i class="fa-regular fa-user absolute right-3.5 top-4 text-stone-500"></i>
-                            </div>
-                        </div>
-
-                        <div class="bg-white p-5 rounded-3xl shadow-sm border border-stone-100 space-y-3">
-                            <h2 class="font-black text-sm flex items-center gap-2">
-                                <i class="fa-solid fa-file-lines text-stone-800"></i> ملاحظات
-                            </h2>
-                            <div class="relative">
-                                <textarea oninput="ui.notes=this.value" rows="2" placeholder="ملاحظات إضافية على الطلب..." class="w-full pr-10 pl-4 py-3 rounded-2xl border border-stone-300 text-sm outline-none focus:border-stone-900">${ui.notes}</textarea>
-                                <i class="fa-solid fa-align-right absolute right-3.5 top-3.5 text-stone-500"></i>
+                                <input type="text" oninput="ui.customerName=this.value" value="${ui.customerName}" placeholder="الاسم (اختياري)" class="w-full pr-10 pl-4 py-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-sm text-white outline-none focus:border-amber-500">
+                                <i class="fa-regular fa-user absolute right-3.5 top-4 text-slate-500"></i>
                             </div>
                         </div>
 
-                        <div class="bg-white p-5 rounded-3xl shadow-sm border border-stone-100 space-y-3">
-                            <h2 class="font-black text-sm flex items-center gap-2">
-                                <i class="fa-solid fa-store text-stone-800"></i> طريقة الاستلام <span class="text-red-500">*</span>
+                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-sm space-y-3">
+                            <h2 class="font-black text-sm flex items-center gap-2 text-amber-400">
+                                <i class="fa-solid fa-file-lines"></i> ملاحظات
+                            </h2>
+                            <div class="relative">
+                                <textarea oninput="ui.notes=this.value" rows="2" placeholder="ملاحظات إضافية على الطلب..." class="w-full pr-10 pl-4 py-3 rounded-2xl bg-slate-950 border border-slate-800 text-sm text-white outline-none focus:border-amber-500">${ui.notes}</textarea>
+                                <i class="fa-solid fa-align-right absolute right-3.5 top-3.5 text-slate-500"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-sm space-y-3">
+                            <h2 class="font-black text-sm flex items-center gap-2 text-amber-400">
+                                <i class="fa-solid fa-store"></i> طريقة الاستلام <span class="text-red-500">*</span>
                             </h2>
 
-                            <label onclick="ui.deliveryMethod='branch'; render();" class="flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer transition ${ui.deliveryMethod === 'branch' ? 'border-stone-900 bg-stone-50' : 'border-stone-200'}">
+                            <label onclick="ui.deliveryMethod='branch'; render();" class="flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer transition ${ui.deliveryMethod === 'branch' ? 'border-amber-500 bg-amber-500/10' : 'border-slate-800 bg-slate-950'}">
                                 <span class="font-bold text-sm">استلام من الفرع (أو داخل المطعم)</span>
-                                <input type="radio" name="del_method" ${ui.deliveryMethod === 'branch' ? 'checked' : ''} class="w-5 h-5 accent-stone-950">
+                                <input type="radio" name="del_method" ${ui.deliveryMethod === 'branch' ? 'checked' : ''} class="w-5 h-5 accent-amber-500">
                             </label>
 
-                            <label onclick="ui.deliveryMethod='home'; render();" class="flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer transition ${ui.deliveryMethod === 'home' ? 'border-stone-900 bg-stone-50' : 'border-stone-200'}">
+                            <label onclick="ui.deliveryMethod='home'; render();" class="flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer transition ${ui.deliveryMethod === 'home' ? 'border-amber-500 bg-amber-500/10' : 'border-slate-800 bg-slate-950'}">
                                 <span class="font-bold text-sm">استلام في المنزل (توصيل دليفري)</span>
-                                <input type="radio" name="del_method" ${ui.deliveryMethod === 'home' ? 'checked' : ''} class="w-5 h-5 accent-stone-950">
+                                <input type="radio" name="del_method" ${ui.deliveryMethod === 'home' ? 'checked' : ''} class="w-5 h-5 accent-amber-500">
                             </label>
                         </div>
 
                         ${ui.deliveryMethod === 'branch' ? `
-                            <div class="bg-white p-5 rounded-3xl shadow-sm border border-stone-100 space-y-3">
-                                <h2 class="font-black text-sm flex items-center gap-2">
-                                    <i class="fa-solid fa-chair text-stone-800"></i> رقم الطاولة (اختياري)
+                            <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-sm space-y-3">
+                                <h2 class="font-black text-sm flex items-center gap-2 text-amber-400">
+                                    <i class="fa-solid fa-chair"></i> رقم الطاولة (اختياري)
                                 </h2>
-                                <div class="flex items-center justify-between border border-stone-300 rounded-2xl px-4 py-3">
-                                    <span class="text-sm font-bold text-stone-600 flex items-center gap-2"><i class="fa-solid fa-utensils"></i> رقم الطاولة</span>
-                                    <select onchange="ui.tableNo=this.value" class="bg-stone-100 px-4 py-1.5 rounded-xl font-black text-sm outline-none">
+                                <div class="flex items-center justify-between border border-slate-800 rounded-2xl px-4 py-3 bg-slate-950">
+                                    <span class="text-sm font-bold text-slate-400 flex items-center gap-2"><i class="fa-solid fa-utensils"></i> رقم الطاولة</span>
+                                    <select onchange="ui.tableNo=this.value" class="bg-slate-900 text-amber-400 px-4 py-1.5 rounded-xl font-black text-sm outline-none border border-slate-700">
                                         <option value="">بدون طاولة (تيك أواي)</option>
                                         ${[1,2,3,4,5,6,7,8,9,10,11,12].map(n => `<option value="${n}" ${ui.tableNo == n ? 'selected' : ''}>طاولة ${n}</option>`).join('')}
                                     </select>
@@ -973,83 +1017,83 @@
                         ` : ''}
 
                         ${ui.deliveryMethod === 'home' ? `
-                            <div class="bg-white p-5 rounded-3xl shadow-sm border border-stone-100 space-y-3">
-                                <h2 class="font-black text-sm flex items-center gap-2">
-                                    <i class="fa-solid fa-location-dot text-stone-800"></i> عنوان التوصيل <span class="text-red-500">*</span>
+                            <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-sm space-y-3">
+                                <h2 class="font-black text-sm flex items-center gap-2 text-amber-400">
+                                    <i class="fa-solid fa-location-dot"></i> عنوان التوصيل <span class="text-red-500">*</span>
                                 </h2>
-                                <button onclick="detectGPSLocation()" type="button" class="w-full bg-stone-950 hover:bg-stone-800 text-white font-bold py-3.5 rounded-2xl text-sm flex items-center justify-center gap-2 transition">
+                                <button onclick="detectGPSLocation()" type="button" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3.5 rounded-2xl text-sm flex items-center justify-center gap-2 transition">
                                     <i class="fa-solid fa-crosshairs"></i> الحصول على الموقع الحالي (GPS)
                                 </button>
-                                ${ui.gpsCoords ? `<p class="text-xs text-emerald-600 font-bold text-center">✅ تم تحديد إحداثيات موقعك: ${ui.gpsCoords}</p>` : ''}
+                                ${ui.gpsCoords ? `<p class="text-xs text-emerald-400 font-bold text-center">✅ تم تحديد إحداثيات موقعك: ${ui.gpsCoords}</p>` : ''}
                                 <div class="relative">
-                                    <input type="text" oninput="ui.address=this.value" value="${ui.address}" placeholder="الشارع / رقم المبنى / معلم مشهور" class="w-full pr-10 pl-4 py-3.5 rounded-2xl border border-stone-300 text-sm outline-none focus:border-stone-900">
-                                    <i class="fa-solid fa-building absolute right-3.5 top-4 text-stone-500"></i>
+                                    <input type="text" oninput="ui.address=this.value" value="${ui.address}" placeholder="الشارع / رقم المبنى / معلم مشهور" class="w-full pr-10 pl-4 py-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-sm text-white outline-none focus:border-amber-500">
+                                    <i class="fa-solid fa-building absolute right-3.5 top-4 text-slate-500"></i>
                                 </div>
                             </div>
                         ` : ''}
 
-                        <div class="bg-white p-5 rounded-3xl shadow-sm border border-stone-100 space-y-3">
-                            <h2 class="font-black text-sm flex items-center gap-2">
-                                <i class="fa-solid fa-tag text-stone-800"></i> كود الخصم
+                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-sm space-y-3">
+                            <h2 class="font-black text-sm flex items-center gap-2 text-amber-400">
+                                <i class="fa-solid fa-tag"></i> كود الخصم
                             </h2>
                             <div class="flex gap-2">
                                 <div class="relative flex-1">
-                                    <input type="text" oninput="ui.couponInput=this.value" value="${ui.couponInput}" placeholder="أدخل كود الخصم (مثال: SAVE10)" class="w-full pr-10 pl-3 py-3 rounded-2xl border border-stone-300 text-sm uppercase outline-none">
-                                    <i class="fa-solid fa-ticket absolute right-3.5 top-3.5 text-stone-500"></i>
+                                    <input type="text" oninput="ui.couponInput=this.value" value="${ui.couponInput}" placeholder="أدخل كود الخصم (مثال: SAVE10)" class="w-full pr-10 pl-3 py-3 rounded-2xl bg-slate-950 border border-slate-800 text-sm uppercase text-white outline-none">
+                                    <i class="fa-solid fa-ticket absolute right-3.5 top-3.5 text-slate-500"></i>
                                 </div>
-                                <button onclick="applyCoupon()" type="button" class="bg-stone-950 text-white font-bold px-6 rounded-2xl text-sm">إضافة</button>
+                                <button onclick="applyCoupon()" type="button" class="bg-amber-500 text-slate-950 font-bold px-6 rounded-2xl text-sm">إضافة</button>
                             </div>
                         </div>
 
-                        <div class="bg-white p-5 rounded-3xl shadow-sm border border-stone-100 space-y-3">
-                            <h2 class="font-black text-sm flex items-center gap-2">
-                                <i class="fa-regular fa-credit-card text-stone-800"></i> طريقة الدفع <span class="text-red-500">*</span>
+                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-sm space-y-3">
+                            <h2 class="font-black text-sm flex items-center gap-2 text-amber-400">
+                                <i class="fa-regular fa-credit-card"></i> طريقة الدفع <span class="text-red-500">*</span>
                             </h2>
-                            <label onclick="ui.paymentMethod='cash'; render();" class="flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer ${ui.paymentMethod === 'cash' ? 'border-stone-900 bg-stone-50' : 'border-stone-200'}">
+                            <label onclick="ui.paymentMethod='cash'; render();" class="flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer ${ui.paymentMethod === 'cash' ? 'border-amber-500 bg-amber-500/10' : 'border-slate-800 bg-slate-950'}">
                                 <span class="font-bold text-sm">دفع عند الاستلام</span>
-                                <input type="radio" name="pay_method" ${ui.paymentMethod === 'cash' ? 'checked' : ''} class="w-5 h-5 accent-stone-950">
+                                <input type="radio" name="pay_method" ${ui.paymentMethod === 'cash' ? 'checked' : ''} class="w-5 h-5 accent-amber-500">
                             </label>
-                            <label onclick="ui.paymentMethod='online'; render();" class="flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer ${ui.paymentMethod === 'online' ? 'border-stone-900 bg-stone-50' : 'border-stone-200'}">
+                            <label onclick="ui.paymentMethod='online'; render();" class="flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer ${ui.paymentMethod === 'online' ? 'border-amber-500 bg-amber-500/10' : 'border-slate-800 bg-slate-950'}">
                                 <span class="font-bold text-sm">دفع إلكتروني (انستا باي / محفظة)</span>
-                                <input type="radio" name="pay_method" ${ui.paymentMethod === 'online' ? 'checked' : ''} class="w-5 h-5 accent-stone-950">
+                                <input type="radio" name="pay_method" ${ui.paymentMethod === 'online' ? 'checked' : ''} class="w-5 h-5 accent-amber-500">
                             </label>
                         </div>
 
-                        <div class="bg-stone-200/70 p-5 rounded-3xl border border-stone-300/70 space-y-2.5">
-                            <h2 class="font-black text-sm flex items-center gap-2 mb-3">
-                                <i class="fa-solid fa-receipt text-stone-800"></i> ملخص الطلب
+                        <div class="bg-slate-900 p-5 rounded-3xl border border-slate-800 space-y-2.5">
+                            <h2 class="font-black text-sm flex items-center gap-2 mb-3 text-amber-400">
+                                <i class="fa-solid fa-receipt"></i> ملخص الطلب
                             </h2>
-                            <div class="flex justify-between text-xs font-bold text-stone-600">
+                            <div class="flex justify-between text-xs font-bold text-slate-400">
                                 <span>المجموع الفرعي</span>
                                 <span>EG ${subtotal.toFixed(2)}</span>
                             </div>
-                            <div class="flex justify-between text-xs font-bold text-stone-600">
+                            <div class="flex justify-between text-xs font-bold text-slate-400">
                                 <span>الضريبة (${db.restaurant.taxRate}%)</span>
                                 <span>EG 0.00</span>
                             </div>
-                            <div class="flex justify-between text-xs font-bold text-stone-600">
+                            <div class="flex justify-between text-xs font-bold text-slate-400">
                                 <span>رسوم التوصيل</span>
                                 <span>EG ${deliveryFee.toFixed(2)}</span>
                             </div>
                             ${discountAmount > 0 ? `
-                                <div class="flex justify-between text-xs font-bold text-emerald-600">
+                                <div class="flex justify-between text-xs font-bold text-emerald-400">
                                     <span>الخصم (${effectiveDiscountPct}%)</span>
                                     <span>- EG ${discountAmount.toFixed(2)}</span>
                                 </div>
                             ` : ''}
-                            <div class="border-t border-stone-300 pt-2.5 mt-2 flex justify-between items-center">
-                                <span class="font-black text-base">الإجمالي</span>
-                                <span class="font-black text-lg">EG ${grandTotal.toFixed(2)}</span>
+                            <div class="border-t border-slate-800 pt-2.5 mt-2 flex justify-between items-center">
+                                <span class="font-black text-base text-white">الإجمالي</span>
+                                <span class="font-black text-lg text-amber-400">EG ${grandTotal.toFixed(2)}</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 p-4 shadow-lg z-30">
+                    <div class="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 p-4 shadow-2xl z-30">
                         <div class="max-w-lg mx-auto flex items-center justify-between gap-4">
-                            <button onclick="submitFinalOrder()" class="flex-1 bg-stone-950 hover:bg-stone-800 text-white font-black py-4 rounded-2xl text-base transition">تأكيد وإرسال الطلب</button>
+                            <button onclick="submitFinalOrder()" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 rounded-2xl text-base transition">تأكيد وإرسال الطلب</button>
                             <div class="text-left">
-                                <span class="block text-[11px] text-stone-500 font-bold">الإجمالي</span>
-                                <span class="font-black text-base">EG ${grandTotal.toFixed(2)}</span>
+                                <span class="block text-[11px] text-slate-400 font-bold">الإجمالي</span>
+                                <span class="font-black text-base text-amber-400">EG ${grandTotal.toFixed(2)}</span>
                             </div>
                         </div>
                     </div>
@@ -1130,21 +1174,21 @@
         function renderOrderSuccess() {
             const ord = ui.lastOrder;
             return `
-                <div class="min-h-screen bg-stone-50 flex items-center justify-center p-4">
-                    <div class="max-w-md w-full bg-white rounded-3xl p-8 text-center shadow-xl border border-stone-100">
-                        <div class="w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-4xl mx-auto mb-4">
+                <div class="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
+                    <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 text-center shadow-xl">
+                        <div class="w-20 h-20 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-4xl mx-auto mb-4">
                             <i class="fa-solid fa-check"></i>
                         </div>
-                        <h2 class="text-2xl font-black text-stone-900 mb-1">تم إرسال طلبك بنجاح!</h2>
-                        <p class="text-xs text-stone-500 mb-6">رقم الطلب: <span class="font-black text-stone-900">${ord.id}</span></p>
+                        <h2 class="text-2xl font-black mb-1">تم إرسال طلبك بنجاح!</h2>
+                        <p class="text-xs text-slate-400 mb-6">رقم الطلب: <span class="font-black text-amber-400">${ord.id}</span></p>
 
-                        <div class="bg-stone-50 rounded-2xl p-4 text-right text-xs space-y-2 mb-6 border border-stone-200/70">
-                            <div class="flex justify-between"><span class="text-stone-500">طريقة الاستلام:</span><span class="font-bold">${ord.deliveryMethod === 'home' ? 'توصيل للمنزل' : (ord.tableNo ? 'طاولة رقم ' + ord.tableNo : 'استلام من الفرع')}</span></div>
-                            <div class="flex justify-between"><span class="text-stone-500">طريقة الدفع:</span><span class="font-bold">${ord.paymentMethod === 'cash' ? 'دفع عند الاستلام' : 'دفع إلكتروني'}</span></div>
-                            <div class="flex justify-between"><span class="text-stone-500">الإجمالي المطلوب:</span><span class="font-black text-emerald-600">EG ${ord.total.toFixed(2)}</span></div>
+                        <div class="bg-slate-950 rounded-2xl p-4 text-right text-xs space-y-2 mb-6 border border-slate-800">
+                            <div class="flex justify-between"><span class="text-slate-400">طريقة الاستلام:</span><span class="font-bold">${ord.deliveryMethod === 'home' ? 'توصيل للمنزل' : (ord.tableNo ? 'طاولة رقم ' + ord.tableNo : 'استلام من الفرع')}</span></div>
+                            <div class="flex justify-between"><span class="text-slate-400">طريقة الدفع:</span><span class="font-bold">${ord.paymentMethod === 'cash' ? 'دفع عند الاستلام' : 'دفع إلكتروني'}</span></div>
+                            <div class="flex justify-between"><span class="text-slate-400">الإجمالي المطلوب:</span><span class="font-black text-emerald-400">EG ${ord.total.toFixed(2)}</span></div>
                         </div>
 
-                        <button onclick="ui.route='menu'; render();" class="w-full bg-stone-950 text-white font-black py-3.5 rounded-2xl text-sm">العودة إلى المنيو</button>
+                        <button onclick="ui.route='menu'; render();" class="w-full bg-amber-500 text-slate-950 font-black py-3.5 rounded-2xl text-sm">العودة إلى المنيو</button>
                     </div>
                 </div>
             `;
@@ -1289,7 +1333,7 @@
                                         <div class="flex items-center gap-3">
                                             <span class="text-3xl">${m.img}</span>
                                             <div>
-                                                <h4 class="font-bold text-sm">${m.name}</h4>
+                                                <h4 class="font-bold text-sm text-white">${m.name}</h4>
                                                 <div class="flex items-center gap-2 mt-0.5">
                                                     <span class="text-xs text-amber-400 font-bold">EG ${m.price}</span>
                                                     <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md">${catName}</span>
@@ -1321,7 +1365,7 @@
                 <div class="max-w-md bg-slate-900 border border-slate-800 p-6 rounded-3xl">
                     <h2 class="text-lg font-black mb-2">📱 توليد رابط QR للطاولات</h2>
                     <p class="text-xs text-slate-400 mb-4">اختر رقم الطاولة لنسخ الرابط المباشر الخاص بها:</p>
-                    <select id="qr_tbl_select" onchange="updateQRPreview()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm font-bold mb-4">
+                    <select id="qr_tbl_select" onchange="updateQRPreview()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm font-bold mb-4 text-white">
                         ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}">طاولة رقم ${n}</option>`).join('')}
                     </select>
                     <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs break-all text-amber-400 mb-4" id="qr_link_box">${baseUrl}#menu?table=1</div>
