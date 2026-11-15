@@ -104,12 +104,11 @@
         let db = loadState();
 
         const ui = {
-            route: 'landing', // landing, builder, menu, cart, checkout, order_success, cashier
+            route: 'landing',
             activeCategory: 'all',
             searchQuery: '',
             cart: [],
             tableParam: null,
-            // Checkout fields
             phone: '',
             customerName: '',
             notes: '',
@@ -121,17 +120,15 @@
             appliedDiscountPercent: 0,
             paymentMethod: 'cash',
             lastOrder: null,
-            // Cashier auth & tabs
             cashierUnlocked: false,
             cashierTab: 'orders',
-            // Paper Menu Importer Modal State
             showImportModal: false,
-            importTab: 'image', // 'image' or 'text'
+            importTab: 'image',
             importStatus: '',
             importProgress: 0,
             importRawText: '',
             importPreviewImage: null,
-            parsedMenuDraft: [], // { name, price, categoryName, categoryId, icon, desc, selected }
+            parsedMenuDraft: [],
             replaceExistingMenu: false
         };
 
@@ -197,7 +194,6 @@
             }
         }
 
-        // ================= 1. LANDING PAGE =================
         function renderLanding() {
             const baseUrl = window.location.origin + window.location.pathname;
             return `
@@ -226,14 +222,14 @@
                             <div class="space-y-3 text-xs">
                                 <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex justify-between items-center gap-2">
                                     <div class="overflow-hidden">
-                                        <span class="text-emerald-400 font-bold block mb-1">1. رابط الزبون (المنيو والطلب فقط - بدون لوحة تحكم):</span>
+                                        <span class="text-emerald-400 font-bold block mb-1">1. رابط الزبون (المنيو والطلب فقط):</span>
                                         <code class="text-slate-300 select-all break-all">${baseUrl}#menu</code>
                                     </div>
                                     <button onclick="copyText('${baseUrl}#menu')" class="bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg font-bold shrink-0">نسخ</button>
                                 </div>
                                 <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex justify-between items-center gap-2">
                                     <div class="overflow-hidden">
-                                        <span class="text-amber-400 font-bold block mb-1">2. رابط الكاشير وإدارة المطعم (محمي برمز PIN: ${db.restaurant.pin}):</span>
+                                        <span class="text-amber-400 font-bold block mb-1">2. رابط الكاشير (محمي برمز PIN: ${db.restaurant.pin}):</span>
                                         <code class="text-slate-300 select-all break-all">${baseUrl}#cashier</code>
                                     </div>
                                     <button onclick="copyText('${baseUrl}#cashier')" class="bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg font-bold shrink-0">نسخ</button>
@@ -250,7 +246,6 @@
             alert('✅ تم نسخ الرابط بنجاح!');
         }
 
-        // ================= 2. SITE BUILDER & STYLES =================
         function renderBuilder() {
             const styles = [
                 { id: 'luxury', name: 'الاستايل الفاخر (Steakhouse Luxury)', desc: 'تصميم راقٍ بلمسات ذهبية وبانر عروض وتقييمات أطباق' },
@@ -267,7 +262,6 @@
                             <button onclick="navigate('')" class="text-slate-400 hover:text-slate-700 font-bold text-sm">رجوع للرئيسية</button>
                         </div>
 
-                        <!-- Smart Paper Menu Upload Banner inside Builder -->
                         <div class="mb-6 bg-gradient-to-l from-amber-500/15 via-orange-500/10 to-amber-50 border border-amber-300 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                             <div>
                                 <span class="bg-amber-500 text-slate-950 text-[10px] font-black px-2.5 py-0.5 rounded-full">ميزة ذكية ⚡</span>
@@ -345,7 +339,6 @@
             navigate('#menu');
         }
 
-        // ================= SMART PAPER MENU IMPORTER (OCR + AUTO CATEGORIZER) =================
         function openPaperMenuImporter() {
             ui.showImportModal = true;
             ui.importStatus = '';
@@ -364,7 +357,6 @@
             return `
                 <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-6 overflow-y-auto">
                     <div class="bg-slate-900 text-white border border-slate-700 rounded-3xl max-w-2xl w-full p-5 md:p-7 shadow-2xl my-auto max-h-[92vh] overflow-y-auto">
-                        <!-- Modal Header -->
                         <div class="flex justify-between items-center pb-4 mb-5 border-b border-slate-800">
                             <div>
                                 <h2 class="text-lg md:text-xl font-black text-amber-400 flex items-center gap-2">
@@ -377,7 +369,6 @@
                             </button>
                         </div>
 
-                        <!-- Mode Tabs -->
                         <div class="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-2xl mb-5 border border-slate-800">
                             <button onclick="ui.importTab='image'; render();" class="py-2.5 rounded-xl text-xs font-black transition ${ui.importTab === 'image' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'}">
                                 📸 رفع صورة المنيو الورقي
@@ -388,7 +379,6 @@
                         </div>
 
                         ${ui.importTab === 'image' ? `
-                            <!-- Image Upload Area -->
                             <div class="space-y-4">
                                 <label class="block border-2 border-dashed border-slate-700 hover:border-amber-500 rounded-2xl p-6 text-center cursor-pointer transition bg-slate-950/60">
                                     <input type="file" accept="image/*" onchange="handlePaperMenuImageUpload(event)" class="hidden">
@@ -417,20 +407,18 @@
                                 ` : ''}
                             </div>
                         ` : `
-                            <!-- Text Paste / Sample Area -->
                             <div class="space-y-3">
                                 <div class="flex justify-between items-center">
                                     <label class="text-xs font-bold text-slate-300">اكتب أو الصق أصناف المنيو الورقي (كل صنف وسعره في سطر):</label>
                                     <button onclick="fillSamplePaperMenuText()" class="text-[11px] text-amber-400 font-bold hover:underline">✨ تعبئة نموذج منيو تجريبي</button>
                                 </div>
-                                <textarea id="raw_menu_textarea" oninput="ui.importRawText=this.value" rows="6" placeholder="مثال:&#10;قسم المشويات&#10;كباب مشوي على الفحم 220&#10;كفتة ضاني 180&#10;قسم البيتزا&#10;بيتزا مارجريتا 95&#10;بيتزا سوبر سوبريم 135&#10;قسم المشروبات&#10;عصير برتقال فريش 35" class="w-full bg-slate-950 border border-slate-700 rounded-2xl p-4 text-xs leading-relaxed text-white outline-none focus:border-amber-500">${ui.importRawText}</textarea>
+                                <textarea id="raw_menu_textarea" oninput="ui.importRawText=this.value" rows="6" placeholder="مثال:&#10;قسم المشويات&#10;كباب مشوي على الفحم 220&#10;كفتة ضاني 180" class="w-full bg-slate-950 border border-slate-700 rounded-2xl p-4 text-xs leading-relaxed text-white outline-none focus:border-amber-500">${ui.importRawText}</textarea>
                                 <button onclick="parseAndCategorizeMenuText(ui.importRawText)" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs transition">
                                     ⚡ تحليل وتقسيم الأصناف تلقائياً
                                 </button>
                             </div>
                         `}
 
-                        <!-- Parsed Preview & Editable Categorization Table -->
                         ${ui.parsedMenuDraft.length > 0 ? `
                             <div class="mt-6 pt-5 border-t border-slate-800 space-y-4">
                                 <div class="flex flex-wrap justify-between items-center gap-2">
@@ -528,7 +516,7 @@
                         throw new Error('OCR library unavailable');
                     }
                 } catch (err) {
-                    ui.importStatus = 'تعذر الاتصال بمحرك OCR، يمكنك لصق النص في التبويب الثاني أو تعديل النموذج.';
+                    ui.importStatus = 'تعذر الاتصال بمحرك OCR، يمكنك لصق النص يدوياً.';
                     ui.importProgress = 0;
                     render();
                 }
@@ -564,18 +552,14 @@
 
         function parseAndCategorizeMenuText(rawText) {
             if (!rawText || !rawText.trim()) return;
-            const lines = rawText.split(/
-?
-/).map(l => l.trim()).filter(Boolean);
+            const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
             const draft = [];
             let currentHeader = '';
 
-            // Convert Arabic-Indic digits (٠١٢٣٤٥٦٧٨٩) to Western digits
             const normalizeDigits = (str) => str.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
 
             for (let rawLine of lines) {
                 const line = normalizeDigits(rawLine).replace(/[\.\-_•\*]+/g, ' ').trim();
-                // Check if line has a price number at the end or anywhere
                 const priceMatch = line.match(/(\d+(?:\.\d+)?)\s*(?:ج\.م|جنيه|egp|eg|sr|sar|ريال)?$/i);
 
                 if (priceMatch) {
@@ -593,7 +577,6 @@
                         });
                     }
                 } else {
-                    // Treat short non-priced lines as section headers (e.g. "قسم المشويات")
                     if (line.length >= 3 && line.length <= 35 && !/\d/.test(line)) {
                         currentHeader = line.replace(/^(قسم|قائمة)\s+/i, '').trim();
                     }
@@ -601,7 +584,7 @@
             }
 
             if (draft.length === 0) {
-                alert('لم يتم العثور على أصناف بأسعار واضحة. تأكد أن كل سطر يحتوي على اسم الصنف وبجانبه السعر (مثال: شاورما لحم 65).');
+                alert('لم يتم العثور على أصناف بأسعار واضحة. تأكد أن كل سطر يحتوي على اسم الصنف وبجانبه السعر.');
             }
 
             ui.parsedMenuDraft = draft;
@@ -621,7 +604,6 @@
             }
 
             selectedItems.forEach((item, idx) => {
-                // Find or create category
                 let catObj = db.categories.find(c => c.name === item.categoryName);
                 if (!catObj) {
                     const newCatId = 'cat_' + Date.now() + '_' + idx;
@@ -648,7 +630,6 @@
             render();
         }
 
-        // ================= 3. CUSTOMER STOREFRONT (NO CASHIER BUTTONS!) =================
         function renderCustomerMenu() {
             const st = db.restaurant.style;
             const color = db.restaurant.themeColor;
@@ -785,7 +766,6 @@
             alert('✅ تم إرسال طلبك للكاشير وسيصلك الويتر فوراً!');
         }
 
-        // ================= 4. CART PAGE =================
         function renderCartPage() {
             const subtotal = ui.cart.reduce((s, i) => s + (i.price * i.qty), 0);
             const remainingForDiscount = Math.max(0, db.restaurant.discountThreshold - subtotal);
@@ -869,7 +849,6 @@
             render();
         }
 
-        // ================= 5. CHECKOUT PAGE =================
         function renderCheckoutPage() {
             const subtotal = ui.cart.reduce((s, i) => s + (i.price * i.qty), 0);
             const deliveryFee = ui.deliveryMethod === 'home' ? db.restaurant.deliveryFee : 0;
@@ -916,7 +895,7 @@
                         <div class="bg-white p-5 rounded-3xl shadow-sm border border-stone-100 space-y-3">
                             <h2 class="font-black text-sm flex items-center gap-2">
                                 <i class="fa-solid fa-store text-stone-800"></i> طريقة الاستلام <span class="text-red-500">*</span>
-                            </h2>
+                            </h4>
 
                             <label onclick="ui.deliveryMethod='branch'; render();" class="flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer transition ${ui.deliveryMethod === 'branch' ? 'border-stone-900 bg-stone-50' : 'border-stone-200'}">
                                 <span class="font-bold text-sm">استلام من الفرع (أو داخل المطعم)</span>
@@ -1108,7 +1087,7 @@
                             <i class="fa-solid fa-check"></i>
                         </div>
                         <h2 class="text-2xl font-black text-stone-900 mb-1">تم إرسال طلبك بنجاح!</h2>
-                        <p class="text-xs text-stone-500 mb-6">رقم الطلب: <span class="font-black text-stone-900">${ord.id}</span> — وصل الطلب الآن لشاشة الكاشير</p>
+                        <p class="text-xs text-stone-500 mb-6">رقم الطلب: <span class="font-black text-stone-900">${ord.id}</span></p>
 
                         <div class="bg-stone-50 rounded-2xl p-4 text-right text-xs space-y-2 mb-6 border border-stone-200/70">
                             <div class="flex justify-between"><span class="text-stone-500">طريقة الاستلام:</span><span class="font-bold">${ord.deliveryMethod === 'home' ? 'توصيل للمنزل' : (ord.tableNo ? 'طاولة رقم ' + ord.tableNo : 'استلام من الفرع')}</span></div>
@@ -1122,7 +1101,6 @@
             `;
         }
 
-        // ================= 6. CASHIER DASHBOARD =================
         function renderCashier() {
             if (!ui.cashierUnlocked) {
                 return `
