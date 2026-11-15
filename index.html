@@ -29,8 +29,8 @@
     <script>
         const DEFAULT_DATA = {
             restaurant: {
-                name: 'مطعمي المميز',
-                taglet: 'أجود وأطعم الأطباق الطازجة',
+                name: 'مطعم الطاهي',
+                taglet: 'أصل المذاق المصري',
                 logo: '🍽️',
                 themeColor: '#d97706',
                 style: 'luxury',
@@ -52,7 +52,7 @@
 
         function loadState() {
             try {
-                const saved = localStorage.getItem('sofratech_db_v7');
+                const saved = localStorage.getItem('sofratech_db_v8');
                 if (saved) {
                     const parsed = JSON.parse(saved);
                     if (parsed && parsed.restaurant && Array.isArray(parsed.menu)) {
@@ -61,13 +61,13 @@
                 }
             } catch (e) {
                 console.error('LocalStorage parse error, resetting:', e);
-                localStorage.removeItem('sofratech_db_v7');
+                localStorage.removeItem('sofratech_db_v8');
             }
             return JSON.parse(JSON.stringify(DEFAULT_DATA));
         }
 
         function saveState() {
-            localStorage.setItem('sofratech_db_v7', JSON.stringify(db));
+            localStorage.setItem('sofratech_db_v8', JSON.stringify(db));
         }
 
         let db = loadState();
@@ -127,7 +127,7 @@
 
         window.addEventListener('hashchange', syncRouteFromHash);
         window.addEventListener('storage', (e) => {
-            if (e.key === 'sofratech_db_v7') {
+            if (e.key === 'sofratech_db_v8') {
                 db = loadState();
                 render();
             }
@@ -265,7 +265,7 @@
                                     ${styles.map(st => `
                                         <label class="border-2 rounded-2xl p-3.5 cursor-pointer transition ${db.restaurant.style === st.id ? 'border-amber-500 bg-amber-50/50' : 'border-slate-200 hover:border-slate-300'}">
                                             <div class="flex items-center gap-2 mb-1">
-                                                <input type="radio" name="cfg_style" value="${st.id}" ${db.restaurant.style === st.id ? 'checked' : ''} class="accent-amber-500">
+                                                <input type="radio" name="cfg_style" value="${st.id}" ${db.restaurant.style === st.id ? 'checked' : ''} class="accent-amber-500" onchange="previewStyleOnChange('${st.id}')">
                                                 <span class="font-black text-xs text-slate-900">${st.name}</span>
                                             </div>
                                             <p class="text-[11px] text-slate-500 pr-5">${st.desc}</p>
@@ -289,22 +289,36 @@
                                 </div>
                             </div>
 
-                            <button onclick="saveBuilder()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-2xl text-sm shadow-lg transition">حفظ الإعدادات وفتح رابط الزبون 🚀</button>
+                            <div class="flex gap-3">
+                                <button onclick="saveBuilder()" class="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-2xl text-sm shadow-lg transition">حفظ الإعدادات 🚀</button>
+                                <button onclick="saveBuilderAndPreview()" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 rounded-2xl text-sm shadow-lg transition">معاينة رابط الزبون 📱</button>
+                            </div>
                         </div>
                     </div>
                 </div>
             `;
         }
 
+        function previewStyleOnChange(styleId) {
+            db.restaurant.style = styleId;
+            saveState();
+        }
+
         function saveBuilder() {
             db.restaurant.name = document.getElementById('cfg_name').value;
             db.restaurant.logo = document.getElementById('cfg_logo').value;
             db.restaurant.taglet = document.getElementById('cfg_tag').value;
-            db.restaurant.style = document.querySelector('input[name="cfg_style"]:checked').value;
+            const checkedStyle = document.querySelector('input[name="cfg_style"]:checked');
+            if (checkedStyle) db.restaurant.style = checkedStyle.value;
             db.restaurant.themeColor = document.getElementById('cfg_color').value;
             db.restaurant.deliveryFee = Number(document.getElementById('cfg_fee').value) || 0;
             db.restaurant.pin = document.getElementById('cfg_pin').value || '1234';
             saveState();
+            alert('✅ تم حفظ إعدادات واستايل المطعم بنجاح!');
+        }
+
+        function saveBuilderAndPreview() {
+            saveBuilder();
             navigate('#menu');
         }
 
@@ -483,29 +497,23 @@
                     { name: 'كباب بتلو مشوي', price: 240, categoryName: 'المشويات', icon: '🥩', desc: 'محضر على الفحم الطازج', selected: true },
                     { name: 'كفتة ضاني أصلي', price: 180, categoryName: 'المشويات', icon: '🥩', desc: 'تخلطة الحاتي المميزة', selected: true },
                     { name: 'شيش طاووق', price: 165, categoryName: 'المشويات', icon: '🍗', desc: 'مخلى بتبلة الشيف', selected: true },
-                    { name: 'طاجن لحم بالبصل', price: 210, categoryName: 'الطواجن', icon: '🍲', desc: 'في الفخار البلدي', selected: true },
-                    { name: 'طاجن ورق عنب باللحمة', price: 170, categoryName: 'الطواجن', icon: '🍲', desc: 'على الطريقة المصرية', selected: true }
+                    { name: 'طاجن لحم بالبصل', price: 210, categoryName: 'الطواجن', icon: '🍲', desc: 'في الفخار البلدي', selected: true }
                 ];
             } else if (type === 'burgers') {
                 items = [
                     { name: 'بيف برجر دبل تشيز', price: 140, categoryName: 'البرجر', icon: '🍔', desc: 'شريحتين لحم مع الجبن المذيب', selected: true },
-                    { name: 'مشغور تشيكن زنگر', price: 110, categoryName: 'البرجر', icon: '🍔', desc: 'دجاج مقرمش حار', selected: true },
-                    { name: 'ساندوتش شاورما لحم', price: 75, categoryName: 'الساندوتشات', icon: '🌯', desc: 'خبز صاج مع الطحينة', selected: true },
-                    { name: 'ساندوتش شاورما فراخ', price: 65, categoryName: 'الساندوتشات', icon: '🌯', desc: 'ثومية وبطاطس', selected: true }
+                    { name: 'تشيكن زنگر', price: 110, categoryName: 'البرجر', icon: '🍔', desc: 'دجاج مقرمش حار', selected: true },
+                    { name: 'ساندوتش شاورما لحم', price: 75, categoryName: 'الساندوتشات', icon: '🌯', desc: 'خبز صاج مع الطحينة', selected: true }
                 ];
             } else if (type === 'pizza') {
                 items = [
                     { name: 'بيتزا مارجريتا', price: 95, categoryName: 'البيتزا', icon: '🍕', desc: 'موتزريلا وصلصة طماطم', selected: true },
-                    { name: 'بيتزا بيروني وفلفل', price: 145, categoryName: 'البيتزا', icon: '🍕', desc: 'مع قطع اللحم المدخن', selected: true },
-                    { name: 'فطيرة بالسكر واللبن', price: 60, categoryName: 'الفطائر الشرقية', icon: '🥮', desc: 'مغلفة بالقشطة والمكسرات', selected: true },
-                    { name: 'فطيرة لوتس وقشطة', price: 90, categoryName: 'الفطائر الشرقية', icon: '🥮', desc: 'صوص لوتس غني', selected: true }
+                    { name: 'بيتزا بيروني', price: 145, categoryName: 'البيتزا', icon: '🍕', desc: 'مع قطع اللحم المدخن', selected: true }
                 ];
             } else if (type === 'cafes') {
                 items = [
                     { name: 'عصير مانجو فريش', price: 45, categoryName: 'المشروبات', icon: '🥤', desc: 'طازج 100%', selected: true },
-                    { name: 'عصير فراولة طبيعي', price: 40, categoryName: 'المشروبات', icon: '🥤', desc: 'مثلج ومنعش', selected: true },
-                    { name: 'قهوة تركية مظبوطة', price: 30, categoryName: 'المشروبات الساخنة', icon: '☕', desc: 'بن فاخر', selected: true },
-                    { name: 'مولتن كيك شوكليت', price: 75, categoryName: 'الحلويات', icon: '🍰', desc: 'مع آيس كريم فانيليا', selected: true }
+                    { name: 'قهوة تركية مظبوطة', price: 30, categoryName: 'المشروبات الساخنة', icon: '☕', desc: 'بن فاخر', selected: true }
                 ];
             }
             ui.parsedMenuDraft = items;
@@ -517,8 +525,7 @@
 كباب بتلو 240
 كفتة ضاني 180
 المشروبات
-عصير مانجو 45
-بيبسي كانز 20`;
+عصير مانجو 45`;
             parseAndCategorizeMenuText(ui.importRawText);
         }
 
@@ -695,10 +702,13 @@
                                     <p class="text-[11px] opacity-70">${db.restaurant.taglet}</p>
                                 </div>
                             </div>
-                            <button onclick="ui.route='cart'; render();" class="relative p-2.5 rounded-full ${isDark ? 'bg-slate-800' : 'bg-stone-100'}">
-                                <i class="fa-solid fa-bag-shopping text-lg"></i>
-                                ${cartCount > 0 ? `<span class="absolute -top-1 -right-1 w-5 h-5 rounded-full text-[11px] font-black text-white flex items-center justify-center" style="background-color: ${color}">${cartCount}</span>` : ''}
-                            </button>
+                            <div class="flex items-center gap-2">
+                                <button onclick="navigate('#builder')" class="text-xs font-bold px-3 py-1.5 rounded-xl border ${isDark ? 'border-slate-700 bg-slate-900 text-amber-400' : 'border-stone-300 bg-stone-100 text-stone-800'}">🛠️ تعديل المطعم</button>
+                                <button onclick="ui.route='cart'; render();" class="relative p-2.5 rounded-full ${isDark ? 'bg-slate-800' : 'bg-stone-100'}">
+                                    <i class="fa-solid fa-bag-shopping text-lg"></i>
+                                    ${cartCount > 0 ? `<span class="absolute -top-1 -right-1 w-5 h-5 rounded-full text-[11px] font-black text-white flex items-center justify-center" style="background-color: ${color}">${cartCount}</span>` : ''}
+                                </button>
+                            </div>
                         </div>
                     </header>
 
@@ -744,7 +754,7 @@
                                 <div class="bg-white p-8 rounded-3xl text-center border border-stone-200">
                                     <div class="text-4xl mb-2">🍽️</div>
                                     <h4 class="font-black text-sm mb-1">المنيو فارغ حالياً</h4>
-                                    <p class="text-xs text-stone-500 mb-4">استخدم نافذة إدارة المنيو لاختيار قائمة جاهزة أو إضافة أطباقك.</p>
+                                    <p class="text-xs text-stone-500 mb-4">استخدم زر تعديل المطعم بالأعلى لاختيار قائمة جاهزة أو إضافة أطباقك.</p>
                                     <button onclick="navigate('#builder')" class="bg-amber-500 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-xs">إدارة المنيو الآن</button>
                                 </div>
                             ` : `
@@ -933,7 +943,7 @@
                         <div class="bg-white p-5 rounded-3xl shadow-sm border border-stone-100 space-y-3">
                             <h2 class="font-black text-sm flex items-center gap-2">
                                 <i class="fa-solid fa-store text-stone-800"></i> طريقة الاستلام <span class="text-red-500">*</span>
-                            </h4>
+                            </h2>
 
                             <label onclick="ui.deliveryMethod='branch'; render();" class="flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer transition ${ui.deliveryMethod === 'branch' ? 'border-stone-900 bg-stone-50' : 'border-stone-200'}">
                                 <span class="font-bold text-sm">استلام من الفرع (أو داخل المطعم)</span>
@@ -1299,7 +1309,7 @@
             const name = prompt('اسم الطبق الجديد:');
             if (!name) return;
             const price = Number(prompt('السعر بالجنيه:', '80')) || 50;
-            db.menu.push({ id: Date.now(), name, cat: 'meals', price, rating: '5.0', reviews: 'جديد', badge: 'جديد', desc: 'محضر طازجاً يومياً', img: '🍽️' });
+            db.menu.push({ id: Date.now(), name, cat: 'meals', price, rating: '5.0', reviews: 'جديد', badge: 'جديد', desc: 'محضر طازجاً يومياً', img: '🍽️' };
             saveState();
             render();
         }
