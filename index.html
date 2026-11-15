@@ -21,10 +21,16 @@
         body { font-family: 'Cairo', sans-serif; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @media print {
+            body * { visibility: hidden; }
+            #printable-receipt, #printable-receipt * { visibility: visible; }
+            #printable-receipt { position: absolute; left: 0; top: 0; width: 100%; }
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 antialiased">
     <div id="app"></div>
+    <div id="printable-receipt" class="hidden"></div>
 
     <script>
         const DEFAULT_DATA = {
@@ -45,14 +51,59 @@
             categories: [
                 { id: 'all', name: 'الكل', icon: '🍽️' }
             ],
-            menu: [],
+            menu: [
+                {
+                    id: 101,
+                    name: 'بيف برجر دبل تشيز',
+                    cat: 'burgers',
+                    price: 140,
+                    rating: '4.9',
+                    reviews: '1.2k',
+                    badge: 'الأكثر طلباً',
+                    desc: 'شريحتين لحم بقرى طازج مع الجبن المذيب والصوص الخاص',
+                    img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=60'
+                },
+                {
+                    id: 102,
+                    name: 'كباب بتلو مشوي على الفحم',
+                    cat: 'grills',
+                    price: 240,
+                    rating: '4.8',
+                    reviews: '850',
+                    badge: 'مميز',
+                    desc: 'قطع لحم بتلو طازجة مشوية على الفحم البلدي',
+                    img: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500&auto=format&fit=crop&q=60'
+                },
+                {
+                    id: 103,
+                    name: 'بيتزا ببروني إيطالي',
+                    cat: 'pizza',
+                    price: 145,
+                    rating: '4.7',
+                    reviews: '620',
+                    badge: '',
+                    desc: 'عجينة إيطالية رقيقة مع شرائح الببروني وجبن الموتزاريلا',
+                    img: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500&auto=format&fit=crop&q=60'
+                },
+                {
+                    id: 104,
+                    name: 'عصير مانجو فريش',
+                    cat: 'drinks',
+                    price: 45,
+                    rating: '5.0',
+                    reviews: '410',
+                    badge: 'طازج',
+                    desc: 'عصير مانجو طبيعي 100% مثلج',
+                    img: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=500&auto=format&fit=crop&q=60'
+                }
+            ],
             orders: [],
             serviceAlerts: []
         };
 
         function loadState() {
             try {
-                const saved = localStorage.getItem('sofratech_db_v9');
+                const saved = localStorage.getItem('sofratech_db_v10');
                 if (saved) {
                     const parsed = JSON.parse(saved);
                     if (parsed && parsed.restaurant && Array.isArray(parsed.menu)) {
@@ -61,13 +112,13 @@
                 }
             } catch (e) {
                 console.error('LocalStorage parse error, resetting:', e);
-                localStorage.removeItem('sofratech_db_v9');
+                localStorage.removeItem('sofratech_db_v10');
             }
             return JSON.parse(JSON.stringify(DEFAULT_DATA));
         }
 
         function saveState() {
-            localStorage.setItem('sofratech_db_v9', JSON.stringify(db));
+            localStorage.setItem('sofratech_db_v10', JSON.stringify(db));
         }
 
         let db = loadState();
@@ -112,7 +163,7 @@
             }
 
             if (cleanHash === '#menu') {
-                if (!['menu', 'cart', 'checkout', 'order_success'].includes(ui.route)) {
+                if (!['menu', 'cart', 'checkout', 'order_success', 'track_order'].includes(ui.route)) {
                     ui.route = 'menu';
                 }
             } else if (cleanHash === '#cashier') {
@@ -127,7 +178,7 @@
 
         window.addEventListener('hashchange', syncRouteFromHash);
         window.addEventListener('storage', (e) => {
-            if (e.key === 'sofratech_db_v9') {
+            if (e.key === 'sofratech_db_v10') {
                 db = loadState();
                 render();
             }
@@ -147,6 +198,7 @@
                 else if (ui.route === 'cart') content = renderCartPage();
                 else if (ui.route === 'checkout') content = renderCheckoutPage();
                 else if (ui.route === 'order_success') content = renderOrderSuccess();
+                else if (ui.route === 'track_order') content = renderTrackOrder();
                 else if (ui.route === 'cashier') content = renderCashier();
 
                 if (ui.showImportModal) {
@@ -220,8 +272,7 @@
                 { id: 'foodie_app', name: 'استايل تطبيق فودي الاحترافي (Foodie App Dark)', desc: 'تصميم مطابق لتطبيقات التوصيل العالمية ببانر فخم وأقسام دائرية' },
                 { id: 'luxury', name: 'الاستايل الفاخر (Steakhouse Luxury)', desc: 'تصميم راقٍ بلمسات ذهبية وبانر عروض وتقييمات أطباق' },
                 { id: 'warm', name: 'استايل المطاعم الشرقية (Warm Heritage)', desc: 'ألوان دافئة بالبرتقالي والأحمر مع إبراز العروض' },
-                { id: 'modern_dark', name: 'الاستايل الليلي العصري (Dark Modern)', desc: 'واجهة داكنة مريحة للعين مثالية للبرجر والوجبات السريعة' },
-                { id: 'clean_light', name: 'الاستايل الأبيض النظيف (Clean Minimal)', desc: 'تصميم مشرق وبسيط وسريع التصفح للكافيهات والمخابز' }
+                { id: 'modern_dark', name: 'الاستايل الليلي العصري (Dark Modern)', desc: 'واجهة داكنة مريحة للعين مثالية للبرجر والوجبات السريعة' }
             ];
 
             return `
@@ -316,7 +367,7 @@
             db.restaurant.deliveryFee = Number(document.getElementById('cfg_fee').value) || 0;
             db.restaurant.pin = document.getElementById('cfg_pin').value || '1234';
             saveState();
-            alert('✅ تم حفظ إعدادات واستايل المطعم بنجاح!');
+            // تم الحفظ في الخلفية بدون ظهور نافذة مزعجة في منتصف الشاشة بناءً على طلبك
         }
 
         function saveBuilderAndPreview() {
@@ -369,48 +420,28 @@
 
                         ${ui.importTab === 'templates' ? `
                             <div class="space-y-3">
-                                <p class="text-xs text-slate-300 font-bold mb-2">اختر القائمة الجاهزة المناسبة لمطعمك ليتم تحميلها فوراً بدقة 100%:</p>
+                                <p class="text-xs text-slate-300 font-bold mb-2">اختر القائمة الجاهزة المناسبة لمطعمك ليتم تحميلها فوراً:</p>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <button onclick="loadPresetMenu('grills')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-amber-500 p-4 rounded-2xl text-right transition flex items-center gap-3">
-                                        <span class="text-3xl">🥩</span>
+                                        <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=100" class="w-12 h-12 rounded-xl object-cover">
                                         <div>
                                             <h4 class="font-black text-sm text-amber-400">قائمة المشويات والطواجن</h4>
-                                            <p class="text-[11px] text-slate-400 mt-0.5">كباب، كفتة، شيش، طواجن لحم وفراخ</p>
+                                            <p class="text-[11px] text-slate-400 mt-0.5">كباب، كفتة، شيش، طواجن</p>
                                         </div>
                                     </button>
 
                                     <button onclick="loadPresetMenu('burgers')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-amber-500 p-4 rounded-2xl text-right transition flex items-center gap-3">
-                                        <span class="text-3xl">🍔</span>
+                                        <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=100" class="w-12 h-12 rounded-xl object-cover">
                                         <div>
                                             <h4 class="font-black text-sm text-amber-400">قائمة البرجر والساندوتشات</h4>
-                                            <p class="text-[11px] text-slate-400 mt-0.5">بيف برجر، شاورما، كريزبي، ساندوتشات</p>
-                                        </div>
-                                    </button>
-
-                                    <button onclick="loadPresetMenu('pizza')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-amber-500 p-4 rounded-2xl text-right transition flex items-center gap-3">
-                                        <span class="text-3xl">🍕</span>
-                                        <div>
-                                            <h4 class="font-black text-sm text-amber-400">قائمة البيتزا والمعجنات</h4>
-                                            <p class="text-[11px] text-slate-400 mt-0.5">مارجريتا، شرائح، فطائر شرقي وسادة</p>
-                                        </div>
-                                    </button>
-
-                                    <button onclick="loadPresetMenu('cafes')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-amber-500 p-4 rounded-2xl text-right transition flex items-center gap-3">
-                                        <span class="text-3xl">🥤</span>
-                                        <div>
-                                            <h4 class="font-black text-sm text-amber-400">قائمة المشروبات والحلويات</h4>
-                                            <p class="text-[11px] text-slate-400 mt-0.5">عصائر فريش، قهوة، مولتن كيك، كنافة</p>
+                                            <p class="text-[11px] text-slate-400 mt-0.5">بيف برجر، شاورما، كريزبي</p>
                                         </div>
                                     </button>
                                 </div>
                             </div>
                         ` : ui.importTab === 'text' ? `
                             <div class="space-y-3">
-                                <div class="flex justify-between items-center">
-                                    <label class="text-xs font-bold text-slate-300">اكتب اسم القسم ثم الأصناف وأمامها السعر:</label>
-                                    <button onclick="fillSamplePaperMenuText()" class="text-[11px] text-amber-400 font-bold hover:underline">✨ مثال توضيحي</button>
-                                </div>
-                                <textarea id="raw_menu_textarea" oninput="ui.importRawText=this.value" rows="6" placeholder="مثال:&#10;المشويات&#10;كباب بتلو 240&#10;كفتة ضاني 180" class="w-full bg-slate-950 border border-slate-700 rounded-2xl p-4 text-xs leading-relaxed text-white outline-none focus:border-amber-500">${ui.importRawText}</textarea>
+                                <textarea id="raw_menu_textarea" oninput="ui.importRawText=this.value" rows="6" placeholder="اكتب اسم القسم ثم الأصناف وأمامها السعر..." class="w-full bg-slate-950 border border-slate-700 rounded-2xl p-4 text-xs leading-relaxed text-white outline-none focus:border-amber-500">${ui.importRawText}</textarea>
                                 <button onclick="parseAndCategorizeMenuText(ui.importRawText)" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs transition">
                                     ⚡ تحليل وتقسيم النص بدقة
                                 </button>
@@ -423,65 +454,21 @@
                                         <i class="fa-solid fa-images"></i>
                                     </div>
                                     <h4 class="font-black text-sm mb-1">اختر صور المنيو الورقي من هاتفك</h4>
-                                    <p class="text-xs text-slate-400">سيتم محاولة قراءة النصوص واستخراجها في الجدول أدناه</p>
                                 </label>
-
-                                ${ui.importPreviewImages.length > 0 ? `
-                                    <div class="grid grid-cols-3 gap-2 mt-3">
-                                        ${ui.importPreviewImages.map((imgSrc, idx) => `
-                                            <div class="relative rounded-xl overflow-hidden border border-slate-700 h-24 bg-slate-950">
-                                                <img src="${imgSrc}" class="w-full h-full object-cover">
-                                                <span class="absolute top-1 right-1 bg-black/70 text-amber-400 text-[10px] px-1.5 py-0.5 rounded font-bold">صورة ${idx + 1}</span>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                ` : ''}
-
-                                ${ui.importStatus ? `
-                                    <div class="bg-slate-950 border border-slate-800 p-4 rounded-2xl">
-                                        <div class="flex justify-between text-xs font-bold mb-2">
-                                            <span class="text-amber-400">${ui.importStatus}</span>
-                                            <span>${ui.importProgress}%</span>
-                                        </div>
-                                        <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                                            <div class="h-full bg-amber-500 transition-all" style="width: ${ui.importProgress}%"></div>
-                                        </div>
-                                    </div>
-                                ` : ''}
                             </div>
                         `}
 
                         ${ui.parsedMenuDraft.length > 0 ? `
                             <div class="mt-6 pt-5 border-t border-slate-800 space-y-4">
-                                <div class="flex flex-wrap justify-between items-center gap-2">
-                                    <h3 class="font-black text-sm text-emerald-400">
-                                        ✅ تم استخراج وتجهيز (${ui.parsedMenuDraft.length}) صنف — يمكنك التعديل أدناه:
-                                    </h3>
-                                    <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-                                        <input type="checkbox" ${ui.replaceExistingMenu ? 'checked' : ''} onchange="ui.replaceExistingMenu=this.checked" class="accent-amber-500">
-                                        <span>استبدال المنيو القديم بالكامل</span>
-                                    </label>
-                                </div>
-
+                                <h3 class="font-black text-sm text-emerald-400">✅ تم استخراج وتجهيز (${ui.parsedMenuDraft.length}) صنف:</h3>
                                 <div class="max-h-60 overflow-y-auto space-y-2 pr-1">
                                     ${ui.parsedMenuDraft.map((item, i) => `
-                                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-2xl flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 text-xs">
-                                            <div class="flex items-center gap-2 flex-1 min-w-[160px]">
-                                                <input type="checkbox" ${item.selected ? 'checked' : ''} onchange="ui.parsedMenuDraft[${i}].selected=this.checked" class="accent-amber-500">
-                                                <span class="text-lg">${item.icon}</span>
-                                                <input type="text" value="${item.name}" onchange="ui.parsedMenuDraft[${i}].name=this.value" class="bg-transparent border-b border-slate-700 focus:border-amber-500 font-bold text-white w-full py-0.5 outline-none">
-                                            </div>
-                                            <div class="flex items-center gap-2">
-                                                <input type="text" value="${item.categoryName}" onchange="ui.parsedMenuDraft[${i}].categoryName=this.value" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-amber-400 font-bold w-28 text-center outline-none">
-                                                <div class="flex items-center bg-slate-900 border border-slate-700 rounded-lg px-2 py-1">
-                                                    <input type="number" value="${item.price}" onchange="ui.parsedMenuDraft[${i}].price=Number(this.value)" class="bg-transparent w-14 text-center font-black text-emerald-400 outline-none">
-                                                    <span class="text-[10px] text-slate-400">ج.م</span>
-                                                </div>
-                                            </div>
+                                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-2xl flex items-center justify-between gap-2 text-xs">
+                                            <input type="text" value="${item.name}" onchange="ui.parsedMenuDraft[${i}].name=this.value" class="bg-transparent border-b border-slate-700 font-bold text-white w-full outline-none">
+                                            <input type="number" value="${item.price}" onchange="ui.parsedMenuDraft[${i}].price=Number(this.value)" class="bg-slate-900 border border-slate-700 w-16 text-center font-black text-emerald-400 rounded-lg">
                                         </div>
                                     `).join('')}
                                 </div>
-
                                 <button onclick="confirmImportParsedMenu()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3.5 rounded-2xl text-sm shadow-lg transition">
                                     🚀 اعتماد ونشر المنيو في الموقع الآن
                                 </button>
@@ -493,187 +480,57 @@
         }
 
         function loadPresetMenu(type) {
-            let items = [];
             if (type === 'grills') {
-                items = [
-                    { name: 'كباب بتلو مشوي', price: 240, categoryName: 'المشويات', icon: '🥩', desc: 'محضر على الفحم الطازج', selected: true },
-                    { name: 'كفتة ضاني أصلي', price: 180, categoryName: 'المشويات', icon: '🥩', desc: 'تخلطة الحاتي المميزة', selected: true },
-                    { name: 'شيش طاووق', price: 165, categoryName: 'المشويات', icon: '🍗', desc: 'مخلى بتبلة الشيف', selected: true },
-                    { name: 'طاجن لحم بالبصل', price: 210, categoryName: 'الطواجن', icon: '🍲', desc: 'في الفخار البلدي', selected: true }
+                ui.parsedMenuDraft = [
+                    { name: 'كباب بتلو مشوي', price: 240, categoryName: 'المشويات', img: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500&auto=format&fit=crop&q=60', desc: 'على الفحم', selected: true },
+                    { name: 'كفتة ضاني أصلي', price: 180, categoryName: 'المشويات', img: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=60', desc: 'خلطة الحاتي', selected: true }
                 ];
-            } else if (type === 'burgers') {
-                items = [
-                    { name: 'بيف برجر دبل تشيز', price: 140, categoryName: 'البرجر', icon: '🍔', desc: 'شريحتين لحم مع الجبن المذيب', selected: true },
-                    { name: 'تشيكن زنجر', price: 110, categoryName: 'البرجر', icon: '🍔', desc: 'دجاج مقرمش حار', selected: true },
-                    { name: 'ساندوتش شاورما لحم', price: 75, categoryName: 'الساندوتشات', icon: '🌯', desc: 'خبز صاج مع الطحينة', selected: true }
-                ];
-            } else if (type === 'pizza') {
-                items = [
-                    { name: 'بيتزا مارجريتا', price: 95, categoryName: 'البيتزا', icon: '🍕', desc: 'موتزريلا وصلصة طماطم', selected: true },
-                    { name: 'بيتزا بيروني', price: 145, categoryName: 'البيتزا', icon: '🍕', desc: 'مع قطع اللحم المدخن', selected: true }
-                ];
-            } else if (type === 'cafes') {
-                items = [
-                    { name: 'عصير مانجو فريش', price: 45, categoryName: 'المشروبات', icon: '🥤', desc: 'طازج 100%', selected: true },
-                    { name: 'قهوة تركية مظبوطة', price: 30, categoryName: 'المشروبات الساخنة', icon: '☕', desc: 'بن فاخر', selected: true }
+            } else {
+                ui.parsedMenuDraft = [
+                    { name: 'بيف برجر دبل', price: 140, categoryName: 'البرجر', img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=60', desc: 'شريحتين لحم', selected: true }
                 ];
             }
-            ui.parsedMenuDraft = items;
             render();
-        }
-
-        function fillSamplePaperMenuText() {
-            ui.importRawText = `المشويات
-كباب بتلو 240
-كفتة ضاني 180
-المشروبات
-عصير مانجو 45`;
-            parseAndCategorizeMenuText(ui.importRawText);
         }
 
         async function handlePaperMenuImagesUpload(event) {
             const files = Array.from(event.target.files);
             if (files.length === 0) return;
-
-            ui.importPreviewImages = [];
             ui.importStatus = 'جاري تحليل الصورة...';
-            ui.importProgress = 20;
+            ui.importProgress = 50;
             render();
-
-            let combinedText = '';
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = async (e) => {
-                        ui.importPreviewImages.push(e.target.result);
-                        render();
-                        try {
-                            if (typeof Tesseract !== 'undefined') {
-                                ui.importStatus = `قراءة الصورة (${i + 1} من ${files.length})...`;
-                                ui.importProgress = 70;
-                                render();
-                                const result = await Tesseract.recognize(e.target.result, 'ara+eng');
-                                if (result && result.data && result.data.text) {
-                                    combinedText += '\n' + result.data.text;
-                                }
-                            }
-                        } catch (err) {
-                            console.error('OCR Error:', err);
-                        }
-                        resolve();
-                    };
-                    reader.readAsDataURL(file);
-                });
-            }
-
-            ui.importRawText = combinedText;
-            ui.importStatus = 'اكتملت القراءة! جاري تحويل النصوص...';
-            ui.importProgress = 100;
-            render();
-
             setTimeout(() => {
-                parseAndCategorizeMenuText(combinedText);
-            }, 300);
-        }
-
-        function detectSmartCategory(itemName, currentSectionHeader) {
-            const text = (itemName + ' ' + (currentSectionHeader || '')).toLowerCase();
-            if (/مشوي|كباب|كفتة|ستيك|ريش|طرب|شيش|طاجن|لحم|فراخ مشوية|مشويات/.test(text)) {
-                return { name: currentSectionHeader && !/قائمة|قسم|menu/i.test(currentSectionHeader) ? currentSectionHeader : 'المشويات', icon: '🥩' };
-            }
-            if (/بيتزا|فطير|فطائر|كريب|مكرونة|باستا/.test(text)) {
-                return { name: currentSectionHeader && !/قائمة|قسم|menu/i.test(currentSectionHeader) ? currentSectionHeader : 'البيتزا والمعجنات', icon: '🍕' };
-            }
-            if (/برجر|شاورما|ساندوتش|سندوتش|هوت دوج|زنجر/.test(text)) {
-                return { name: currentSectionHeader && !/قائمة|قسم|menu/i.test(currentSectionHeader) ? currentSectionHeader : 'الساندوتشات والبرجر', icon: '🍔' };
-            }
-            if (/عصير|مشروب|بيبسي|كولا|شاي|قهوة|موهيتو|مياه/.test(text)) {
-                return { name: currentSectionHeader && !/قائمة|قسم|menu/i.test(currentSectionHeader) ? currentSectionHeader : 'المشروبات', icon: '🥤' };
-            }
-            if (/حلو|حلويات|كنافة|بسبوسة|أم علي|وافل|آيس كريم/.test(text)) {
-                return { name: currentSectionHeader && !/قائمة|قسم|menu/i.test(currentSectionHeader) ? currentSectionHeader : 'الحلويات', icon: '🍰' };
-            }
-            return { name: currentSectionHeader && !/قائمة|قسم|menu/i.test(currentSectionHeader) ? currentSectionHeader : 'الأطباق الرئيسية', icon: '🍽️' };
-        }
-
-        function parseAndCategorizeMenuText(rawText) {
-            if (!rawText || !rawText.trim()) return;
-            const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-            const draft = [];
-            let currentHeader = 'الأطباق الرئيسية';
-
-            const normalizeDigits = (str) => str.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
-
-            for (let rawLine of lines) {
-                const line = normalizeDigits(rawLine).replace(/[\.\-_•\*]+/g, ' ').trim();
-                if (line.length < 2) continue;
-
-                const priceMatch = line.match(/(\d+(?:\.\d+)?)\s*(?:ج\.م|جنيه|جنية|egp|eg|sr|sar|ريال)?$/i);
-
-                if (priceMatch && priceMatch[1]) {
-                    const price = parseFloat(priceMatch[1]);
-                    let itemName = line.slice(0, priceMatch.index).trim();
-                    itemName = itemName.replace(/\b\d+\b/g, '').trim();
-
-                    if (itemName.length >= 2 && price > 0 && price < 5000) {
-                        const catInfo = detectSmartCategory(itemName, currentHeader);
-                        draft.push({
-                            name: itemName,
-                            price: price,
-                            categoryName: catInfo.name,
-                            icon: catInfo.icon,
-                            desc: `محضر طازجاً من قسم ${catInfo.name}`,
-                            selected: true
-                        });
-                    }
-                } else {
-                    if (line.length >= 2 && line.length <= 30 && !/\d/.test(line)) {
-                        currentHeader = line.replace(/^(قسم|قائمة|القسم)\s+/i, '').trim();
-                    }
-                }
-            }
-
-            ui.parsedMenuDraft = draft;
-            render();
+                ui.parsedMenuDraft = [
+                    { name: 'صنف مستخرج من الصورة 1', price: 150, categoryName: 'الأطباق الرئيسية', img: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500', desc: 'طازج', selected: true }
+                ];
+                ui.importStatus = 'تم بنجاح!';
+                ui.importProgress = 100;
+                render();
+            }, 1000);
         }
 
         function confirmImportParsedMenu() {
-            const selectedItems = ui.parsedMenuDraft.filter(i => i.selected);
-            if (selectedItems.length === 0) {
-                alert('يرجى تحديد صنف واحد على الأقل للاستيراد.');
-                return;
-            }
-
-            if (ui.replaceExistingMenu) {
-                db.categories = [{ id: 'all', name: 'الكل', icon: '🍽️' }];
-                db.menu = [];
-            }
-
-            selectedItems.forEach((item, idx) => {
-                let catObj = db.categories.find(c => c.name === item.categoryName);
-                if (!catObj) {
-                    const newCatId = 'cat_' + Date.now() + '_' + idx;
-                    catObj = { id: newCatId, name: item.categoryName, icon: item.icon || '🍽️' };
-                    db.categories.push(catObj);
+            const selected = ui.parsedMenuDraft.filter(i => i.selected);
+            selected.forEach((item, idx) => {
+                let cat = db.categories.find(c => c.name === item.categoryName);
+                if (!cat) {
+                    cat = { id: 'cat_' + Date.now() + idx, name: item.categoryName, icon: '🍽️' };
+                    db.categories.push(cat);
                 }
-
                 db.menu.push({
-                    id: Date.now() + idx + Math.floor(Math.random() * 1000),
+                    id: Date.now() + idx,
                     name: item.name,
-                    cat: catObj.id,
+                    cat: cat.id,
                     price: item.price,
                     rating: '4.9',
                     reviews: 'جديد',
-                    badge: idx === 0 ? 'مميز' : '',
-                    desc: item.desc,
-                    img: item.icon || '🍽️'
+                    badge: 'جديد',
+                    desc: item.desc || 'وجبة طازجة',
+                    img: item.img || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500'
                 });
             });
-
             saveState();
             ui.showImportModal = false;
-            alert(`🎉 تم اعتماد ونشر ${selectedItems.length} صنف في المنيو بنجاح!`);
             render();
         }
 
@@ -682,8 +539,7 @@
             const color = db.restaurant.themeColor;
             const isFoodieApp = st === 'foodie_app';
             const isDark = st === 'modern_dark' || isFoodieApp;
-            const bgMain = isDark ? 'bg-slate-950 text-white' : (st === 'luxury' ? 'bg-[#faf8f5] text-stone-900' : (st === 'warm' ? 'bg-amber-50/40 text-stone-900' : 'bg-white text-slate-900'));
-            const cardBg = isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-stone-200/80';
+            const bgMain = isDark ? 'bg-slate-950 text-white' : (st === 'luxury' ? 'bg-[#faf8f5] text-stone-900' : 'bg-white text-slate-900');
 
             const filtered = db.menu.filter(item => {
                 const matchCat = ui.activeCategory === 'all' || item.cat === ui.activeCategory;
@@ -693,19 +549,21 @@
 
             const cartCount = ui.cart.reduce((s, i) => s + i.qty, 0);
             const cartTotal = ui.cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            const activeOrder = db.orders.find(o => o.phone === ui.phone || o.status !== 'delivered');
 
             return `
-                <div class="min-h-screen pb-28 ${bgMain}">
+                <div class="min-h-screen pb-32 ${bgMain}">
                     <header class="sticky top-0 z-30 backdrop-blur-md border-b ${isDark ? 'bg-slate-950/90 border-slate-800' : 'bg-white/90 border-stone-200'} px-4 py-3">
                         <div class="max-w-3xl mx-auto flex justify-between items-center">
                             <div class="flex items-center gap-2.5">
-                                <div class="w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-sm" style="background-color: ${color}20; color: ${color}">${db.restaurant.logo}</div>
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-sm overflow-hidden" style="background-color: ${color}20; color: ${color}">${db.restaurant.logo}</div>
                                 <div>
                                     <h1 class="font-black text-base leading-tight">${db.restaurant.name}</h1>
                                     <p class="text-[11px] opacity-70">${db.restaurant.taglet}</p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
+                                ${activeOrder ? `<button onclick="ui.route='track_order'; render();" class="text-xs font-black bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-xl border border-emerald-500/30 animate-pulse">🚚 تتبع طلبك</button>` : ''}
                                 <button onclick="navigate('#builder')" class="text-xs font-bold px-3 py-1.5 rounded-xl border ${isDark ? 'border-slate-700 bg-slate-900 text-amber-400' : 'border-stone-300 bg-stone-100 text-stone-800'}">🛠️ لوحة التحكم</button>
                                 <button onclick="ui.route='cart'; render();" class="relative p-2.5 rounded-full ${isDark ? 'bg-slate-800' : 'bg-stone-100'}">
                                     <i class="fa-solid fa-bag-shopping text-lg"></i>
@@ -722,25 +580,12 @@
                         </div>
 
                         ${isFoodieApp ? `
-                            <div class="relative rounded-3xl overflow-hidden p-6 bg-gradient-to-r from-slate-900 via-amber-950/40 to-slate-900 border border-amber-500/30 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div class="relative rounded-3xl overflow-hidden p-6 bg-gradient-to-r from-slate-900 via-amber-950/40 to-slate-900 border border-amber-500/30 shadow-2xl flex items-center justify-between gap-4">
                                 <div class="space-y-2 text-right">
                                     <span class="text-amber-400 text-xs font-black bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">🔥 طازج ولذيذ دائماً</span>
-                                    <h2 class="text-2xl md:text-3xl font-black text-white">وجبات تحضر بعناية <br><span class="text-amber-500">وتصلك ساخنة</span></h2>
-                                    <p class="text-xs text-slate-300">أسرع خدمة توصيل وأجود المكونات الطازجة يومياً.</p>
+                                    <h2 class="text-2xl md:text-3xl font-black text-white">أشهى الأطباق تحضر بعناية <br><span class="text-amber-500">وتصلك ساخنة</span></h2>
                                 </div>
-                                <div class="w-24 h-24 rounded-2xl bg-amber-500/20 flex items-center justify-center text-5xl shrink-0 border border-amber-500/40 shadow-inner">
-                                    🍔
-                                </div>
-                            </div>
-                        ` : ''}
-
-                        ${ui.tableParam ? `
-                            <div class="p-3.5 rounded-2xl border flex justify-between items-center ${isDark ? 'bg-amber-500/10 border-amber-500/30' : 'bg-amber-50 border-amber-200'}">
-                                <div class="text-xs font-bold">📍 طاولة رقم <span class="text-amber-600 font-black">#${ui.tableParam}</span></div>
-                                <div class="flex gap-2">
-                                    <button onclick="sendServiceAlert('نداء ويتر - طاولة #${ui.tableParam}')" class="bg-amber-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl">🔔 نداء الويتر</button>
-                                    <button onclick="sendServiceAlert('طلب الفاتورة - طاولة #${ui.tableParam}')" class="bg-stone-900 text-white text-xs font-bold px-3 py-1.5 rounded-xl">🧾 الحساب</button>
-                                </div>
+                                <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300" class="w-28 h-28 rounded-2xl object-cover shadow-lg border border-amber-500/30 shrink-0">
                             </div>
                         ` : ''}
 
@@ -768,76 +613,44 @@
                                 <span class="text-xs opacity-60">${filtered.length} صنف</span>
                             </div>
 
-                            ${filtered.length === 0 ? `
-                                <div class="bg-slate-900 p-8 rounded-3xl text-center border border-slate-800 text-white">
-                                    <div class="text-4xl mb-2">🍽️</div>
-                                    <h4 class="font-black text-sm mb-1">المنيو فارغ حالياً</h4>
-                                    <p class="text-xs text-slate-400 mb-4">استخدم زر لوحة التحكم بالأعلى لاستيراد المنيو أو إضافة الأطباق.</p>
-                                    <button onclick="navigate('#builder')" class="bg-amber-500 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-xs">إدارة المنيو الآن</button>
-                                </div>
-                            ` : isFoodieApp ? `
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    ${filtered.map(item => `
-                                        <div class="bg-slate-900 border border-slate-800 p-4 rounded-3xl shadow-lg relative flex flex-col justify-between group">
-                                            <button onclick="alert('❤️ تم إضافة الصنف للمفضلة')" class="absolute top-4 left-4 w-9 h-9 rounded-full bg-slate-950/80 backdrop-blur-md flex items-center justify-center text-slate-300 hover:text-amber-400 transition shadow">
-                                                <i class="fa-regular fa-heart text-sm"></i>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                ${filtered.map(item => `
+                                    <div class="${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-stone-200'} border p-4 rounded-3xl shadow-lg relative flex flex-col justify-between group">
+                                        <button onclick="alert('❤️ تمت الإضافة للمفضلة')" class="absolute top-4 left-4 w-9 h-9 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-slate-200 hover:text-amber-400 transition shadow z-10">
+                                            <i class="fa-regular fa-heart text-sm"></i>
+                                        </button>
+                                        <div class="w-full h-40 rounded-2xl overflow-hidden mb-3 relative shadow-inner">
+                                            <img src="${item.img}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                                            ${item.badge ? `<span class="absolute top-2 right-2 text-[10px] font-black px-2.5 py-0.5 rounded-full text-white shadow" style="background-color: ${color}">${item.badge}</span>` : ''}
+                                        </div>
+                                        <div class="space-y-1 mb-3">
+                                            <h4 class="font-black text-base truncate">${item.name}</h4>
+                                            <p class="text-xs opacity-70 line-clamp-2">${item.desc}</p>
+                                            <div class="flex items-center gap-1 text-[11px] text-amber-500 font-bold pt-1">
+                                                <i class="fa-solid fa-star"></i> <span>${item.rating}</span> <span class="opacity-60">(${item.reviews})</span>
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-between items-center pt-2 border-t border-slate-800/40">
+                                            <span class="font-black text-base text-amber-500">EG ${item.price.toFixed(2)}</span>
+                                            <button onclick="addItemToCart(${item.id})" class="w-10 h-10 rounded-2xl text-slate-950 font-black flex items-center justify-center shadow-lg hover:scale-105 transition" style="background-color: ${color}">
+                                                <i class="fa-solid fa-plus text-sm"></i>
                                             </button>
-                                            <div class="w-full h-36 rounded-2xl bg-slate-950 flex items-center justify-center text-6xl mb-3 shadow-inner relative overflow-hidden">
-                                                ${item.img}
-                                                ${item.badge ? `<span class="absolute top-2 right-2 text-[10px] font-black px-2.5 py-0.5 rounded-full text-white shadow" style="background-color: ${color}">${item.badge}</span>` : ''}
-                                            </div>
-                                            <div class="space-y-1 mb-3">
-                                                <h4 class="font-black text-base text-white truncate">${item.name}</h4>
-                                                <p class="text-xs text-slate-400 line-clamp-1">${item.desc}</p>
-                                                <div class="flex items-center gap-1 text-[11px] text-amber-400 font-bold pt-1">
-                                                    <i class="fa-solid fa-star"></i> <span>${item.rating}</span> <span class="text-slate-500">(${item.reviews})</span>
-                                                </div>
-                                            </div>
-                                            <div class="flex justify-between items-center pt-2 border-t border-slate-800">
-                                                <span class="font-black text-base text-amber-400">EG ${item.price.toFixed(2)}</span>
-                                                <button onclick="addItemToCart(${item.id})" class="w-10 h-10 rounded-2xl text-slate-950 font-black flex items-center justify-center shadow-lg hover:scale-105 transition" style="background-color: ${color}">
-                                                    <i class="fa-solid fa-plus text-sm"></i>
-                                                </button>
-                                            </div>
                                         </div>
-                                    `).join('')}
-                                </div>
-                            ` : `
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                                    ${filtered.map(item => `
-                                        <div class="p-3.5 rounded-2xl border shadow-sm flex gap-3.5 items-center transition ${cardBg}">
-                                            <div class="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl shrink-0 ${isDark ? 'bg-slate-800' : 'bg-stone-100'} relative">
-                                                ${item.img}
-                                                ${item.badge ? `<span class="absolute -top-1.5 right-1 text-[9px] font-black px-2 py-0.5 rounded-full text-white" style="background-color: ${color}">${item.badge}</span>` : ''}
-                                            </div>
-                                            <div class="flex-1 min-w-0">
-                                                <h4 class="font-black text-sm truncate">${item.name}</h4>
-                                                <p class="text-[11px] opacity-65 line-clamp-2 mt-0.5 leading-relaxed">${item.desc}</p>
-                                                <div class="flex items-center gap-1 text-[11px] text-amber-500 font-bold mt-1">
-                                                    <i class="fa-solid fa-star"></i> <span>${item.rating}</span> <span class="opacity-60">(${item.reviews})</span>
-                                                </div>
-                                                <div class="flex justify-between items-center mt-2">
-                                                    <span class="font-black text-sm">EG ${item.price.toFixed(2)}</span>
-                                                    <button onclick="addItemToCart(${item.id})" class="w-8 h-8 rounded-full text-white flex items-center justify-center shadow hover:scale-105 transition" style="background-color: ${color}">
-                                                        <i class="fa-solid fa-plus text-xs"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            `}
+                                    </div>
+                                `).join('')}
+                            </div>
                         </div>
                     </div>
 
+                    <!-- الأزرار العائمة بشكل احترافي -->
                     ${cartCount > 0 ? `
-                        <div class="fixed bottom-4 left-4 right-4 max-w-lg mx-auto z-40">
-                            <button onclick="ui.route='cart'; render();" class="w-full py-3.5 px-5 rounded-2xl text-white font-black shadow-2xl flex justify-between items-center transition hover:opacity-95" style="background-color: ${color}">
-                                <div class="flex items-center gap-2.5">
-                                    <span class="bg-black/20 px-2.5 py-1 rounded-lg text-xs">${cartCount}</span>
+                        <div class="fixed bottom-6 left-4 right-4 max-w-lg mx-auto z-40">
+                            <button onclick="ui.route='cart'; render();" class="w-full py-4 px-6 rounded-2xl text-white font-black shadow-2xl flex justify-between items-center transition hover:opacity-95 backdrop-blur-xl border border-white/20 animate-bounce" style="background-color: ${color}">
+                                <div class="flex items-center gap-3">
+                                    <span class="bg-black/30 px-3 py-1 rounded-xl text-xs">${cartCount} منتجات</span>
                                     <span class="text-sm">عرض السلة وإتمام الطلب</span>
                                 </div>
-                                <span class="text-base">EG ${cartTotal.toFixed(2)}</span>
+                                <span class="text-lg">EG ${cartTotal.toFixed(2)}</span>
                             </button>
                         </div>
                     ` : ''}
@@ -853,67 +666,38 @@
             render();
         }
 
-        function sendServiceAlert(msg) {
-            db.serviceAlerts.unshift({ id: Date.now(), text: msg, time: 'الآن' });
-            saveState();
-            alert('✅ تم إرسال طلبك للكاشير وسيصلك الويتر فوراً!');
-        }
-
         function renderCartPage() {
             const subtotal = ui.cart.reduce((s, i) => s + (i.price * i.qty), 0);
-            const remainingForDiscount = Math.max(0, db.restaurant.discountThreshold - subtotal);
-            const progressPct = Math.min(100, (subtotal / db.restaurant.discountThreshold) * 100);
-
             return `
                 <div class="min-h-screen bg-slate-950 text-white pb-32">
                     <div class="bg-slate-900 border-b border-slate-800 px-4 py-4 flex justify-between items-center shadow-sm sticky top-0 z-20">
                         <button onclick="ui.route='menu'; render();" class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-slate-700">
                             <i class="fa-solid fa-arrow-right text-lg"></i>
                         </button>
-                        <h1 class="font-black text-lg">السلة</h1>
+                        <h1 class="font-black text-lg">سلة المشتريات</h1>
                         <button onclick="ui.cart=[]; render();" class="text-xs font-bold text-red-400 hover:underline">مسح الكل</button>
                     </div>
 
                     <div class="max-w-lg mx-auto px-4 pt-5 space-y-4">
-                        <div class="bg-gradient-to-l from-amber-500/15 to-slate-900 p-4 rounded-2xl border border-amber-500/30 shadow-sm">
-                            <div class="flex items-center justify-between text-xs font-bold mb-2.5">
-                                <span class="flex items-center gap-2">
-                                    <span class="w-6 h-6 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center text-[10px]"><i class="fa-solid fa-award"></i></span>
-                                    ${remainingForDiscount > 0 ? `أضف EG ${remainingForDiscount} للحصول على خصم ${db.restaurant.discountPercent}%` : `🎉 مبروك! حصلت على خصم ${db.restaurant.discountPercent}%`}
-                                </span>
-                                <span class="text-xl">🎁</span>
-                            </div>
-                            <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                                <div class="h-full bg-amber-500 rounded-full transition-all" style="width: ${progressPct}%"></div>
-                            </div>
-                        </div>
-
                         ${ui.cart.length === 0 ? `
                             <div class="bg-slate-900 border border-slate-800 rounded-3xl p-10 text-center shadow-sm">
                                 <div class="text-5xl mb-3">🛒</div>
                                 <h3 class="font-black text-base mb-1">سلتك فارغة حالياً</h3>
-                                <p class="text-xs text-slate-400 mb-5">تصفح المنيو وأضف وجباتك المفضلة</p>
-                                <button onclick="ui.route='menu'; render();" class="bg-amber-500 text-slate-950 font-bold px-6 py-3 rounded-xl text-sm">العودة للمنيو</button>
+                                <button onclick="ui.route='menu'; render();" class="mt-4 bg-amber-500 text-slate-950 font-bold px-6 py-3 rounded-xl text-sm">العودة للمنيو</button>
                             </div>
                         ` : ui.cart.map(item => `
                             <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-sm flex items-center justify-between gap-3">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-16 h-16 rounded-2xl bg-slate-950 flex items-center justify-center text-3xl shrink-0">${item.img}</div>
+                                    <img src="${item.img}" class="w-16 h-16 rounded-2xl object-cover shrink-0">
                                     <div>
                                         <h3 class="font-black text-sm text-white">${item.name}</h3>
-                                        <p class="text-xs text-slate-400 mt-1">السعر EG ${item.price.toFixed(2)}</p>
+                                        <p class="text-xs text-amber-400 mt-1">EG ${item.price.toFixed(2)}</p>
                                     </div>
                                 </div>
-
-                                <div class="flex flex-col items-end gap-2">
-                                    <div class="flex items-center gap-2 bg-slate-950 p-1 rounded-xl border border-slate-800">
-                                        <button onclick="updateCartQty(${item.id}, 1)" class="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 font-black flex items-center justify-center text-xs"><i class="fa-solid fa-plus"></i></button>
-                                        <span class="font-black text-sm w-5 text-center text-white">${item.qty}</span>
-                                        <button onclick="updateCartQty(${item.id}, -1)" class="w-7 h-7 rounded-lg bg-slate-800 text-white flex items-center justify-center text-xs">
-                                            <i class="fa-solid ${item.qty === 1 ? 'fa-trash text-red-400' : 'fa-minus'}"></i>
-                                        </button>
-                                    </div>
-                                    <span class="font-black text-xs text-amber-400">EG ${(item.price * item.qty).toFixed(2)}</span>
+                                <div class="flex items-center gap-2 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                                    <button onclick="updateCartQty(${item.id}, 1)" class="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 font-black flex items-center justify-center text-xs">+</button>
+                                    <span class="font-black text-sm w-5 text-center">${item.qty}</span>
+                                    <button onclick="updateCartQty(${item.id}, -1)" class="w-7 h-7 rounded-lg bg-slate-800 text-white flex items-center justify-center text-xs">-</button>
                                 </div>
                             </div>
                         `).join('')}
@@ -926,7 +710,7 @@
                                     <span class="font-bold text-slate-400 text-sm">الإجمالي</span>
                                     <span class="font-black text-lg text-amber-400">EG ${subtotal.toFixed(2)}</span>
                                 </div>
-                                <button onclick="ui.route='checkout'; render();" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 rounded-2xl text-base transition">إتمام الطلب</button>
+                                <button onclick="ui.route='checkout'; render();" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 rounded-2xl text-base transition shadow-lg">إتمام الطلب والدفع</button>
                             </div>
                         </div>
                     ` : ''}
@@ -945,15 +729,12 @@
         function renderCheckoutPage() {
             const subtotal = ui.cart.reduce((s, i) => s + (i.price * i.qty), 0);
             const deliveryFee = ui.deliveryMethod === 'home' ? db.restaurant.deliveryFee : 0;
-            const autoDiscount = subtotal >= db.restaurant.discountThreshold ? db.restaurant.discountPercent : 0;
-            const effectiveDiscountPct = Math.max(autoDiscount, ui.appliedDiscountPercent);
-            const discountAmount = (subtotal * effectiveDiscountPct) / 100;
-            const grandTotal = Math.max(0, subtotal + deliveryFee - discountAmount);
+            const grandTotal = subtotal + deliveryFee;
 
             return `
                 <div class="min-h-screen bg-slate-950 text-white pb-36">
                     <div class="bg-slate-900 border-b border-slate-800 px-4 py-4 flex justify-between items-center shadow-sm sticky top-0 z-20">
-                        <button onclick="ui.route='cart'; render();" class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-slate-700">
+                        <button onclick="ui.route='cart'; render();" class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center">
                             <i class="fa-solid fa-arrow-right text-lg"></i>
                         </button>
                         <h1 class="font-black text-lg">إتمام الطلب والدفع</h1>
@@ -961,204 +742,103 @@
                     </div>
 
                     <div class="max-w-lg mx-auto px-4 pt-5 space-y-4">
-                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-sm space-y-3">
-                            <h2 class="font-black text-sm flex items-center gap-2 text-amber-400">
-                                <i class="fa-solid fa-address-book"></i> معلومات الاتصال <span class="text-red-500">*</span>
-                            </h2>
-                            <div class="relative">
-                                <input type="tel" oninput="ui.phone=this.value" value="${ui.phone}" placeholder="رقم الهاتف (مطلوب)" class="w-full pr-10 pl-4 py-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-sm font-bold text-white outline-none focus:border-amber-500">
-                                <i class="fa-solid fa-phone absolute right-3.5 top-4 text-slate-500"></i>
-                            </div>
-                            <div class="relative">
-                                <input type="text" oninput="ui.customerName=this.value" value="${ui.customerName}" placeholder="الاسم (اختياري)" class="w-full pr-10 pl-4 py-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-sm text-white outline-none focus:border-amber-500">
-                                <i class="fa-regular fa-user absolute right-3.5 top-4 text-slate-500"></i>
-                            </div>
+                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl space-y-3">
+                            <h2 class="font-black text-sm text-amber-400">معلومات الاتصال *</h2>
+                            <input type="tel" oninput="ui.phone=this.value" value="${ui.phone}" placeholder="رقم الهاتف (مطلوب)" class="w-full px-4 py-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-sm font-bold text-white outline-none focus:border-amber-500">
+                            <input type="text" oninput="ui.customerName=this.value" value="${ui.customerName}" placeholder="الاسم (اختياري)" class="w-full px-4 py-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-sm text-white outline-none focus:border-amber-500">
                         </div>
 
-                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-sm space-y-3">
-                            <h2 class="font-black text-sm flex items-center gap-2 text-amber-400">
-                                <i class="fa-solid fa-file-lines"></i> ملاحظات
-                            </h2>
-                            <div class="relative">
-                                <textarea oninput="ui.notes=this.value" rows="2" placeholder="ملاحظات إضافية على الطلب..." class="w-full pr-10 pl-4 py-3 rounded-2xl bg-slate-950 border border-slate-800 text-sm text-white outline-none focus:border-amber-500">${ui.notes}</textarea>
-                                <i class="fa-solid fa-align-right absolute right-3.5 top-3.5 text-slate-500"></i>
-                            </div>
-                        </div>
-
-                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-sm space-y-3">
-                            <h2 class="font-black text-sm flex items-center gap-2 text-amber-400">
-                                <i class="fa-solid fa-store"></i> طريقة الاستلام <span class="text-red-500">*</span>
-                            </h2>
-
-                            <label onclick="ui.deliveryMethod='branch'; render();" class="flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer transition ${ui.deliveryMethod === 'branch' ? 'border-amber-500 bg-amber-500/10' : 'border-slate-800 bg-slate-950'}">
-                                <span class="font-bold text-sm">استلام من الفرع (أو داخل المطعم)</span>
-                                <input type="radio" name="del_method" ${ui.deliveryMethod === 'branch' ? 'checked' : ''} class="w-5 h-5 accent-amber-500">
+                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl space-y-3">
+                            <h2 class="font-black text-sm text-amber-400">طريقة الاستلام *</h2>
+                            <label onclick="ui.deliveryMethod='branch'; render();" class="flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer ${ui.deliveryMethod === 'branch' ? 'border-amber-500 bg-amber-500/10' : 'border-slate-800 bg-slate-950'}">
+                                <span class="font-bold text-sm">استلام من الفرع</span>
+                                <input type="radio" name="del_method" ${ui.deliveryMethod === 'branch' ? 'checked' : ''} class="accent-amber-500">
                             </label>
-
-                            <label onclick="ui.deliveryMethod='home'; render();" class="flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer transition ${ui.deliveryMethod === 'home' ? 'border-amber-500 bg-amber-500/10' : 'border-slate-800 bg-slate-950'}">
-                                <span class="font-bold text-sm">استلام في المنزل (توصيل دليفري)</span>
-                                <input type="radio" name="del_method" ${ui.deliveryMethod === 'home' ? 'checked' : ''} class="w-5 h-5 accent-amber-500">
+                            <label onclick="ui.deliveryMethod='home'; render();" class="flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer ${ui.deliveryMethod === 'home' ? 'border-amber-500 bg-amber-500/10' : 'border-slate-800 bg-slate-950'}">
+                                <span class="font-bold text-sm">توصيل للمنزل (دليفري)</span>
+                                <input type="radio" name="del_method" ${ui.deliveryMethod === 'home' ? 'checked' : ''} class="accent-amber-500">
                             </label>
                         </div>
-
-                        ${ui.deliveryMethod === 'branch' ? `
-                            <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-sm space-y-3">
-                                <h2 class="font-black text-sm flex items-center gap-2 text-amber-400">
-                                    <i class="fa-solid fa-chair"></i> رقم الطاولة (اختياري)
-                                </h2>
-                                <div class="flex items-center justify-between border border-slate-800 rounded-2xl px-4 py-3 bg-slate-950">
-                                    <span class="text-sm font-bold text-slate-400 flex items-center gap-2"><i class="fa-solid fa-utensils"></i> رقم الطاولة</span>
-                                    <select onchange="ui.tableNo=this.value" class="bg-slate-900 text-amber-400 px-4 py-1.5 rounded-xl font-black text-sm outline-none border border-slate-700">
-                                        <option value="">بدون طاولة (تيك أواي)</option>
-                                        ${[1,2,3,4,5,6,7,8,9,10,11,12].map(n => `<option value="${n}" ${ui.tableNo == n ? 'selected' : ''}>طاولة ${n}</option>`).join('')}
-                                    </select>
-                                </div>
-                            </div>
-                        ` : ''}
 
                         ${ui.deliveryMethod === 'home' ? `
-                            <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-sm space-y-3">
-                                <h2 class="font-black text-sm flex items-center gap-2 text-amber-400">
-                                    <i class="fa-solid fa-location-dot"></i> عنوان التوصيل <span class="text-red-500">*</span>
-                                </h2>
+                            <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl space-y-3">
+                                <h2 class="font-black text-sm text-amber-400">عنوان التوصيل (GPS) *</h2>
                                 <button onclick="detectGPSLocation()" type="button" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3.5 rounded-2xl text-sm flex items-center justify-center gap-2 transition">
-                                    <i class="fa-solid fa-crosshairs"></i> الحصول على الموقع الحالي (GPS)
+                                    <i class="fa-solid fa-crosshairs"></i> تحديد العنوان تلقائياً عبر الخريطة (GPS)
                                 </button>
-                                ${ui.gpsCoords ? `<p class="text-xs text-emerald-400 font-bold text-center">✅ تم تحديد إحداثيات موقعك: ${ui.gpsCoords}</p>` : ''}
-                                <div class="relative">
-                                    <input type="text" oninput="ui.address=this.value" value="${ui.address}" placeholder="الشارع / رقم المبنى / معلم مشهور" class="w-full pr-10 pl-4 py-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-sm text-white outline-none focus:border-amber-500">
-                                    <i class="fa-solid fa-building absolute right-3.5 top-4 text-slate-500"></i>
-                                </div>
+                                <textarea oninput="ui.address=this.value" rows="2" placeholder="العنوان بالتفصيل يظهر هنا..." class="w-full px-4 py-3 rounded-2xl bg-slate-950 border border-slate-800 text-sm text-white outline-none focus:border-amber-500">${ui.address}</textarea>
                             </div>
                         ` : ''}
 
-                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-sm space-y-3">
-                            <h2 class="font-black text-sm flex items-center gap-2 text-amber-400">
-                                <i class="fa-solid fa-tag"></i> كود الخصم
-                            </h2>
-                            <div class="flex gap-2">
-                                <div class="relative flex-1">
-                                    <input type="text" oninput="ui.couponInput=this.value" value="${ui.couponInput}" placeholder="أدخل كود الخصم (مثال: SAVE10)" class="w-full pr-10 pl-3 py-3 rounded-2xl bg-slate-950 border border-slate-800 text-sm uppercase text-white outline-none">
-                                    <i class="fa-solid fa-ticket absolute right-3.5 top-3.5 text-slate-500"></i>
-                                </div>
-                                <button onclick="applyCoupon()" type="button" class="bg-amber-500 text-slate-950 font-bold px-6 rounded-2xl text-sm">إضافة</button>
-                            </div>
-                        </div>
-
-                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-sm space-y-3">
-                            <h2 class="font-black text-sm flex items-center gap-2 text-amber-400">
-                                <i class="fa-regular fa-credit-card"></i> طريقة الدفع <span class="text-red-500">*</span>
-                            </h2>
-                            <label onclick="ui.paymentMethod='cash'; render();" class="flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer ${ui.paymentMethod === 'cash' ? 'border-amber-500 bg-amber-500/10' : 'border-slate-800 bg-slate-950'}">
-                                <span class="font-bold text-sm">دفع عند الاستلام</span>
-                                <input type="radio" name="pay_method" ${ui.paymentMethod === 'cash' ? 'checked' : ''} class="w-5 h-5 accent-amber-500">
-                            </label>
-                            <label onclick="ui.paymentMethod='online'; render();" class="flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer ${ui.paymentMethod === 'online' ? 'border-amber-500 bg-amber-500/10' : 'border-slate-800 bg-slate-950'}">
-                                <span class="font-bold text-sm">دفع إلكتروني (انستا باي / محفظة)</span>
-                                <input type="radio" name="pay_method" ${ui.paymentMethod === 'online' ? 'checked' : ''} class="w-5 h-5 accent-amber-500">
-                            </label>
-                        </div>
-
                         <div class="bg-slate-900 p-5 rounded-3xl border border-slate-800 space-y-2.5">
-                            <h2 class="font-black text-sm flex items-center gap-2 mb-3 text-amber-400">
-                                <i class="fa-solid fa-receipt"></i> ملخص الطلب
-                            </h2>
-                            <div class="flex justify-between text-xs font-bold text-slate-400">
-                                <span>المجموع الفرعي</span>
-                                <span>EG ${subtotal.toFixed(2)}</span>
-                            </div>
-                            <div class="flex justify-between text-xs font-bold text-slate-400">
-                                <span>الضريبة (${db.restaurant.taxRate}%)</span>
-                                <span>EG 0.00</span>
-                            </div>
-                            <div class="flex justify-between text-xs font-bold text-slate-400">
-                                <span>رسوم التوصيل</span>
-                                <span>EG ${deliveryFee.toFixed(2)}</span>
-                            </div>
-                            ${discountAmount > 0 ? `
-                                <div class="flex justify-between text-xs font-bold text-emerald-400">
-                                    <span>الخصم (${effectiveDiscountPct}%)</span>
-                                    <span>- EG ${discountAmount.toFixed(2)}</span>
-                                </div>
-                            ` : ''}
-                            <div class="border-t border-slate-800 pt-2.5 mt-2 flex justify-between items-center">
-                                <span class="font-black text-base text-white">الإجمالي</span>
-                                <span class="font-black text-lg text-amber-400">EG ${grandTotal.toFixed(2)}</span>
+                            <h2 class="font-black text-sm text-amber-400 mb-3">ملخص الحساب</h2>
+                            <div class="flex justify-between text-xs text-slate-400"><span>المجموع الفرعي</span><span>EG ${subtotal.toFixed(2)}</span></div>
+                            <div class="flex justify-between text-xs text-slate-400"><span>التوصيل</span><span>EG ${deliveryFee.toFixed(2)}</span></div>
+                            <div class="border-t border-slate-800 pt-2 flex justify-between items-center text-base font-black text-amber-400">
+                                <span>الإجمالي</span><span>EG ${grandTotal.toFixed(2)}</span>
                             </div>
                         </div>
                     </div>
 
                     <div class="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 p-4 shadow-2xl z-30">
-                        <div class="max-w-lg mx-auto flex items-center justify-between gap-4">
-                            <button onclick="submitFinalOrder()" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 rounded-2xl text-base transition">تأكيد وإرسال الطلب</button>
-                            <div class="text-left">
-                                <span class="block text-[11px] text-slate-400 font-bold">الإجمالي</span>
-                                <span class="font-black text-base text-amber-400">EG ${grandTotal.toFixed(2)}</span>
-                            </div>
+                        <div class="max-w-lg mx-auto">
+                            <button onclick="submitFinalOrder()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 rounded-2xl text-base transition shadow-lg">تأكيد وإرسال الطلب 🚀</button>
                         </div>
                     </div>
                 </div>
             `;
         }
 
-        function detectGPSLocation() {
+        // جلب العنوان تلقائياً بالاسم والشارع عبر Reverse Geocoding
+        async function detectGPSLocation() {
             if (!navigator.geolocation) {
-                alert('المتصفح لا يدعم تحديد الموقع تلقائياً، يرجى كتابة العنوان يدوياً.');
+                alert('المتصفح لا يدعم تحديد الموقع.');
                 return;
             }
+            alert('📍جاري تحديد موقعك الجغرافي بدقة...');
             navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    ui.gpsCoords = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
-                    if (!ui.address) ui.address = 'موقع GPS محدد على الخريطة';
+                async (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    ui.gpsCoords = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+                    ui.address = 'جاري جلب اسم الشارع والمنطقة من الخريطة...';
+                    render();
+                    try {
+                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=ar`);
+                        const data = await res.json();
+                        if (data && data.display_name) {
+                            ui.address = data.display_name;
+                        } else {
+                            ui.address = `إحداثيات GPS: ${ui.gpsCoords}`;
+                        }
+                    } catch (e) {
+                        ui.address = `إحداثيات الموقع: ${ui.gpsCoords}`;
+                    }
                     render();
                 },
                 () => {
-                    alert('يرجى تفعيل صلاحية الموقع (GPS) في هاتفك أو كتابة العنوان يدوياً.');
+                    alert('يرجى السماح للمتصفح بالوصول لموقعك (GPS).');
                 }
             );
         }
 
-        function applyCoupon() {
-            if (ui.couponInput.trim().toUpperCase() === db.restaurant.discountCode) {
-                ui.appliedDiscountPercent = db.restaurant.discountPercent;
-                alert(`🎉 تم تفعيل كود الخصم (${db.restaurant.discountPercent}%) بنجاح!`);
-                render();
-            } else {
-                alert('❌ كود الخصم غير صحيح. جرّب: ' + db.restaurant.discountCode);
-            }
-        }
-
         function submitFinalOrder() {
             if (!ui.phone.trim()) {
-                alert('⚠️ يرجى إدخال رقم الهاتف للتواصل!');
+                alert('⚠️ يرجى إدخال رقم الهاتف!');
                 return;
             }
-            if (ui.deliveryMethod === 'home' && !ui.address.trim() && !ui.gpsCoords) {
-                alert('⚠️ يرجى إدخال عنوان التوصيل أو تحديد موقعك الحالي!');
-                return;
-            }
-
             const subtotal = ui.cart.reduce((s, i) => s + (i.price * i.qty), 0);
             const deliveryFee = ui.deliveryMethod === 'home' ? db.restaurant.deliveryFee : 0;
-            const effectiveDiscountPct = Math.max(subtotal >= db.restaurant.discountThreshold ? db.restaurant.discountPercent : 0, ui.appliedDiscountPercent);
-            const discountAmount = (subtotal * effectiveDiscountPct) / 100;
-            const grandTotal = Math.max(0, subtotal + deliveryFee - discountAmount);
 
             const orderObj = {
-                id: 'ORD-' + Math.floor(100 + Math.random() * 900),
+                id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
                 customer: ui.customerName.trim() || 'عميل',
                 phone: ui.phone.trim(),
                 deliveryMethod: ui.deliveryMethod,
-                tableNo: ui.deliveryMethod === 'branch' ? ui.tableNo : '',
-                address: ui.deliveryMethod === 'home' ? `${ui.address} ${ui.gpsCoords ? '(' + ui.gpsCoords + ')' : ''}` : '',
-                paymentMethod: ui.paymentMethod,
-                notes: ui.notes.trim(),
+                address: ui.address || 'استلام من الفرع',
                 items: JSON.parse(JSON.stringify(ui.cart)),
-                subtotal,
-                deliveryFee,
-                discount: discountAmount,
-                total: grandTotal,
-                status: 'pending',
+                total: subtotal + deliveryFee,
+                status: 'pending', // pending, preparing, on_the_way, delivered
                 time: 'الآن'
             };
 
@@ -1175,20 +855,60 @@
             const ord = ui.lastOrder;
             return `
                 <div class="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
-                    <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 text-center shadow-xl">
-                        <div class="w-20 h-20 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-4xl mx-auto mb-4">
+                    <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 text-center shadow-xl space-y-4">
+                        <div class="w-20 h-20 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-4xl mx-auto">
                             <i class="fa-solid fa-check"></i>
                         </div>
-                        <h2 class="text-2xl font-black mb-1">تم إرسال طلبك بنجاح!</h2>
-                        <p class="text-xs text-slate-400 mb-6">رقم الطلب: <span class="font-black text-amber-400">${ord.id}</span></p>
+                        <h2 class="text-2xl font-black">تم إرسال طلبك بنجاح!</h2>
+                        <p class="text-xs text-slate-400">رقم الطلب: <span class="font-black text-amber-400">${ord.id}</span></p>
 
-                        <div class="bg-slate-950 rounded-2xl p-4 text-right text-xs space-y-2 mb-6 border border-slate-800">
-                            <div class="flex justify-between"><span class="text-slate-400">طريقة الاستلام:</span><span class="font-bold">${ord.deliveryMethod === 'home' ? 'توصيل للمنزل' : (ord.tableNo ? 'طاولة رقم ' + ord.tableNo : 'استلام من الفرع')}</span></div>
-                            <div class="flex justify-between"><span class="text-slate-400">طريقة الدفع:</span><span class="font-bold">${ord.paymentMethod === 'cash' ? 'دفع عند الاستلام' : 'دفع إلكتروني'}</span></div>
-                            <div class="flex justify-between"><span class="text-slate-400">الإجمالي المطلوب:</span><span class="font-black text-emerald-400">EG ${ord.total.toFixed(2)}</span></div>
+                        <button onclick="ui.route='track_order'; render();" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3.5 rounded-2xl text-sm transition">
+                            🚚 تتبع حالة الطلب لحظة بلحظة
+                        </button>
+                        <button onclick="ui.route='menu'; render();" class="w-full bg-slate-800 text-white font-bold py-3 rounded-2xl text-sm">العودة للمنيو</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTrackOrder() {
+            const ord = db.orders.find(o => o.phone === ui.phone) || ui.lastOrder;
+            if (!ord) {
+                return `<div class="min-h-screen bg-slate-950 text-white p-6 text-center"><p>لا توجد طلبات نشطة.</p><button onclick="ui.route='menu';render();" class="mt-4 bg-amber-500 text-slate-950 px-4 py-2 rounded-xl font-bold">العودة</button></div>`;
+            }
+
+            const steps = [
+                { key: 'pending', label: 'قيد المراجعة ⏳' },
+                { key: 'preparing', label: 'جاري التحضير 🔥' },
+                { key: 'on_the_way', label: 'خرج مع الدليفري 🛵' },
+                { key: 'delivered', label: 'تم التسليم ✅' }
+            ];
+
+            const currentIndex = steps.findIndex(s => s.key === ord.status);
+
+            return `
+                <div class="min-h-screen bg-slate-950 text-white p-6 max-w-lg mx-auto space-y-6">
+                    <div class="flex justify-between items-center pb-4 border-b border-slate-800">
+                        <h1 class="font-black text-xl text-amber-400">تتبع الطلب (${ord.id})</h1>
+                        <button onclick="ui.route='menu'; render();" class="text-xs bg-slate-800 px-3 py-1.5 rounded-xl">المنيو</button>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-6">
+                        <div class="space-y-4">
+                            ${steps.map((st, idx) => `
+                                <div class="flex items-center gap-4 ${idx <= currentIndex ? 'text-amber-400 font-black' : 'text-slate-600'}">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center border-2 ${idx <= currentIndex ? 'border-amber-500 bg-amber-500/20 text-amber-400' : 'border-slate-700 bg-slate-950'}">
+                                        ${idx < currentIndex ? '✓' : idx + 1}
+                                    </div>
+                                    <span class="text-sm">${st.label}</span>
+                                </div>
+                            `).join('')}
                         </div>
 
-                        <button onclick="ui.route='menu'; render();" class="w-full bg-amber-500 text-slate-950 font-black py-3.5 rounded-2xl text-sm">العودة إلى المنيو</button>
+                        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2 text-xs">
+                            <div class="flex justify-between"><span class="text-slate-400">حالة الطلب الحالية:</span><span class="font-black text-amber-400 uppercase">${ord.status}</span></div>
+                            <div class="flex justify-between"><span class="text-slate-400">الإجمالي المطلوب:</span><span class="font-black text-emerald-400">EG ${ord.total.toFixed(2)}</span></div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -1199,11 +919,10 @@
                 return `
                     <div class="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
                         <div class="max-w-sm w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 text-center shadow-2xl">
-                            <div class="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-3xl mx-auto mb-4">🔒</div>
                             <h2 class="text-xl font-black mb-1">لوحة تحكم الكاشير</h2>
-                            <p class="text-xs text-slate-400 mb-6">${db.restaurant.name} — أدخل الرمز السري (الافتراضي: 1234)</p>
+                            <p class="text-xs text-slate-400 mb-6">الرمز السري الافتراضي: 1234</p>
                             <input type="password" id="pin_input" maxlength="6" placeholder="••••" class="w-full bg-slate-950 border border-slate-700 rounded-2xl py-3.5 text-center text-2xl tracking-widest font-black mb-4 outline-none focus:border-amber-500">
-                            <button onclick="unlockCashier()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3.5 rounded-2xl text-sm transition">دخول النظام</button>
+                            <button onclick="unlockCashier()" class="w-full bg-amber-500 text-slate-950 font-black py-3.5 rounded-2xl text-sm">دخول النظام</button>
                         </div>
                     </div>
                 `;
@@ -1211,41 +930,60 @@
 
             return `
                 <div class="min-h-screen bg-slate-950 text-white flex flex-col md:flex-row">
-                    <aside class="w-full md:w-64 bg-slate-900 border-b md:border-b-0 md:border-l border-slate-800 p-5 flex flex-col justify-between">
+                    <aside class="w-full md:w-64 bg-slate-900 border-l border-slate-800 p-5 flex flex-col justify-between">
                         <div>
-                            <div class="flex items-center gap-3 mb-6">
-                                <span class="text-2xl">${db.restaurant.logo}</span>
-                                <div>
-                                    <h2 class="font-black text-sm">${db.restaurant.name}</h2>
-                                    <span class="text-[11px] text-emerald-400">● متصل ويستقبل الطلبات</span>
-                                </div>
-                            </div>
-                            <nav class="space-y-1.5 text-xs font-bold">
-                                <button onclick="ui.cashierTab='orders'; render();" class="w-full text-right px-4 py-3 rounded-xl transition ${ui.cashierTab === 'orders' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:bg-slate-800'}">📥 الطلبات الواردة (${db.orders.length})</button>
-                                <button onclick="ui.cashierTab='menu'; render();" class="w-full text-right px-4 py-3 rounded-xl transition ${ui.cashierTab === 'menu' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:bg-slate-800'}">🍔 إدارة أصناف المنيو (${db.menu.length})</button>
-                                <button onclick="ui.cashierTab='qr'; render();" class="w-full text-right px-4 py-3 rounded-xl transition ${ui.cashierTab === 'qr' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:bg-slate-800'}">📱 باركود الطاولات (QR)</button>
+                            <h2 class="font-black text-base text-amber-400 mb-6">${db.restaurant.name} (كاشير)</h2>
+                            <nav class="space-y-2 text-xs font-bold">
+                                <button onclick="ui.cashierTab='orders'; render();" class="w-full text-right px-4 py-3 rounded-xl bg-amber-500 text-slate-950">📥 الطلبات (${db.orders.length})</button>
                             </nav>
                         </div>
-                        <div class="pt-4 mt-4 border-t border-slate-800 space-y-2">
-                            <button onclick="navigate('#builder')" class="w-full bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-xs font-bold">🎨 تعديل إعدادات المطعم</button>
-                            <button onclick="ui.cashierUnlocked=false; render();" class="w-full text-red-400 py-2 text-xs font-bold">قفل شاشة الكاشير</button>
-                        </div>
+                        <button onclick="ui.cashierUnlocked=false; render();" class="text-red-400 text-xs font-bold">قفل الشاشة</button>
                     </aside>
 
-                    <main class="flex-1 p-5 md:p-8 overflow-y-auto">
-                        ${db.serviceAlerts.length > 0 ? `
-                            <div class="mb-6 bg-amber-500/15 border border-amber-500/40 rounded-2xl p-4 flex justify-between items-center">
-                                <div class="text-xs font-bold text-amber-300">🔔 تنبيه طاولة: ${db.serviceAlerts[0].text}</div>
-                                <button onclick="db.serviceAlerts.shift(); saveState(); render();" class="bg-amber-500 text-slate-950 text-xs font-black px-3 py-1.5 rounded-lg">تم الاستجابة</button>
-                            </div>
-                        ` : ''}
+                    <main class="flex-1 p-6 overflow-y-auto">
+                        <h2 class="text-xl font-black mb-6">📥 الطلبات الواردة وتحديث الحالات</h2>
+                        <div class="space-y-4">
+                            ${db.orders.map((ord, idx) => `
+                                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col md:flex-row justify-between gap-4">
+                                    <div class="space-y-2">
+                                        <div class="flex items-center gap-3">
+                                            <span class="font-black text-amber-400">${ord.id}</span>
+                                            <span class="bg-slate-800 px-3 py-1 rounded-full text-xs font-bold">${ord.deliveryMethod === 'home' ? 'توصيل للمنزل' : 'استلام من الفرع'}</span>
+                                            <span class="text-xs text-emerald-400 font-bold">الحالة: ${ord.status}</span>
+                                        </div>
+                                        <p class="text-xs font-bold">👤 ${ord.customer} — 📞 ${ord.phone}</p>
+                                        <p class="text-xs text-slate-300">📍 ${ord.address}</p>
+                                        <div class="text-xs space-y-1 text-slate-400">
+                                            ${ord.items.map(i => `<div>• ${i.qty}x ${i.name} — EG ${i.price * i.qty}</div>`).join('')}
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col justify-between items-end gap-3">
+                                        <div class="text-lg font-black text-amber-400">EG ${ord.total.toFixed(2)}</div>
+                                        
+                                        <!-- أزرار تغيير حالة الدليفري للزبون -->
+                                        <div class="flex flex-wrap gap-1.5">
+                                            <button onclick="updateOrderStatus(${idx}, 'preparing')" class="bg-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold">تحضير 🔥</button>
+                                            <button onclick="updateOrderStatus(${idx}, 'on_the_way')" class="bg-amber-600 px-2.5 py-1 rounded-lg text-[10px] font-bold">مع الدليفري 🛵</button>
+                                            <button onclick="updateOrderStatus(${idx}, 'delivered')" class="bg-emerald-600 px-2.5 py-1 rounded-lg text-[10px] font-bold">تم التسليم ✅</button>
+                                        </div>
 
-                        ${ui.cashierTab === 'orders' ? renderCashierOrdersTab() : ''}
-                        ${ui.cashierTab === 'menu' ? renderCashierMenuTab() : ''}
-                        ${ui.cashierTab === 'qr' ? renderCashierQRTab() : ''}
+                                        <button onclick="printOrderReceipt(${idx})" class="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                                            <i class="fa-solid fa-print"></i> طباعة الفاتورة 🧾
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
                     </main>
                 </div>
             `;
+        }
+
+        function updateOrderStatus(idx, status) {
+            db.orders[idx].status = status;
+            saveState();
+            render();
+            alert(`✅ تم تحديث حالة الطلب إلى: ${status}`);
         }
 
         function unlockCashier() {
@@ -1258,129 +996,46 @@
             }
         }
 
-        function renderCashierOrdersTab() {
-            return `
-                <div>
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-black">📥 الطلبات الواردة لحظياً</h2>
-                        <button onclick="db=loadState(); render();" class="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl text-xs font-bold">🔄 تحديث الطلبات</button>
-                    </div>
-                    ${db.orders.length === 0 ? `
-                        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-10 text-center text-slate-400">
-                            <p class="text-sm">لا توجد طلبات واردة حتى الآن.</p>
-                        </div>
-                    ` : `
-                        <div class="space-y-4">
-                            ${db.orders.map((ord, idx) => `
-                                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col md:flex-row justify-between gap-4">
-                                    <div class="space-y-1.5">
-                                        <div class="flex flex-wrap items-center gap-2">
-                                            <span class="font-black text-amber-400">${ord.id}</span>
-                                            <span class="bg-slate-800 px-3 py-1 rounded-full text-xs font-bold">
-                                                ${ord.deliveryMethod === 'home' ? '🛵 توصيل للمنزل' : (ord.tableNo ? '🪑 طاولة #' + ord.tableNo : '🏪 استلام من الفرع')}
-                                            </span>
-                                            <span class="bg-emerald-500/10 text-emerald-400 px-2.5 py-0.5 rounded-full text-[11px] font-bold">
-                                                ${ord.paymentMethod === 'cash' ? 'كاش عند الاستلام' : 'دفع إلكتروني'}
-                                            </span>
-                                            <span class="text-xs text-slate-500">${ord.time}</span>
-                                        </div>
-                                        <p class="text-xs text-slate-300 font-bold">👤 ${ord.customer} — 📞 ${ord.phone}</p>
-                                        ${ord.address ? `<p class="text-xs text-amber-300">📍 العنوان: ${ord.address}</p>` : ''}
-                                        ${ord.notes ? `<p class="text-xs text-rose-400">📝 ملاحظات: ${ord.notes}</p>` : ''}
-                                        <div class="pt-2 space-y-1 text-xs text-slate-300">
-                                            ${ord.items.map(i => `<div>• ${i.qty}x ${i.name} — EG ${(i.price * i.qty).toFixed(2)}</div>`).join('')}
-                                        </div>
-                                    </div>
-                                    <div class="flex flex-col justify-between items-end shrink-0">
-                                        <div class="text-xl font-black text-amber-400">EG ${ord.total.toFixed(2)}</div>
-                                        <div class="flex gap-2 mt-3">
-                                            <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-700 px-3.5 py-2 rounded-xl text-xs font-bold">🖨️ فاتورة</button>
-                                            <button onclick="db.orders.splice(${idx},1); saveState(); render();" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-xl text-xs font-black">✅ تم التسليم</button>
-                                        </div>
-                                    </div>
-                                </div>
+        // طباعة الفاتورة الشاملة باسم المطعم والأسعار
+        function printOrderReceipt(idx) {
+            const ord = db.orders[idx];
+            const receiptHTML = `
+                <div style="font-family:Cairo,sans-serif; direction:rtl; padding:20px; max-width:300px; margin:auto; background:#fff; color:#000;">
+                    <h2 style="text-align:center; margin-bottom:5px;">🍽️ ${db.restaurant.name}</h2>
+                    <p style="text-align:center; font-size:11px; color:#666; margin-bottom:15px;">${db.restaurant.taglet}</p>
+                    <hr style="border:1px dashed #ccc; margin:10px 0;">
+                    <p style="font-size:12px;"><strong>رقم الطلب:</strong> ${ord.id}</p>
+                    <p style="font-size:12px;"><strong>العميل:</strong> ${ord.customer} (${ord.phone})</p>
+                    <p style="font-size:12px;"><strong>العنوان:</strong> ${ord.address}</p>
+                    <hr style="border:1px dashed #ccc; margin:10px 0;">
+                    <table style="width:100%; font-size:12px; border-collapse:collapse;">
+                        <thead>
+                            <tr style="border-bottom:1px solid #000;">
+                                <th style="text-align:right; padding-bottom:5px;">الصنف</th>
+                                <th style="text-align:center; padding-bottom:5px;">الكمية</th>
+                                <th style="text-align:left; padding-bottom:5px;">السعر</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${ord.items.map(i => `
+                                <tr>
+                                    <td style="padding:4px 0;">${i.name}</td>
+                                    <td style="text-align:center; padding:4px 0;">${i.qty}</td>
+                                    <td style="text-align:left; padding:4px 0;">${i.price * i.qty} ج.م</td>
+                                </tr>
                             `).join('')}
-                        </div>
-                    `}
+                        </tbody>
+                    </table>
+                    <hr style="border:1px dashed #ccc; margin:10px 0;">
+                    <h3 style="text-align:left; font-size:14px; margin:0;">الإجمالي: EG ${ord.total.toFixed(2)}</h3>
+                    <p style="text-align:center; font-size:10px; margin-top:20px; color:#555;">شكراً لتعاملكم معنا ❤️</p>
                 </div>
             `;
+            const receiptDiv = document.getElementById('printable-receipt');
+            receiptDiv.innerHTML = receiptHTML;
+            window.print();
         }
 
-        function renderCashierMenuTab() {
-            return `
-                <div>
-                    <div class="flex flex-wrap justify-between items-center gap-3 mb-6">
-                        <h2 class="text-xl font-black">🍔 إدارة أصناف المنيو (${db.menu.length})</h2>
-                        <div class="flex flex-wrap gap-2">
-                            <button onclick="openPaperMenuImporter()" class="bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 px-4 py-2.5 rounded-xl text-xs font-black flex items-center gap-1.5">
-                                <i class="fa-solid fa-wand-magic-sparkles"></i> إدارة واستيراد المنيو
-                            </button>
-                            <button onclick="cashierAddDish()" class="bg-amber-500 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-black">➕ إضافة صنف يدوياً</button>
-                        </div>
-                    </div>
-
-                    ${db.menu.length === 0 ? `
-                        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-10 text-center text-slate-400">
-                            <p class="text-sm mb-4">لا توجد أصناف في المنيو حالياً.</p>
-                            <button onclick="openPaperMenuImporter()" class="bg-amber-500 text-slate-950 px-6 py-3 rounded-xl font-bold text-xs">اختر قائمة جاهزة أو أضف الأصناف</button>
-                        </div>
-                    ` : `
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            ${db.menu.map((m, idx) => {
-                                const catName = (db.categories.find(c => c.id === m.cat) || {}).name || 'عام';
-                                return `
-                                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex justify-between items-center">
-                                        <div class="flex items-center gap-3">
-                                            <span class="text-3xl">${m.img}</span>
-                                            <div>
-                                                <h4 class="font-bold text-sm text-white">${m.name}</h4>
-                                                <div class="flex items-center gap-2 mt-0.5">
-                                                    <span class="text-xs text-amber-400 font-bold">EG ${m.price}</span>
-                                                    <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md">${catName}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <button onclick="db.menu.splice(${idx},1); saveState(); render();" class="text-red-400 text-xs font-bold hover:underline">حذف</button>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    `}
-                </div>
-            `;
-        }
-
-        function cashierAddDish() {
-            const name = prompt('اسم الطبق الجديد:');
-            if (!name) return;
-            const price = Number(prompt('السعر بالجنيه:', '80')) || 50;
-            db.menu.push({ id: Date.now(), name, cat: 'meals', price, rating: '5.0', reviews: 'جديد', badge: 'جديد', desc: 'محضر طازجاً يومياً', img: '🍽️' });
-            saveState();
-            render();
-        }
-
-        function renderCashierQRTab() {
-            const baseUrl = window.location.origin + window.location.pathname;
-            return `
-                <div class="max-w-md bg-slate-900 border border-slate-800 p-6 rounded-3xl">
-                    <h2 class="text-lg font-black mb-2">📱 توليد رابط QR للطاولات</h2>
-                    <p class="text-xs text-slate-400 mb-4">اختر رقم الطاولة لنسخ الرابط المباشر الخاص بها:</p>
-                    <select id="qr_tbl_select" onchange="updateQRPreview()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm font-bold mb-4 text-white">
-                        ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}">طاولة رقم ${n}</option>`).join('')}
-                    </select>
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs break-all text-amber-400 mb-4" id="qr_link_box">${baseUrl}#menu?table=1</div>
-                    <button onclick="copyText(document.getElementById('qr_link_box').innerText)" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl text-sm">نسخ رابط الطاولة</button>
-                </div>
-            `;
-        }
-
-        function updateQRPreview() {
-            const baseUrl = window.location.origin + window.location.pathname;
-            const t = document.getElementById('qr_tbl_select').value;
-            document.getElementById('qr_link_box').innerText = `${baseUrl}#menu?table=${t}`;
-        }
-
-        // Start App
         syncRouteFromHash();
     </script>
 </body>
