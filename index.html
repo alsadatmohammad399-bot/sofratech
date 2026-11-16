@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سُفرة تك | منصة بناء المنيو الرقمي والمطاعم السحابية</title>
+    <title> Ghazal | منصة المنيو السحابي والطلبات الاحترافية</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
@@ -54,7 +54,7 @@
                 name: 'مطعم السعادة',
                 taglet: 'أشهى المأكولات الطازجة والسريعة',
                 logo: '🍔',
-                style: 'crispy_cream', // الاستايل الافتراضي
+                style: 'crispy_cream',
                 whatsapp: '201015861991',
                 deliveryFee: 15,
                 pin: '1234'
@@ -75,7 +75,7 @@
         };
 
         function loadState() {
-            const saved = localStorage.getItem('sofratech_pro_v2');
+            const saved = localStorage.getItem('sofratech_pro_v3');
             if (saved) { try { return JSON.parse(saved); } catch (e) {} }
             return JSON.parse(JSON.stringify(DEFAULT_DATA));
         }
@@ -83,12 +83,12 @@
         let db = loadState();
 
         function saveState() {
-            localStorage.setItem('sofratech_pro_v2', JSON.stringify(db));
-            if (fbDB) { fbDB.ref('sofratech_pro_v2').set(db); }
+            localStorage.setItem('sofratech_pro_v3', JSON.stringify(db));
+            if (fbDB) { fbDB.ref('sofratech_pro_v3').set(db); }
         }
 
         if (fbDB) {
-            fbDB.ref('sofratech_pro_v2').on('value', (snapshot) => {
+            fbDB.ref('sofratech_pro_v3').on('value', (snapshot) => {
                 const val = snapshot.val();
                 if (val) {
                     db = val;
@@ -99,7 +99,7 @@
         }
 
         const ui = {
-            route: 'landing', // landing, builder, menu, cart, checkout, order_success, cashier
+            route: 'landing', // landing, builder, menu, cart, checkout, track, cashier
             activeCategory: 'all',
             searchQuery: '',
             cart: [],
@@ -107,6 +107,7 @@
             customerName: '',
             deliveryMethod: 'branch',
             address: '',
+            trackingOrderId: null,
             cashierUnlocked: false
         };
 
@@ -116,7 +117,7 @@
             else if (hash === '#menu') ui.route = 'menu';
             else if (hash === '#cart') ui.route = 'cart';
             else if (hash === '#checkout') ui.route = 'checkout';
-            else if (hash === '#order_success') ui.route = 'order_success';
+            else if (hash === '#track') ui.route = 'track';
             else if (hash === '#cashier') ui.route = 'cashier';
             else ui.route = 'landing';
             render();
@@ -132,11 +133,11 @@
             else if (ui.route === 'menu') app.innerHTML = renderCustomerMenu();
             else if (ui.route === 'cart') app.innerHTML = renderCart();
             else if (ui.route === 'checkout') app.innerHTML = renderCheckout();
-            else if (ui.route === 'order_success') app.innerHTML = renderOrderSuccess();
+            else if (ui.route === 'track') app.innerHTML = renderTrackOrder();
             else if (ui.route === 'cashier') app.innerHTML = renderCashier();
         }
 
-        // ================= 1. صفحة البداية الرئيسية والروابط المستقلة =================
+        // ================= 1. الصفحة الرئيسية والروابط =================
         function renderLanding() {
             const baseUrl = window.location.origin + window.location.pathname;
             return `
@@ -150,9 +151,9 @@
                     </nav>
 
                     <section class="container mx-auto px-6 py-12 text-center max-w-4xl my-auto">
-                        <span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-4 py-1.5 rounded-full text-xs font-bold inline-block mb-5">منصة إنشاء المنيو الرقمي السحابي للمطاعم</span>
-                        <h1 class="text-4xl md:text-6xl font-black leading-tight mb-6">رابط منيو <span class="text-amber-500">${db.restaurant.name}</span> جاهز لاستقبال الطلبات</h1>
-                        <p class="text-slate-400 text-lg mb-10">اختر استايل مطعمك، استخرج المنيو بصورة بالذكاء الاصطناعي، واستقبل طلباتك فوراً.</p>
+                        <span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-4 py-1.5 rounded-full text-xs font-bold inline-block mb-5">منصة المنيو السحابي الاحترافي</span>
+                        <h1 class="text-4xl md:text-6xl font-black leading-tight mb-6">رابط منيو <span class="text-amber-500">${db.restaurant.name}</span> جاهز للطلبات والتتبع</h1>
+                        <p class="text-slate-400 text-lg mb-10">استخرج المنيو بالذكاء الاصطناعي، تتبع الطلبات حياً، واستقبلها بسلاسة تامة.</p>
 
                         <div class="flex flex-wrap justify-center gap-4 mb-12">
                             <button onclick="navigate('#builder')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-8 py-4 rounded-2xl text-base shadow-xl transition">🛠️ تخصيص القوالب والذكاء الاصطناعي</button>
@@ -165,7 +166,7 @@
                             <div class="space-y-3 text-xs">
                                 <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex justify-between items-center gap-2">
                                     <div class="overflow-hidden">
-                                        <span class="text-emerald-400 font-bold block mb-1">1. رابط الزبون (المنيو والطلب):</span>
+                                        <span class="text-emerald-400 font-bold block mb-1">1. رابط الزبون (المنيو والتتبع):</span>
                                         <code class="text-slate-300 select-all break-all">${baseUrl}#menu</code>
                                     </div>
                                     <button onclick="copyText('${baseUrl}#menu')" class="bg-slate-800 px-3 py-2 rounded-lg font-bold shrink-0 hover:bg-slate-700">نسخ</button>
@@ -193,7 +194,7 @@
             alert('✅ تم نسخ الرابط بنجاح!');
         }
 
-        // ================= 2. لوحة التخصيص والقوالب والذكاء الاصطناعي (Builder) =================
+        // ================= 2. لوحة التحكم والقوالب وزر نسخ المنيو والذكاء الاصطناعي =================
         function renderBuilder() {
             const styles = [
                 { id: 'crispy_cream', name: 'استايل كرسبي شيكن الفاتح (Cream Minimal)', desc: 'تصميم كريمي دافئ وأنيق مستوحى من تطبيقات الوجبات' },
@@ -206,13 +207,13 @@
                 <div class="min-h-screen bg-slate-950 text-white p-6 max-w-xl mx-auto space-y-6 pb-32">
                     <div class="flex justify-between items-center pb-4 border-b border-slate-800">
                         <button onclick="navigate('')" class="text-xs bg-slate-900 px-3 py-1.5 rounded-xl text-slate-300">الرئيسية</button>
-                        <h1 class="font-black text-base text-amber-400">⚙️ تخصيص القوالب والذكاء الاصطناعي</h1>
+                        <h1 class="font-black text-base text-amber-400">⚙️ إدارة المنيو والذكاء الاصطناعي</h1>
                         <button onclick="navigate('#menu')" class="text-xs bg-slate-900 px-3 py-1.5 rounded-xl text-emerald-400">المنيو</button>
                     </div>
 
-                    <!-- اختيار الأستايل والقالب -->
+                    <!-- اختيار القالب -->
                     <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl space-y-3 text-xs">
-                        <h3 class="font-black text-amber-400 text-sm">🎨 اختر قالب التصميم للمطعم (Style Theme)</h3>
+                        <h3 class="font-black text-amber-400 text-sm">🎨 اختر قالب التصميم للمطعم</h3>
                         <div class="space-y-2">
                             ${styles.map(st => `
                                 <label class="flex items-start gap-3 p-3 rounded-2xl border cursor-pointer transition ${db.restaurant.style === st.id ? 'border-amber-500 bg-amber-500/10 text-white' : 'border-slate-800 text-slate-400'}">
@@ -226,23 +227,27 @@
                         </div>
                     </div>
 
-                    <!-- استخراج المنيو بالذكاء الاصطناعي من الصور -->
+                    <!-- استخراج المنيو بالصورة + زر نسخ المنيو -->
                     <div class="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/40 p-5 rounded-3xl space-y-3 text-xs">
                         <div class="flex items-center gap-3">
                             <span class="text-2xl">📸</span>
                             <div>
                                 <h3 class="font-black text-amber-300 text-sm">استخراج المنيو بالذكاء الاصطناعي من صورة</h3>
-                                <p class="text-[11px] text-slate-300">ارفع صورة قائمة الطعام الورقية وسيتم استخراج الأصناف والأسعار تلقائياً!</p>
+                                <p class="text-[11px] text-slate-300">ارفع صورة القائمة وسيتم استخراج الأصناف والأسعار فوراً!</p>
                             </div>
                         </div>
                         <input type="file" id="ai_img" accept="image/*" class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-xl text-slate-300">
-                        <button onclick="simulateAI()" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-lg">✨ استخراج وإضافة الأصناف للمنيو تلقائياً</button>
+                        <button onclick="simulateAI()" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-lg">✨ استخراج الأصناف وإضافتها للمنيو</button>
+                        
+                        <!-- زر نسخ المنيو -->
+                        <button onclick="copyFullMenuText()" class="w-full bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold py-2.5 rounded-xl border border-amber-500/30 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-copy"></i> 📋 نسخ نص المنيو بالكامل (لل مشاركة)
+                        </button>
                     </div>
 
-                    <!-- إعدادات بيانات المطعم -->
+                    <!-- بيانات المطعم -->
                     <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl space-y-4 text-xs">
-                        <h3 class="font-black text-amber-400 text-sm">بيانات المطعم والروابط</h3>
-                        
+                        <h3 class="font-black text-amber-400 text-sm">بيانات المطعم</h3>
                         <label class="block text-slate-400">اسم المطعم</label>
                         <input type="text" id="b_name" value="${db.restaurant.name}" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold text-sm outline-none">
 
@@ -252,13 +257,13 @@
                         <label class="block text-emerald-400 font-bold">🔑 كلمة سر شاشة الكاشير (PIN)</label>
                         <input type="text" id="b_pin" value="${db.restaurant.pin}" class="w-full bg-slate-950 border border-emerald-500/50 p-3 rounded-xl text-emerald-400 font-black text-center text-lg outline-none">
 
-                        <button onclick="saveRestaurantSettings()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3.5 rounded-xl text-sm transition">حفظ الإعدادات والقالب سحابياً 🚀</button>
+                        <button onclick="saveRestaurantSettings()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3.5 rounded-xl text-sm transition">حفظ التعديلات وقالب التصميم 🚀</button>
                     </div>
 
-                    <!-- إدارة أصناف المنيو اليدوية -->
+                    <!-- إدارة الأصناف اليدوية -->
                     <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl space-y-3 text-xs">
                         <h3 class="font-black text-amber-400 text-sm">إضافة صنف جديد يدوياً</h3>
-                        <input type="text" id="new_name" placeholder="اسم الوجبة (مثال: برجر دجاج)" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold outline-none">
+                        <input type="text" id="new_name" placeholder="اسم الوجبة" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold outline-none">
                         <input type="number" id="new_price" placeholder="السعر (ج.م)" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold outline-none">
                         <input type="text" id="new_desc" placeholder="وصف الوجبة" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white outline-none">
                         <button onclick="addNewItem()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-3 rounded-xl transition">إضافة الصنف للمنيو 🍔</button>
@@ -280,6 +285,15 @@
                     </div>
                 </div>
             `;
+        }
+
+        function copyFullMenuText() {
+            let menuText = `📋 منيو ${db.restaurant.name}:\n\n`;
+            db.menu.forEach((item, index) => {
+                menuText += `${index + 1}. ${item.name} - ${item.price} ج.م\n   📝 ${item.desc}\n\n`;
+            });
+            navigator.clipboard.writeText(menuText);
+            alert('✅ تم نسخ نص المنيو بالكامل وجاهز للمشاركة على واتساب أو السوشيال ميديا!');
         }
 
         function simulateAI() {
@@ -344,7 +358,7 @@
             render();
         }
 
-        // ================= 3. واجهة الزبون والمنيو (متوافقة مع الاستايل المختار) =================
+        // ================= 3. واجهة الزبون والمنيو (حسب القالب) =================
         function renderCustomerMenu() {
             const st = db.restaurant.style;
             let bgMain = 'bg-slate-950 text-white';
@@ -409,7 +423,7 @@
                             </div>
                         </div>
 
-                        <!-- قائمة الأطباق والأسعار -->
+                        <!-- شبكة الوجبات والأسعار المحترفة -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             ${filtered.map(item => `
                                 <div class="${cardBg} p-4 rounded-3xl flex flex-col justify-between">
@@ -524,7 +538,7 @@
                     </div>
 
                     <button onclick="submitFinalOrder()" type="button" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-2xl text-sm shadow-xl transition">
-                        🚀 تأكيد وإرسال الطلب سحابياً (الكاشير + واتساب)
+                        🚀 تأكيد وإرسال الطلب (بدء تتبع الطلب الكاشير + واتساب)
                     </button>
                 </div>
             `;
@@ -573,26 +587,85 @@
             db.orders.unshift(orderObj);
             saveState();
 
+            ui.trackingOrderId = orderObj.id;
             ui.cart = [];
-            navigate('#order_success');
+            navigate('#track');
 
             const itemsText = orderObj.items.map(i => `- ${i.qty}x ${i.name} (${i.price * i.qty}ج)`).join('%0A');
             const waMsg = `🚨 *طلب جديد إلى ${db.restaurant.name}!*%0A🆔 رقم: ${orderObj.id}%0A👤 العميل: ${ui.customerName}%0A📞 الهاتف: ${ui.phone}%0A📍 العنوان: ${orderObj.address}%0A%0A🍽️ *الأصناف:*%0A${itemsText}%0A%0A💰 الإجمالي: ${total} ج.م`;
             window.open(`https://wa.me/${db.restaurant.whatsapp}?text=${waMsg}`, '_blank');
         }
 
-        function renderOrderSuccess() {
+        // ================= 5. شاشة تتبع الطلب الحية (Live Order Tracking) =================
+        function renderTrackOrder() {
+            const currentOrder = db.orders.find(o => o.id === ui.trackingOrderId) || db.orders[0];
+            if (!currentOrder) {
+                return `
+                    <div class="min-h-screen bg-slate-950 text-white p-6 flex flex-col items-center justify-center text-center space-y-4">
+                        <h2 class="text-lg font-black">لا توجد طلبات نشطة للتتبع</h2>
+                        <button onclick="navigate('#menu')" class="bg-amber-500 text-slate-950 font-black px-6 py-3 rounded-xl text-xs">العودة للمنيو</button>
+                    </div>
+                `;
+            }
+
+            let step = 1;
+            if (currentOrder.status.includes('جاري التحضير') || currentOrder.status.includes('التحضير')) step = 2;
+            else if (currentOrder.status.includes('طريق') || currentOrder.status.includes('توصيل')) step = 3;
+            else if (currentOrder.status.includes('تم التسليم') || currentOrder.status.includes('مكتمل')) step = 4;
+
             return `
-                <div class="min-h-screen bg-slate-950 text-white p-6 flex flex-col items-center justify-center text-center space-y-4 pb-32">
-                    <div class="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-3xl font-black">✓</div>
-                    <h2 class="text-2xl font-black">تم إرسال طلبك بنجاح!</h2>
-                    <p class="text-xs text-slate-400">ظهر الطلب فوراً في شاشة الكاشير السحابية.</p>
-                    <button onclick="navigate('#menu')" class="bg-amber-500 text-slate-950 font-black px-6 py-3 rounded-xl text-xs">العودة للمنيو</button>
+                <div class="min-h-screen bg-slate-950 text-white p-6 max-w-md mx-auto space-y-6 pb-32">
+                    <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+                        <button onclick="navigate('#menu')" class="text-xs bg-slate-900 px-3 py-1.5 rounded-xl">المنيو</button>
+                        <h1 class="font-black text-sm text-amber-400">📦 تتبع الطلب لحظياً</h1>
+                        <div></div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl space-y-4 text-xs">
+                        <div class="flex justify-between items-center">
+                            <span class="font-black text-amber-400 text-sm">${currentOrder.id}</span>
+                            <span class="bg-amber-500/20 text-amber-300 font-bold px-3 py-1 rounded-full">${currentOrder.status}</span>
+                        </div>
+                        <p class="text-slate-400">👤 ${currentOrder.customer} — 📞 ${currentOrder.phone}</p>
+                        <p class="text-slate-400">📍 ${currentOrder.address}</p>
+
+                        <!-- خطوات التتبع المرئية -->
+                        <div class="py-4 space-y-4 border-t border-slate-800">
+                            <div class="flex items-center gap-3 ${step >= 1 ? 'text-amber-400 font-bold' : 'text-slate-600'}">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-500'}">1</div>
+                                <span>تم استلام طلبك وقيد المراجعة ⏳</span>
+                            </div>
+                            <div class="flex items-center gap-3 ${step >= 2 ? 'text-amber-400 font-bold' : 'text-slate-600'}">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-500'}">2</div>
+                                <span>جاري تحضير الوجبة في المطبخ 👨‍🍳</span>
+                            </div>
+                            <div class="flex items-center gap-3 ${step >= 3 ? 'text-amber-400 font-bold' : 'text-slate-600'}">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center ${step >= 3 ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-500'}">3</div>
+                                <span>مندوب التوصيل في الطريق إليك 🛵</span>
+                            </div>
+                            <div class="flex items-center gap-3 ${step >= 4 ? 'text-emerald-400 font-bold' : 'text-slate-600'}">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center ${step >= 4 ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-500'}">4</div>
+                                <span>تم تسليم الطلب بنجاح ✅</span>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-slate-800 pt-3 text-slate-300 space-y-1">
+                            <p class="font-bold text-white mb-1">تفاصيل الأصناف:</p>
+                            ${currentOrder.items.map(i => `<div>• ${i.qty}x ${i.name} (${i.price * i.qty} ج)</div>`).join('')}
+                        </div>
+
+                        <div class="border-t border-slate-800 pt-3 flex justify-between font-black text-amber-400 text-sm">
+                            <span>الإجمالي</span>
+                            <span>${currentOrder.total} ج.م</span>
+                        </div>
+                    </div>
+
+                    <button onclick="navigate('#menu')" class="w-full bg-slate-900 border border-slate-800 text-white font-black py-3.5 rounded-2xl text-xs hover:bg-slate-800 transition">العودة إلى المنيو الرئيسي</button>
                 </div>
             `;
         }
 
-        // ================= 5. شاشة الكاشير الفورية =================
+        // ================= 6. شاشة الكاشير السحابية =================
         function renderCashier() {
             if (!ui.cashierUnlocked) {
                 return `
@@ -618,7 +691,7 @@
                         </div>
                     </div>
                     <div class="space-y-3">
-                        ${db.orders.length === 0 ? `<div class="bg-slate-900 p-10 rounded-2xl text-center text-slate-500 text-xs">لا توجد طلبات جديدة. ستظهر فوراً عند إرسالها من أي هاتف!</div>` : db.orders.map((ord, idx) => `
+                        ${db.orders.length === 0 ? `<div class="bg-slate-900 p-10 rounded-2xl text-center text-slate-500 text-xs">لا توجد طلبات جديدة. ستظهر فوراً عند إرسالها!</div>` : db.orders.map((ord, idx) => `
                             <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col md:flex-row justify-between gap-3 text-xs shadow-xl">
                                 <div class="space-y-1">
                                     <div class="flex items-center gap-2">
@@ -631,7 +704,11 @@
                                 </div>
                                 <div class="flex flex-col justify-between items-end gap-2">
                                     <span class="font-black text-amber-400 text-sm">${ord.total} ج.م</span>
-                                    <button onclick="db.orders.splice(${idx},1); saveState(); render();" class="bg-emerald-600 text-white px-3 py-1.5 rounded-xl font-bold text-xs">تم التسليم ✅</button>
+                                    <div class="flex gap-1">
+                                        <button onclick="db.orders[${idx}].status='جاري التحضير 👨‍🍳'; saveState(); render();" class="bg-amber-600 text-white px-2.5 py-1 rounded text-[10px] font-bold">تحضير</button>
+                                        <button onclick="db.orders[${idx}].status='في طريق التوصيل 🛵'; saveState(); render();" class="bg-blue-600 text-white px-2.5 py-1 rounded text-[10px] font-bold">توصيل</button>
+                                        <button onclick="db.orders[${idx}].status='تم التسليم ✅'; saveState(); render();" class="bg-emerald-600 text-white px-2.5 py-1 rounded text-[10px] font-bold">تسليم</button>
+                                    </div>
                                 </div>
                             </div>
                         `).join('')}
