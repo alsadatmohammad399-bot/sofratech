@@ -49,7 +49,7 @@
 
         let globalDB = { restaurants: {} };
         try {
-            const raw = localStorage.getItem('tablia_multitenant_2030_v32');
+            const raw = localStorage.getItem('tablia_multitenant_2030_v34');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) {}
 
@@ -57,17 +57,19 @@
             globalDB = {
                 restaurants: {
                     "rest_demo": {
-                        id: "rest_demo", ownerName: "محمد علي", name: "برجرك الشهير", phone: "01015861991", pass: "1234",
-                        template_id: "burger-fast", tablesCount: 20, deliveryFee: 25,
-                        address: "القاهرة، مصر", wifiName: "Tablia_Free", wifiPass: "357159357", lang: "ar",
+                        id: "rest_demo", ownerName: "محمد علي", name: "شواء الذهب الفاخر", phone: "01015861991", pass: "1234",
+                        template_id: "gold-luxury", tablesCount: 20, deliveryFee: 30,
+                        address: "الرياض، المملكة العربية السعودية", wifiName: "Gold_Grill_Free", wifiPass: "357159357", lang: "ar",
                         subscription: { isActive: true, expiresAt: Date.now() + 30*24*60*60*1000 },
-                        theme: { primary: '#dc2626', bg: '#0b0f19', accent: '#facc15' },
+                        theme: { primary: '#d4af37', bg: '#0a0a0a', accent: '#f59e0b' },
                         categories: [
-                            { id: 'cat_1', name: 'البرجر والسندوتشات', icon: '🍔' },
-                            { id: 'cat_2', name: 'المشروبات', icon: '🥤' }
+                            { id: 'cat_1', name: 'المشاوي', icon: '🍢' },
+                            { id: 'cat_2', name: 'المقبلات', icon: '🥗' }
                         ],
                         menu_items: [
-                            { id: 'itm_1', category_id: 'cat_1', name: 'برجر كلاسيك', description: 'لحم بقري مشوي، خس، طماطم', price: 120, stock: 50, image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500', is_available: true, discount: 'عرض اليوم' }
+                            { id: 'itm_1', category_id: 'cat_1', name: 'كباب لحم', description: 'سيخ لحم مشوي متبل بخلطة الطاهي الخاصة مع خضار مشوية', price: 68, stock: 50, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500', is_available: true, discount: 'Signature' },
+                            { id: 'itm_2', category_id: 'cat_1', name: 'مشاوي مشكلة', description: 'تشكيلة مشاوي لحم ودجاج مع خضار مشوية', price: 125, stock: 40, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500', is_available: true, discount: 'Popular' },
+                            { id: 'itm_3', category_id: 'cat_2', name: 'حمص بالصنوبر', description: 'حمص كريمي مغطى بالصنوبر وزيت الزيتون', price: 32, stock: 60, image: 'https://images.unsplash.com/photo-1577805947697-89e18249d767?w=500', is_available: true, discount: 'Vegetarian' }
                         ],
                         orders: [],
                         employees: []
@@ -77,10 +79,10 @@
         }
 
         const TEMPLATES_CATALOG = [
-            { id: 'burger-fast', name: 'قالب البرجر والفاست فود', desc: 'أحمر وأصفر عصري مع بانر عروض طازجة', preview: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800', theme: { primary: '#dc2626', bg: '#0b0f19', accent: '#facc15' }, badge: '🍔 الأفضل مبيعا' },
-            { id: 'cafe-warm', name: 'قالب الكافيه والمخبوزات', desc: 'درجات البني الدافئ والبيج الراقي', preview: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800', theme: { primary: '#78350f', bg: '#fdf8f6', accent: '#d97706' }, badge: '☕ للكافيهات' },
-            { id: 'seafood-blue', name: 'قالب المأكولات البحرية', desc: 'أزرق عميق وأجواء محيطية ساحرة', preview: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=800', theme: { primary: '#0284c7', bg: '#0b0f19', accent: '#38bdf8' }, badge: '🦐 للأسماك' },
-            { id: 'gold-luxury', name: 'قالب المشويات والفاخر', desc: 'أسود وذهبي ملكي للمطاعم الراقية', preview: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800', theme: { primary: '#d4af37', bg: '#0a0a0a', accent: '#f59e0b' }, badge: '⭐ فاخر' }
+            { id: 'gold-luxury', name: 'قالب المشويات والفاخر (شواء الذهب)', desc: 'أسود وذهبي ملكي للمطاعم الفاخرة والأنيقة', preview: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800', theme: { primary: '#d4af37', bg: '#0a0a0a', accent: '#f59e0b' }, badge: '⭐ فاخر' },
+            { id: 'burger-fast', name: 'قالب البرجر والفاست فود العصري', desc: 'أحمر وأصفر جريء مع بانر عروض طازجة', preview: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800', theme: { primary: '#dc2626', bg: '#0b0f19', accent: '#facc15' }, badge: '🍔 فاست فود' },
+            { id: 'cafe-warm', name: 'قالب الكافيه والمخبوزات (قهوة دفء)', desc: 'درجات البني الدافئ والبيج الراقي', preview: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800', theme: { primary: '#78350f', bg: '#fdf8f6', accent: '#d97706' }, badge: '☕ كافيهات' },
+            { id: 'seafood-blue', name: 'قالب المأكولات البحرية (الليوان)', desc: 'أزرق عميق وأجواء محيطية ساحرة', preview: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=800', theme: { primary: '#0284c7', bg: '#0b0f19', accent: '#38bdf8' }, badge: '🦐 أسماك' }
         ];
 
         function checkSubscription(rest) {
@@ -93,15 +95,15 @@
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_multitenant_2030_v32', JSON.stringify(globalDB));
+                localStorage.setItem('tablia_multitenant_2030_v34', JSON.stringify(globalDB));
                 if (cloudDB) {
-                    cloudDB.ref('tablia_multitenant_enterprise_2030_v32').set(globalDB).catch(() => {});
+                    cloudDB.ref('tablia_multitenant_enterprise_2030_v34').set(globalDB).catch(() => {});
                 }
             } catch (e) {}
         }
 
         if (cloudDB) {
-            cloudDB.ref('tablia_multitenant_enterprise_2030_v32').on('value', (snap) => {
+            cloudDB.ref('tablia_multitenant_enterprise_2030_v34').on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.restaurants) {
                     if (currentRestId && data.restaurants[currentRestId]) {
@@ -115,7 +117,7 @@
                     }
                     globalDB = data;
                     try {
-                        localStorage.setItem('tablia_multitenant_2030_v32', JSON.stringify(globalDB));
+                        localStorage.setItem('tablia_multitenant_2030_v34', JSON.stringify(globalDB));
                     } catch(e){}
                     render();
                 }
@@ -157,7 +159,8 @@
             drawerOpen: false,
             modalType: null,
             previewTpl: null,
-            paymentMethod: 'cash'
+            paymentMethod: 'cash',
+            transferRefInput: ''
         };
 
         function setPage(p){ appState.page = p; render(); window.scrollTo(0,0); }
@@ -272,7 +275,7 @@
             <div class="max-w-md mx-auto px-4 py-12 space-y-6">
                 <div class="text-center space-y-2">
                     <h1 class="text-2xl font-black text-white">منصة طبلية | Tablia OS</h1>
-                    <p class="text-xs text-slate-400">اطلب من الـ QR.. المويتر يرن فوراً، صالة، دليفري، استلام، ومخزن</p>
+                    <p class="text-xs text-slate-400">صالة، دليفري، استلام، عناوين رئيسية، وقوالب احترافية</p>
                 </div>
                 <div class="flex bg-slate-900 p-1.5 rounded-2xl text-xs border border-slate-800">
                     <button onclick="appState.authTab='login'; render();" class="flex-1 py-3 rounded-xl font-bold transition ${appState.authTab==='login'?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">تسجيل دخول</button>
@@ -320,11 +323,11 @@
             if(!phone || !pass) { alert('يرجى إدخال رقم الموبايل وكلمة السر'); return; }
 
             if(cloudDB) {
-                cloudDB.ref('tablia_multitenant_enterprise_2030_v32').once('value').then(snap => {
+                cloudDB.ref('tablia_multitenant_enterprise_2030_v34').once('value').then(snap => {
                     const data = snap.val();
                     if(data && data.restaurants) {
                         globalDB = data;
-                        localStorage.setItem('tablia_multitenant_2030_v32', JSON.stringify(globalDB));
+                        localStorage.setItem('tablia_multitenant_2030_v34', JSON.stringify(globalDB));
                     }
                     verifyLoginData(phone, pass);
                 }).catch(() => { verifyLoginData(phone, pass); });
@@ -361,11 +364,11 @@
             if(!globalDB.restaurants) globalDB.restaurants = {};
             globalDB.restaurants[restId] = { 
                 id: restId, ownerName: owner, name: name, phone: phone, pass: pass, 
-                template_id: 'burger-fast', theme: TEMPLATES_CATALOG[0].theme, tablesCount: 20, deliveryFee: 25,
-                address: 'القاهرة، مصر', wifiName: name + '_Free', wifiPass: '357159357', lang: 'ar',
+                template_id: 'gold-luxury', theme: TEMPLATES_CATALOG[0].theme, tablesCount: 20, deliveryFee: 30,
+                address: 'الرياض، المملكة العربية السعودية', wifiName: name + '_Free', wifiPass: '357159357', lang: 'ar',
                 subscription: { isActive: false, expiresAt: null }, 
                 categories: [
-                    { id: 'cat_1', name: 'الرئيسية', icon: '🍔' }
+                    { id: 'cat_1', name: 'الرئيسية', icon: '🍽️' }
                 ], 
                 menu_items: [], 
                 orders: [],
@@ -384,8 +387,8 @@
                 ${renderNav()}
                 <div class="max-w-3xl mx-auto px-4 py-6 space-y-5">
                     <div class="flex gap-1.5 bg-slate-900 p-1.5 rounded-2xl text-xs border border-slate-800 shadow-sm">
-                        <button onclick="appState.builderStep=1; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===1?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">1. القالب والمعاينة</button>
-                        <button onclick="appState.builderStep=2; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===2?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">2. الصندوق السحري والمنيو</button>
+                        <button onclick="appState.builderStep=1; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===1?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">1. القوالب والمعاينة</button>
+                        <button onclick="appState.builderStep=2; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===2?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">2. الأقسام والصندوق السحري</button>
                         <button onclick="appState.builderStep=4; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===4?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">3. نشر اللينك والـ QR</button>
                     </div>
                     ${appState.builderStep===1 ? renderStep1(rest) : (appState.builderStep===2 ? renderStep2(rest) : renderStep4(rest))}
@@ -396,7 +399,7 @@
         function renderStep1(rest){
             return `
                 <div class="bg-slate-900 p-6 rounded-3xl space-y-5 text-xs border border-slate-800 shadow-xl text-slate-100">
-                    <h2 class="font-black text-white text-sm">🎨 اختر القالب المناسب لمطعمك</h2>
+                    <h2 class="font-black text-white text-sm">🎨 اختر القالب الاحترافي لمطعمك (يُطبق فوراً على بياناتك وأقسامك)</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-slate-300 font-bold mb-1.5">اسم المطعم</label>
@@ -405,6 +408,14 @@
                         <div>
                             <label class="block text-slate-300 font-bold mb-1.5">سعر التوصيل (الدليفري)</label>
                             <input id="r_delivery" type="number" value="${rest.deliveryFee || 25}" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold outline-none focus:border-red-600">
+                        </div>
+                        <div>
+                            <label class="block text-slate-300 font-bold mb-1.5">شبكة الواي فاي</label>
+                            <input id="r_wifiname" value="${rest.wifiName || ''}" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold outline-none focus:border-red-600">
+                        </div>
+                        <div>
+                            <label class="block text-slate-300 font-bold mb-1.5">باسورد الواي فاي</label>
+                            <input id="r_wifipass" value="${rest.wifiPass || ''}" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold outline-none focus:border-red-600">
                         </div>
                     </div>
                     <div>
@@ -420,20 +431,19 @@
                                         <div class="absolute bottom-0 p-3 text-white">
                                             <div class="font-black text-sm">${t.name}</div>
                                         </div>
-                                        <div class="absolute inset-0 bg-black/70 opacity-0 hover:opacity-100 flex items-center justify-center gap-2 transition">
-                                            <button onclick="openPreview('${t.id}')" class="bg-white text-slate-900 px-3 py-2 rounded-xl text-xs font-black shadow">معاينة تفصيلية 👁️</button>
-                                            <button onclick="selectTemplate('${t.id}')" class="bg-red-600 text-white px-3 py-2 rounded-xl text-xs font-black shadow">اختيار ✓</button>
-                                        </div>
                                     </div>
                                     <div class="p-3 bg-slate-900 flex justify-between items-center border-t border-slate-800">
                                         <span class="text-slate-400 text-[10px]">${t.desc}</span>
-                                        <button onclick="openPreview('${t.id}')" class="text-red-400 font-bold hover:underline">معاينة ←</button>
+                                        <div class="flex gap-1.5">
+                                            <button onclick="openPreview('${t.id}')" class="bg-slate-800 text-white px-3 py-1.5 rounded-xl text-[10px] font-black shadow hover:bg-slate-700">معاينة 👁️</button>
+                                            <button onclick="selectTemplate('${t.id}')" class="bg-red-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-black shadow hover:bg-red-500">تفعيل ✓</button>
+                                        </div>
                                     </div>
                                 </div>
                             `).join('')}
                         </div>
                     </div>
-                    <button onclick="saveStep1()" class="bg-red-600 text-white font-black px-5 py-3.5 rounded-xl w-full text-xs shadow-lg hover:bg-red-700 transition">حفظ والانتقال لإدارة المنيو ➔</button>
+                    <button onclick="saveStep1()" class="bg-red-600 text-white font-black px-5 py-3.5 rounded-xl w-full text-xs shadow-lg hover:bg-red-700 transition">حفظ والانتقال لإدارة الأقسام والمنيو ➔</button>
                 </div>
             `;
         }
@@ -462,9 +472,10 @@
 
         function renderPreviewModal(){
             const t = appState.previewTpl;
-            const rest = globalDB.restaurants[currentRestId] || { name: 'مطعمك', menu_items: [] };
+            const rest = globalDB.restaurants[currentRestId] || { name: 'مطعمك', menu_items: [], categories: [] };
+            const categories = rest.categories && rest.categories.length > 0 ? rest.categories : [{id:'c1', name:'الرئيسية'}];
             const items = rest.menu_items && rest.menu_items.length > 0 ? rest.menu_items : [
-                { name: 'وجبة تجريبية مميزة', description: 'طازج ومعد بإتقان', price: 120, image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' }
+                { name: 'وجبة مميزة تجريبية', description: 'معد بعناية لترضيك', price: 55, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500' }
             ];
 
             return `
@@ -473,7 +484,7 @@
                         <div class="p-4 bg-slate-900 flex justify-between items-center border-b border-slate-800">
                             <div>
                                 <span class="bg-red-600 text-white px-2.5 py-0.5 rounded-full text-[10px] font-black">${t.badge}</span>
-                                <h3 class="font-black text-sm mt-1">معاينة تفصيلية لـ: ${t.name} (ببيانات مطعمك)</h3>
+                                <h3 class="font-black text-sm mt-1">معاينة القالب: ${t.name} (بأقسام وأصناف مطعمك)</h3>
                             </div>
                             <div class="flex gap-2">
                                 <button onclick="selectTemplate('${t.id}')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-black shadow hover:bg-emerald-500">تفعيل هذا القالب ✓</button>
@@ -484,24 +495,36 @@
                             <div class="p-6 rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between border border-slate-800" style="background:${t.theme.primary}; color:#fff;">
                                 <div class="space-y-3">
                                     <h1 class="text-3xl font-black uppercase">${rest.name}</h1>
-                                    <p class="text-xs opacity-90">اطلب الآن من الـ QR على الترابيزة.. المويتر يرن فوراً!</p>
-                                    <button onclick="selectTemplate('${t.id}')" class="bg-white text-slate-950 font-black px-6 py-3 rounded-xl shadow">اطلب الآن ➔</button>
+                                    <p class="text-xs opacity-90">اطلب الآن من الـ QR على الطاولة.. المويتر يرن فوراً!</p>
+                                    <button onclick="selectTemplate('${t.id}')" class="bg-white text-slate-950 font-black px-6 py-3 rounded-xl shadow">تفعيل القالب واستخدامه ➔</button>
                                 </div>
                                 <img src="${t.preview}" class="w-48 h-48 object-cover rounded-2xl shadow-xl mt-4 md:mt-0">
                             </div>
-                            <div class="space-y-3">
-                                <h3 class="font-black text-lg">قائمة الأصناف</h3>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                                    ${items.map(i => `
-                                        <div class="bg-slate-900/90 text-white p-4 rounded-2xl border border-slate-800 space-y-1.5 shadow">
-                                            <img src="${i.image}" class="w-full h-32 object-cover rounded-xl">
-                                            <div class="font-black text-sm">${i.name}</div>
-                                            <div class="text-[10px] text-slate-400">${i.description}</div>
-                                            <div class="font-black text-amber-400 text-sm">${i.price} ج.م</div>
+
+                            ${categories.map(cat => {
+                                const catItems = items.filter(i => i.category_id === cat.id || !i.category_id);
+                                if(catItems.length === 0) return '';
+                                return `
+                                    <div class="space-y-3 pt-2">
+                                        <h2 class="font-black text-lg border-b pb-2 flex items-center gap-2" style="border-color:${t.theme.primary}; color:${t.theme.primary}">
+                                            <span>${cat.icon || '🔥'}</span> ${cat.name}
+                                        </h2>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                            ${catItems.map(i => `
+                                                <div class="bg-slate-900/90 text-white p-4 rounded-2xl border border-slate-800 space-y-1.5 shadow">
+                                                    <img src="${i.image}" class="w-full h-32 object-cover rounded-xl">
+                                                    <div class="font-black text-sm">${i.name}</div>
+                                                    <div class="text-[10px] text-slate-400">${i.description}</div>
+                                                    <div class="flex justify-between items-center pt-2">
+                                                        <span class="font-black text-amber-400 text-sm">${i.price} ج.م</span>
+                                                        <span class="px-3 py-1 bg-red-600 text-white rounded-xl font-bold">+ أضف</span>
+                                                    </div>
+                                                </div>
+                                            `).join('')}
                                         </div>
-                                    `).join('')}
-                                </div>
-                            </div>
+                                    </div>
+                                `;
+                            }).join('')}
                         </div>
                     </div>
                 </div>
@@ -511,9 +534,13 @@
         function saveStep1(){ 
             const nameInput = document.getElementById('r_name');
             const deliveryInput = document.getElementById('r_delivery');
+            const wifiNameInput = document.getElementById('r_wifiname');
+            const wifiPassInput = document.getElementById('r_wifipass');
             const r = globalDB.restaurants[currentRestId];
             if(nameInput) r.name = nameInput.value.trim();
             if(deliveryInput) r.deliveryFee = Number(deliveryInput.value) || 25;
+            if(wifiNameInput) r.wifiName = wifiNameInput.value.trim();
+            if(wifiPassInput) r.wifiPass = wifiPassInput.value.trim();
             syncCloud(); 
             appState.builderStep = 2; 
             render(); 
@@ -521,20 +548,20 @@
 
         function renderStep2(rest){
             if(!rest.menu_items) rest.menu_items = [];
-            if(!rest.categories) rest.categories = [{id:'cat_1', name:'الرئيسية', icon:'🍔'}];
+            if(!rest.categories) rest.categories = [{id:'cat_1', name:'المشاوي', icon:'🍢'}, {id:'cat_2', name:'المقبلات', icon:'🥗'}];
 
             return `
                 <div class="bg-slate-900 p-6 rounded-3xl space-y-5 text-xs border border-slate-800 shadow-xl text-slate-100">
                     <div class="space-y-3">
                         <div class="flex justify-between items-center">
-                            <h3 class="font-black text-white text-sm">إدارة الأقسام والمنيو</h3>
-                            <button onclick="addCategoryPrompt()" class="bg-red-500/10 text-red-400 font-black px-3 py-1.5 rounded-xl hover:bg-red-500/20 transition">+ إضافة قسم</button>
+                            <h3 class="font-black text-white text-sm">📁 إدارة الأقسام (تظهر كعناوين رئيسية في المنيو)</h3>
+                            <button onclick="addCategoryPrompt()" class="bg-red-500/10 text-red-400 font-black px-3 py-1.5 rounded-xl hover:bg-red-500/20 transition">+ إضافة قسم رئيسي</button>
                         </div>
                         <div class="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
                             ${rest.categories.map(c=>`
-                                <div class="bg-slate-950 border border-slate-800 px-3.5 py-2 rounded-xl flex items-center gap-2 shrink-0 shadow-sm text-white">
-                                    <span>${c.icon || '🍽️'}</span>
-                                    <span class="font-bold">${c.name}</span>
+                                <div class="bg-slate-950 border border-slate-800 px-3.5 py-2.5 rounded-xl flex items-center gap-2 shrink-0 shadow-sm text-white">
+                                    <span class="text-sm">${c.icon || '🍽️'}</span>
+                                    <span class="font-black">${c.name}</span>
                                     <button onclick="deleteCategory('${c.id}')" class="text-red-400 hover:text-red-300 ml-1"><i class="fa-solid fa-xmark"></i></button>
                                 </div>
                             `).join('')}
@@ -542,28 +569,50 @@
                     </div>
 
                     <div class="bg-emerald-950/30 border border-emerald-900 p-4 rounded-2xl space-y-3">
-                        <label class="block text-emerald-400 font-black">🪄 الصندوق السحري الذكي (يضيف الأقسام والأصناف تلقائياً):</label>
-                        <p class="text-[11px] text-slate-300">اكتب الأقسام وجواها الأصناف والأسعار (مثال: <b>قسم البرجر: برجر كلاسيك 120، برجر دجاج 110 | قسم المشروبات: كوكاكولا 25</b>):</p>
-                        <textarea id="magic_box" placeholder="قسم البرجر: برجر كلاسيك 120, برجر دجاج 110&#10;قسم المشروبات: كوكاكولا 25, مياه معدنية 10" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-white outline-none focus:border-emerald-600 font-mono" rows="4"></textarea>
-                        <button onclick="parseSmartMagicText()" class="w-full bg-emerald-600 text-white font-black py-3 rounded-xl shadow hover:bg-emerald-500 transition">تحويل وتوليد الأقسام والأصناف تلقائياً ✓</button>
+                        <label class="block text-emerald-400 font-black">🪄 الصندوق السحري الذكي (يضيف الأقسام والأصناف والصور تلقائياً):</label>
+                        <p class="text-[11px] text-slate-300">اكتب الأقسام عناوين رئيسية وتحتها الأصناف مع الأسعار والصور (مثال):</p>
+                        <div class="bg-slate-950 p-3 rounded-xl font-mono text-[10px] text-amber-300 space-y-1">
+                            قسم المشويات: كباب لحم 68 [رابط الصورة], مشاوي مشكلة 125 [رابط الصورة]<br>
+                            قسم المقبلات: حمص بالصنوبر 32 [رابط الصورة]
+                        </div>
+                        <textarea id="magic_box" placeholder="قسم المشويات: كباب لحم 68, مشاوي مشكلة 125&#10;قسم المقبلات: حمص بالصنوبر 32" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-white outline-none focus:border-emerald-600 font-mono" rows="4"></textarea>
+                        <button onclick="parseSmartMagicText()" class="w-full bg-emerald-600 text-white font-black py-3 rounded-xl shadow hover:bg-emerald-500 transition">توليد الأقسام والأصناف وتوزيعها تلقائياً ✓</button>
+                    </div>
+
+                    <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+                        <h3 class="font-black text-white text-xs">➕ إضافة صنف جديد يدوياً مع صورة وقسم محدد:</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <input id="newItemName" placeholder="اسم الصنف (مثال: شيش طاووق)" class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold outline-none">
+                            <input id="newItemPrice" type="number" placeholder="السعر (ج.م / ر.س)" class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold outline-none">
+                            <select id="newItemCat" class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold outline-none">
+                                ${rest.categories.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}
+                            </select>
+                            <input id="newItemImg" placeholder="رابط صورة الصنف (URL) أو اتركها فارغة" class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold outline-none">
+                        </div>
+                        <textarea id="newItemDesc" placeholder="وصف الصنف (مكونات الطبق)..." class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white outline-none" rows="2"></textarea>
+                        <button onclick="addNewManualItem()" class="w-full bg-red-600 text-white font-black py-3 rounded-xl shadow hover:bg-red-700 transition">إضافة الصنف للمنيو ➔</button>
                     </div>
 
                     <div class="space-y-3">
-                        <h3 class="font-black text-white">الأصناف الحالية بالمخزن والمنيو (${rest.menu_items.length}):</h3>
+                        <h3 class="font-black text-white">الأصناف الحالية مرتبطة بالأقسام (${rest.menu_items.length}):</h3>
                         ${rest.menu_items.length === 0 ? '<p class="text-slate-500 text-center py-6">لا توجد أصناف مضافة بعد.</p>' : ''}
                         <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
-                            ${rest.menu_items.map((it, i) => `
-                                <div class="bg-slate-950 p-3 rounded-2xl flex justify-between items-center border border-slate-800 shadow-sm">
-                                    <div class="flex items-center gap-3">
-                                        <img src="${it.image}" class="w-12 h-12 object-cover rounded-xl shadow">
-                                        <div>
-                                            <h4 class="font-black text-white text-xs">${it.name}</h4>
-                                            <span class="text-red-500 font-bold text-xs">${it.price} ج.م | المخزون: <b class="text-emerald-400">${it.stock || 50}</b></span>
+                            ${rest.menu_items.map((it, i) => {
+                                const cat = rest.categories.find(c => c.id === it.category_id) || {name:'عام'};
+                                return `
+                                    <div class="bg-slate-950 p-3 rounded-2xl flex justify-between items-center border border-slate-800 shadow-sm">
+                                        <div class="flex items-center gap-3">
+                                            <img src="${it.image}" class="w-12 h-12 object-cover rounded-xl shadow">
+                                            <div>
+                                                <span class="bg-red-500/20 text-red-400 px-2 py-0.5 rounded text-[9px] font-bold">${cat.name}</span>
+                                                <h4 class="font-black text-white text-xs mt-0.5">${it.name}</h4>
+                                                <span class="text-amber-400 font-bold text-xs">${it.price} | المخزون: <b class="text-emerald-400">${it.stock || 50}</b></span>
+                                            </div>
                                         </div>
+                                        <button onclick="globalDB.restaurants['${currentRestId}'].menu_items.splice(${i},1); syncCloud(); render();" class="bg-red-500/10 text-red-400 px-3 py-1.5 rounded-xl hover:bg-red-500/20 transition"><i class="fa-solid fa-trash"></i></button>
                                     </div>
-                                    <button onclick="globalDB.restaurants['${currentRestId}'].menu_items.splice(${i},1); syncCloud(); render();" class="bg-red-500/10 text-red-400 px-3 py-1.5 rounded-xl hover:bg-red-500/20 transition"><i class="fa-solid fa-trash"></i></button>
-                                </div>
-                            `).join('')}
+                                `;
+                            }).join('')}
                         </div>
                     </div>
 
@@ -573,19 +622,46 @@
         }
 
         function addCategoryPrompt(){
-            const name = prompt('أدخل اسم القسم الجديد:');
+            const name = prompt('أدخل اسم القسم الرئيسي الجديد (عنوان رئيسي في المنيو):');
             if(!name) return;
             const rest = globalDB.restaurants[currentRestId];
             if(!rest.categories) rest.categories = [];
-            rest.categories.push({ id: 'cat_' + Date.now(), name: name.trim(), icon: '🍔' });
+            rest.categories.push({ id: 'cat_' + Date.now(), name: name.trim(), icon: '🔥' });
             syncCloud();
             render();
         }
 
         function deleteCategory(catId){
             const rest = globalDB.restaurants[currentRestId];
-            if(rest.categories.length <= 1) { alert('يجب أن يكون هناك قسم واحد على الأقل.'); return; }
+            if(rest.categories.length <= 1) { alert('يجب أن يكون هناك قسم رئيسي واحد على الأقل.'); return; }
             rest.categories = rest.categories.filter(c => c.id !== catId);
+            syncCloud();
+            render();
+        }
+
+        function addNewManualItem(){
+            const rest = globalDB.restaurants[currentRestId];
+            const name = document.getElementById('newItemName').value.trim();
+            const price = Number(document.getElementById('newItemPrice').value);
+            const catId = document.getElementById('newItemCat').value;
+            const img = document.getElementById('newItemImg').value.trim() || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500';
+            const desc = document.getElementById('newItemDesc').value.trim() || 'طازج ومعد بإتقان';
+
+            if(!name || !price) { alert('يرجى إدخال اسم الصنف والسعر على الأقل.'); return; }
+            if(!rest.menu_items) rest.menu_items = [];
+
+            rest.menu_items.push({
+                id: 'itm_' + Date.now(),
+                category_id: catId,
+                name,
+                description: desc,
+                price,
+                stock: 50,
+                image: img,
+                is_available: true,
+                discount: 'موصى به'
+            });
+
             syncCloud();
             render();
         }
@@ -608,7 +684,7 @@
                     const parts = line.split(':');
                     const catName = parts[0].replace('قسم', '').trim();
                     const catId = 'cat_' + Date.now() + Math.random();
-                    rest.categories.push({ id: catId, name: catName, icon: '🍽️' });
+                    rest.categories.push({ id: catId, name: catName, icon: '🔥' });
                     currentCatId = catId;
                     
                     if(parts[1]) {
@@ -633,7 +709,7 @@
             const m = str.match(/\d+/);
             if(!m) return;
             const price = Number(m[0]);
-            const name = str.replace(m[0], '').replace(/ج/g, '').replace(/جنيه/g, '').trim();
+            const name = str.replace(m[0], '').replace(/ج/g, '').replace(/جنيه/g, '').replace(/ر.س/g, '').trim();
             if(name) {
                 rest.menu_items.push({
                     id: 'itm_' + Date.now() + Math.random(),
@@ -642,7 +718,7 @@
                     description: 'طازج ومعد بإتقان لترضيك',
                     price,
                     stock: 50,
-                    image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500',
+                    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500',
                     is_available: true,
                     discount: ''
                 });
@@ -657,7 +733,7 @@
             return `
                 <div class="bg-slate-900 p-6 rounded-3xl space-y-5 text-xs border border-slate-800 shadow-xl text-slate-100">
                     <div class="text-center space-y-1">
-                        <h2 class="font-black text-white text-sm">🎉 منيو مطعمك جاهز للعمل واستقبال الطلبات</h2>
+                        <h2 class="font-black text-white text-sm">🎉 منيو مطعمك جاهز للعرض والطلب</h2>
                         <p class="text-slate-400 text-[10px]">القالب المفعل: <b class="text-red-500">${tpl.name}</b></p>
                     </div>
 
@@ -719,11 +795,11 @@
                                     </div>
                                     <div class="text-left">
                                         <span class="text-red-500 font-black text-sm">${ord.total} ج.م</span>
-                                        <span class="text-[10px] text-emerald-400 block">${ord.payment_method==='vodafone'?'فودافون كاش':(ord.payment_method==='instapay'?'InstaPay':'كاش')}</span>
+                                        <span class="text-[10px] text-emerald-400 block">${ord.payment_display}</span>
                                     </div>
                                 </div>
                                 <div class="text-slate-300 text-[11px] bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-1">
-                                    <p class="font-bold text-red-400">📍 تفاصيل الطلب: ${ord.address}</p>
+                                    <p class="font-bold text-red-400">📍 تفاصيل العنوان / المكان: ${ord.address}</p>
                                     <div class="pt-1">${ord.items_json ? ord.items_json.map(x => `• ${x.qty}x ${x.name} (${x.price * x.qty} ج.م)`).join('<br>') : ''}</div>
                                 </div>
                                 <div class="grid grid-cols-5 gap-1 pt-1">
@@ -866,13 +942,6 @@
                 return renderCheckoutPage(rest, theme);
             }
 
-            const filtered = rest.menu_items.filter(i => {
-                if (!i.is_available) return false;
-                const matchCat = appState.activeCat === 'all' || i.category_id === appState.activeCat;
-                const matchQ = i.name.toLowerCase().includes(appState.search.toLowerCase());
-                return matchCat && matchQ;
-            });
-
             const cartCount = appState.cart.reduce((s,i)=>s+i.qty,0); 
             const itemsTotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
             const deliveryFee = rest.deliveryFee || 25;
@@ -922,8 +991,8 @@
                         <div class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 text-xs text-slate-950 text-center">
                             <div class="bg-white p-6 rounded-3xl max-w-sm w-full space-y-3 shadow-2xl">
                                 <h3 class="font-black text-sm">عنوان الفرع</h3>
-                                <p class="font-bold">${rest.address||'القاهرة'}</p>
-                                <a href="https://maps.google.com/?q=${encodeURIComponent(rest.address||'القاهرة')}" target="_blank" class="block bg-red-600 text-white font-black py-3 rounded-xl">فتح في خريطة جوجل</a>
+                                <p class="font-bold">${rest.address||'الرياض'}</p>
+                                <a href="https://maps.google.com/?q=${encodeURIComponent(rest.address||'الرياض')}" target="_blank" class="block bg-red-600 text-white font-black py-3 rounded-xl">فتح في خريطة جوجل</a>
                                 <button onclick="appState.modalType=null; render();" class="w-full bg-slate-100 py-2 rounded-xl">إغلاق</button>
                             </div>
                         </div>
@@ -937,7 +1006,7 @@
                                 <div>
                                     <span class="text-[10px] bg-white/20 px-2.5 py-0.5 rounded-full font-bold">منيو مطعم ${rest.name}</span>
                                     <h1 class="font-black text-lg mt-1">${rest.name}</h1>
-                                    <p class="text-[11px] text-slate-200"><i class="fa-solid fa-location-dot"></i> ${rest.address || 'القاهرة'}</p>
+                                    <p class="text-[11px] text-slate-200"><i class="fa-solid fa-location-dot"></i> ${rest.address || 'الرياض'}</p>
                                 </div>
                                 <span class="bg-emerald-500 text-white text-[10px] px-2.5 py-1 rounded-full font-black shadow">مفتوح الآن</span>
                             </div>
@@ -963,38 +1032,44 @@
 
                         <input value="${appState.search}" oninput="appState.search=this.value; render();" placeholder="ابحث في وجبات المنيو..." class="w-full py-3 px-4 rounded-2xl bg-slate-900 text-white border border-slate-800 text-xs outline-none shadow-sm">
 
-                        <!-- Categories -->
-                        <div class="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
-                            <div onclick="appState.activeCat='all'; render();" class="flex flex-col items-center gap-1 cursor-pointer shrink-0">
-                                <div class="w-14 h-14 rounded-full flex items-center justify-center text-lg shadow ${appState.activeCat==='all'?'':'bg-slate-900 text-slate-300 border border-slate-800'}" style="${appState.activeCat==='all'?`background:${theme.primary}; color:#fff;`:''}">🌟</div>
-                                <span class="text-[10px] font-bold">الكل</span>
-                            </div>
-                            ${rest.categories.map(c => `
-                                <div onclick="appState.activeCat='${c.id}'; render();" class="flex flex-col items-center gap-1 cursor-pointer shrink-0">
-                                    <div class="w-14 h-14 rounded-full flex items-center justify-center text-lg shadow ${appState.activeCat===c.id?'':'bg-slate-900 text-slate-300 border border-slate-800'}" style="${appState.activeCat===c.id?`background:${theme.primary}; color:#fff;`:''}">${c.icon || '🍔'}</div>
-                                    <span class="text-[10px] font-bold">${c.name}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-
-                        <!-- Menu Items -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            ${filtered.map(item => `
-                                <div class="bg-slate-900 text-white rounded-2xl border border-slate-800 overflow-hidden shadow-sm flex flex-col justify-between relative">
-                                    ${item.discount ? `<span class="absolute top-2.5 right-2.5 bg-red-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow">${item.discount}</span>` : ''}
-                                    <img src="${item.image}" class="h-36 w-full object-cover">
-                                    <div class="p-3.5 space-y-2">
-                                        <div>
-                                            <h3 class="font-black text-xs">${item.name}</h3>
-                                            <p class="text-[10px] text-slate-400 line-clamp-2 mt-0.5">${item.description}</p>
+                        <!-- Menu Display Grouped by Category Headings -->
+                        <div class="space-y-6">
+                            ${rest.categories.map(cat => {
+                                const catItems = rest.menu_items.filter(i => {
+                                    if(!i.is_available) return false;
+                                    const matchCat = i.category_id === cat.id;
+                                    const matchQ = i.name.toLowerCase().includes(appState.search.toLowerCase());
+                                    return matchCat && matchQ;
+                                });
+                                if(catItems.length === 0) return '';
+                                return `
+                                    <div class="space-y-3">
+                                        <div class="flex items-center gap-2 border-b border-slate-800 pb-2">
+                                            <span class="text-base">${cat.icon || '🔥'}</span>
+                                            <h2 class="font-black text-sm sm:text-base uppercase" style="color: ${theme.primary}">${cat.name}</h2>
+                                            <span class="text-[10px] text-slate-400 mr-auto font-bold">(${catItems.length} أصناف)</span>
                                         </div>
-                                        <div class="flex justify-between items-center pt-2 border-t border-slate-800">
-                                            <span class="font-black text-xs" style="color:${theme.primary}">${item.price} ج.م</span>
-                                            <button onclick="addToCart('${item.id}')" class="px-4 py-2 text-xs font-black text-white rounded-xl shadow transition" style="background:${theme.primary}">+ أضف</button>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            ${catItems.map(item => `
+                                                <div class="bg-slate-900 text-white rounded-2xl border border-slate-800 overflow-hidden shadow-sm flex flex-col justify-between relative">
+                                                    ${item.discount ? `<span class="absolute top-2.5 right-2.5 bg-red-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow">${item.discount}</span>` : ''}
+                                                    <img src="${item.image}" class="h-36 w-full object-cover">
+                                                    <div class="p-3.5 space-y-2">
+                                                        <div>
+                                                            <h3 class="font-black text-xs">${item.name}</h3>
+                                                            <p class="text-[10px] text-slate-400 line-clamp-2 mt-0.5">${item.description}</p>
+                                                        </div>
+                                                        <div class="flex justify-between items-center pt-2 border-t border-slate-800">
+                                                            <span class="font-black text-xs" style="color:${theme.primary}">${item.price} ج.م</span>
+                                                            <button onclick="addToCart('${item.id}')" class="px-4 py-2 text-xs font-black text-white rounded-xl shadow transition" style="background:${theme.primary}">+ أضف</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            `).join('')}
                                         </div>
                                     </div>
-                                </div>
-                            `).join('')}
+                                `;
+                            }).join('')}
                         </div>
                     </div>
 
@@ -1060,8 +1135,11 @@
                                 <input id="co_phone" placeholder="010xxxxxxxx" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl font-bold outline-none focus:border-red-600 text-white">
                             </div>
                             <div>
-                                <label class="block font-bold text-slate-300 mb-1">${appState.orderType==='dine-in'?'رقم الطاولة':(appState.orderType==='delivery'?'عنوان الاستلام بالتفصيل':'ملاحظات الاستلام من الفرع')}</label>
-                                <input id="co_addr" value="${appState.orderType==='dine-in'?'طاولة 1':(appState.orderType==='delivery'?'العنوان بالتفصيل':'الاستلام من الفرع الرئيسي' )}" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl font-bold outline-none focus:border-red-600 text-white">
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="font-bold text-slate-300">${appState.orderType==='dine-in'?'رقم الطاولة':(appState.orderType==='delivery'?'العنوان بالتفصيل':'ملاحظات الاستلام')}</label>
+                                    ${appState.orderType==='delivery' ? `<button onclick="captureCheckoutGPS()" class="text-sky-400 font-bold hover:underline">📍 تحديد الموقع عبر GPS</button>` : ''}
+                                </div>
+                                <input id="co_addr" value="${appState.orderType==='dine-in'?appState.tableNumber:(appState.orderType==='delivery'?'':'الاستلام من الفرع الرئيسي')}" placeholder="${appState.orderType==='delivery'?'اكتب العنوان أو اضغط تحديد عبر GPS':''}" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl font-bold outline-none focus:border-red-600 text-white">
                             </div>
 
                             <div>
@@ -1074,10 +1152,12 @@
                             </div>
 
                             ${appState.paymentMethod !== 'cash' ? `
-                                <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 text-center space-y-1">
-                                    <p class="font-bold text-amber-400">حول المبلغ (${grandTotal} ج.م) على رقم المحفظة:</p>
-                                    <p class="text-sm font-black select-all">01015861991</p>
-                                    <p class="text-[10px] text-slate-400">ثم اضغط تأكيد الطلب وسيرن هاتف الويتر والمطعم فوراً!</p>
+                                <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 text-center space-y-2">
+                                    <p class="font-bold text-amber-400">حول المبلغ (${grandTotal} ج.م) على رقم المحفظة: <b class="text-white select-all">01015861991</b></p>
+                                    <div>
+                                        <label class="block text-slate-400 text-[10px] mb-1">أدخل رقم المحفظة أو رقم عملية التحويل لتأكيد الدفع:</label>
+                                        <input id="transfer_ref" value="${appState.transferRefInput}" oninput="appState.transferRefInput=this.value" placeholder="مثال: 010xxxxxxxx أو رقم العملية" class="w-full bg-slate-900 border border-slate-700 p-2.5 rounded-xl text-white text-center font-bold outline-none focus:border-amber-500">
+                                    </div>
                                 </div>
                             ` : ''}
 
@@ -1086,6 +1166,22 @@
                     </div>
                 </div>
             `;
+        }
+
+        function captureCheckoutGPS(){
+            const addrInput = document.getElementById('co_addr');
+            if(addrInput) addrInput.value = 'جاري التقاط إحداثيات الـ GPS...';
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    const lat = pos.coords.latitude.toFixed(4);
+                    const lng = pos.coords.longitude.toFixed(4);
+                    if(addrInput) addrInput.value = `موقع GPS: (خط عرض ${lat}, خط طول ${lng}) - تم التقاطه بنجاح`;
+                }, () => {
+                    if(addrInput) addrInput.value = 'تعذر التقاط الموقع تلقائياً، يرجى كتابة العنوان بالتفصيل.';
+                }, { timeout: 10000 });
+            } else {
+                if(addrInput) addrInput.value = 'المتصفح لا يدعم تحديد الموقع.';
+            }
         }
 
         function addToCart(id){
@@ -1110,7 +1206,13 @@
             const name = document.getElementById('co_name').value.trim();
             const phone = document.getElementById('co_phone').value.trim();
             const address = document.getElementById('co_addr').value.trim();
+            const transferRef = document.getElementById('transfer_ref') ? document.getElementById('transfer_ref').value.trim() : '';
+
             if(!name || !phone) { alert('يرجى كتابة الاسم ورقم الموبايل!'); return; }
+            if(appState.paymentMethod !== 'cash' && !transferRef) {
+                alert('يرجى إدخال رقم المحفظة أو رقم عملية التحويل لتأكيد الدفع.');
+                return;
+            }
 
             if(!rest.orders) rest.orders = [];
             const itemsTotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
@@ -1120,6 +1222,10 @@
             let orderTypeLabel = '🍽️ صالة المطعم';
             if(appState.orderType==='delivery') orderTypeLabel = '🛵 دليفري';
             if(appState.orderType==='pickup') orderTypeLabel = '🏪 استلام فرع';
+
+            let paymentDisplay = '💵 كاش عند الاستلام';
+            if(appState.paymentMethod==='vodafone') paymentDisplay = `📱 فودافون كاش (رقم المحول: ${transferRef})`;
+            if(appState.paymentMethod==='instapay') paymentDisplay = `💳 InstaPay (رقم العملية: ${transferRef})`;
 
             appState.cart.forEach(cartItem => {
                 const menuItem = rest.menu_items.find(m => m.id === cartItem.id);
@@ -1140,6 +1246,7 @@
                 total,
                 status: 'new',
                 payment_method: appState.paymentMethod,
+                payment_display: paymentDisplay,
                 created_at: new Date().toLocaleTimeString('ar-EG')
             });
 
@@ -1147,9 +1254,10 @@
             localStorage.setItem('tablia_active_order_id', appState.activeOrderId);
             appState.cart = [];
             appState.checkoutView = false;
+            appState.transferRefInput = '';
             syncCloud();
             playBell();
-            alert('تم إرسال طلبك بنجاح ورن هاتف المطعم والويتر فوراً!');
+            alert('تم إرسال طلبك بنجاح ورن هاتف الويتر والمطعم فوراً!');
             render();
         }
 
@@ -1180,7 +1288,7 @@
                 ${renderNav()}
                 <div class="max-w-3xl mx-auto px-4 py-6 space-y-4 text-xs text-slate-100">
                     <div class="flex justify-between items-center bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-sm">
-                        <h1 class="font-black text-white text-sm">QR Code الطاولات والكروت الجاهزة للطباعة - ${rest.name}</h1>
+                        <h1 class="font-black text-sm">QR Code الطاولات والكروت الجاهزة للطباعة - ${rest.name}</h1>
                         <button onclick="window.print()" class="bg-red-600 text-white px-4 py-2.5 rounded-xl font-black shadow">طباعة الكل 🖨️</button>
                     </div>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
