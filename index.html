@@ -1,213 +1,64 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tablia OS 2030 | المنصة السحابية المتكاملة للمطاعم</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <script>
-        tailwind.config = { theme: { extend: { fontFamily: { cairo: ['Cairo', 'sans-serif'] } } } }
-    </script>
-    <style>
-        body { font-family: 'Cairo', sans-serif; background-color: #030712; color: #f3f4f6; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .glass { background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .gold-gradient { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tablia OS 2030 - Fixed</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+<style>body{font-family:Cairo;background:#030712;color:#f3f4f6}.glass{background:rgba(15,23,42,.92);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.08)}.gold-gradient{background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%)}</style>
 </head>
-<body class="antialiased min-h-screen pb-24 selection:bg-amber-500 selection:text-slate-950">
-
-    <audio id="cloud-bell" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
-    <div id="app"></div>
-
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCVofMvvbyMBGM1pQNeoG-gMT48Ll5IL4I",
-            authDomain: "sofratech-2e033.firebaseapp.com",
-            databaseURL: "https://sofratech-2e033-default-rtdb.firebaseio.com",
-            projectId: "sofratech-2e033",
-            storageBucket: "sofratech-2e033.firebasestorage.app",
-            messagingSenderId: "742714705801",
-            appId: "1:742714705801:web:ddd019d66fa7435f6f8358"
-        };
-        let cloudDB = null;
-        try { firebase.initializeApp(firebaseConfig); cloudDB = firebase.database(); } catch (e) {}
-
-        const PLATFORM_OWNER = { walletNumber: '01015861991', monthlyPrice: 600, adminPass: '2030' };
-
-        let globalDB = JSON.parse(localStorage.getItem('tablia_multitenant_2030')) || {
-            restaurants: {
-                "rest_demo": {
-                    id: "rest_demo", ownerName: "محمد الحاتي", name: "مشويات الحاتي الفاخرة", phone: "01015861991", pass: "1234",
-                    template_id: "foodera-modern", layout: "foodera", theme: { primary: "#ea580c", bg: "#030712" }, tablesCount: 20,
-                    subscription: { isActive: true, expiresAt: Date.now() + 30*24*60*60*1000 },
-                    categories: [{ id: 'cat_1', name: 'المشويات', icon: '🥩' }, { id: 'cat_2', name: 'السندوتشات', icon: '🥙' }],
-                    menu_items: [{ id: 'itm_1', category_id: 'cat_1', name: 'كيلو كباب وكفتة', description: 'لحم بلدي مشوي', price: 680, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500', is_available: true, tags: [] }],
-                    orders: []
-                }
-            }
-        };
-
-        const TEMPLATES_CATALOG = [
-            { id: 'foodera-modern', name: 'Foodera Modern', layout: 'foodera', desc: 'تصميم عصري', preview: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
-            { id: 'pizza-deli', name: 'Pizza Deli', layout: 'pizza', desc: 'بيتزا فخم', preview: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500' },
-            { id: 'dark-grill', name: 'Dark Grill VIP', layout: 'dark_grill', desc: 'ليلي فاخر', preview: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500' }
-        ];
-
-        function syncCloud() {
-            localStorage.setItem('tablia_multitenant_2030', JSON.stringify(globalDB));
-            if (cloudDB) cloudDB.ref('tablia_multitenant_enterprise_2030').set(globalDB);
-        }
-        if (cloudDB) {
-            cloudDB.ref('tablia_multitenant_enterprise_2030').on('value', (snap) => {
-                const data = snap.val();
-                if (data) { 
-                    const oldCount = globalDB.restaurants[currentRestId]?.orders?.length || 0;
-                    globalDB = data; 
-                    const newCount = globalDB.restaurants[currentRestId]?.orders?.length || 0;
-                    if(newCount > oldCount) playBell();
-                    render(); 
-                } else syncCloud();
-            });
-        }
-
-        function playBell(){
-            const a=document.getElementById('cloud-bell');
-            if(a){ a.currentTime=0; a.play().catch(()=>{}); }
-            if('vibrate' in navigator) navigator.vibrate([400,200,400]);
-        }
-        document.body.addEventListener('click', ()=>{ 
-            const a=document.getElementById('cloud-bell'); 
-            if(a){ a.play().then(()=>a.pause()).catch(()=>{}); } 
-        }, {once:true});
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const isCustomerMode = urlParams.get('view') === 'menu';
-        const targetRestSlug = urlParams.get('rest');
-        let currentRestId = localStorage.getItem('tablia_logged_rest_id') || null;
-        const appState = { page: isCustomerMode ? 'storefront' : (currentRestId ? 'builder' : 'auth'), authTab: 'login', builderStep: 1, activeCat: 'all', search: '', cart: [], cartOpen: false, tableNumber: urlParams.get('t')||null, gpsCoords:null, gpsStatus:'', activeOrderId: localStorage.getItem('tablia_active_order_id')||null, trackerOpen:false, adminUnlocked:false };
-
-        function setPage(p){ appState.page=p; render(); window.scrollTo(0,0); }
-
-        function render(){
-            const root=document.getElementById('app');
-            let content='';
-            if(isCustomerMode) content=renderStorefront();
-            else if(appState.page==='auth') content=renderAuthScreen();
-            else if(appState.page==='builder') content=renderBuilder();
-            else if(appState.page==='cashier') content=renderCashier();
-            else if(appState.page==='dashboard') content=renderDashboard();
-            else if(appState.page==='qr_print') content=renderQRPrint();
-            else content=renderBuilder();
-            const bottomBar = isCustomerMode ? '' : renderBottomNav();
-            root.innerHTML=content+bottomBar;
-        }
-
-        function renderNav(){
-            const rest=currentRestId?globalDB.restaurants[currentRestId]:null;
-            return `<nav class="sticky top-0 z-50 glass border-b border-white/10 px-4 py-3"><div class="max-w-4xl mx-auto flex justify-between items-center"><div class="flex gap-2 items-center cursor-pointer" onclick="setPage(currentRestId?'builder':'auth')"><div class="w-9 h-9 rounded-xl gold-gradient text-slate-950 flex items-center justify-center font-black">ط</div><span class="font-black text-white">Tablia <span class="text-amber-400">2030</span></span></div>${currentRestId?`<button onclick="currentRestId=null; localStorage.removeItem('tablia_logged_rest_id'); setPage('auth');" class="bg-red-500/10 text-red-400 px-3 py-1 rounded-xl text-xs">خروج</button>`:''}</div></nav>`;
-        }
-        function renderBottomNav(){
-            if(!currentRestId) return '';
-            return `<div class="fixed bottom-0 left-0 right-0 z-50 glass border-t border-white/10 px-2 py-2"><div class="max-w-md mx-auto grid grid-cols-4 gap-1 text-center"><button onclick="setPage('builder')" class="flex flex-col items-center py-1 ${appState.page==='builder'?'text-amber-400':'text-slate-400'}"><i class="fa-solid fa-wand-magic-sparkles text-sm"></i><span class="text-[10px]">المنشئ</span></button><button onclick="setPage('cashier')" class="flex flex-col items-center py-1 ${appState.page==='cashier'?'text-red-400':'text-slate-400'}"><i class="fa-solid fa-cash-register text-sm"></i><span class="text-[10px]">الكاشير</span></button><button onclick="setPage('dashboard')" class="flex flex-col items-center py-1 ${appState.page==='dashboard'?'text-amber-400':'text-slate-400'}"><i class="fa-solid fa-chart-line text-sm"></i><span class="text-[10px]">الباقات</span></button><button onclick="setPage('qr_print')" class="flex flex-col items-center py-1 ${appState.page==='qr_print'?'text-amber-400':'text-slate-400'}"><i class="fa-solid fa-qrcode text-sm"></i><span class="text-[10px]">QR</span></button></div></div>`;
-        }
-
-        function renderAuthScreen(){
-            return `${renderNav()}<div class="max-w-md mx-auto px-4 py-10 space-y-6"><div class="text-center"><h1 class="text-2xl font-black text-white">Tablia OS 2030</h1></div><div class="flex bg-slate-900 p-1 rounded-xl text-xs"><button onclick="appState.authTab='login'; render();" class="flex-1 py-2.5 rounded-lg font-bold ${appState.authTab==='login'?'bg-amber-500 text-slate-950':'text-slate-400'}">دخول</button><button onclick="appState.authTab='register'; render();" class="flex-1 py-2.5 rounded-lg font-bold ${appState.authTab==='register'?'bg-amber-500 text-slate-950':'text-slate-400'}">مطعم جديد</button></div>${appState.authTab==='login'?`<div class="glass p-6 rounded-3xl space-y-4 text-xs"><input id="log_phone" placeholder="رقم الموبايل" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white"><input id="log_pass" type="password" placeholder="كلمة السر" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white"><button onclick="handleLogin()" class="w-full gold-gradient text-slate-950 font-black py-3 rounded-xl">دخول</button></div>`:`<div class="glass p-6 rounded-3xl space-y-4 text-xs"><input id="reg_owner" placeholder="اسمك" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white"><input id="reg_name" placeholder="اسم المطعم" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white"><input id="reg_phone" placeholder="رقم الموبايل" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white"><input id="reg_pass" type="password" placeholder="كلمة السر" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white"><button onclick="handleRegister()" class="w-full gold-gradient text-slate-950 font-black py-3 rounded-xl">إنشاء</button></div>`}</div>`;
-        }
-        function handleLogin(){
-            const phone=document.getElementById('log_phone').value.trim(); const pass=document.getElementById('log_pass').value.trim();
-            for(let id in globalDB.restaurants){ if(globalDB.restaurants[id].phone===phone && globalDB.restaurants[id].pass===pass){ currentRestId=id; localStorage.setItem('tablia_logged_rest_id',id); setPage('builder'); return; } }
-            alert('بيانات غلط');
-        }
-        function handleRegister(){
-            const owner=document.getElementById('reg_owner').value.trim(); const name=document.getElementById('reg_name').value.trim(); const phone=document.getElementById('reg_phone').value.trim(); const pass=document.getElementById('reg_pass').value.trim();
-            if(!owner||!name||!phone||!pass){ alert('كمل البيانات'); return; }
-            const restId='rest_'+Date.now();
-            globalDB.restaurants[restId]={ id:restId, ownerName:owner, name:name, phone:phone, pass:pass, template_id:'foodera-modern', layout:'foodera', theme:{primary:'#ea580c', bg:'#030712'}, tablesCount:20, subscription:{isActive:false, expiresAt:null}, categories:[{id:'cat_1', name:'الرئيسية', icon:'🍔'}], menu_items:[], orders:[] };
-            syncCloud(); currentRestId=restId; localStorage.setItem('tablia_logged_rest_id',restId); setPage('builder');
-        }
-
-        function renderBuilder(){
-            const rest=globalDB.restaurants[currentRestId]; if(!rest){ setPage('auth'); return ''; }
-            return `${renderNav()}<div class="max-w-3xl mx-auto px-4 py-6 space-y-5"><div class="flex gap-1 bg-slate-900 p-1 rounded-xl text-[11px]"><button onclick="appState.builderStep=1; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===1?'bg-amber-500 text-slate-950':'text-slate-400'}">1. القالب</button><button onclick="appState.builderStep=2; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===2?'bg-amber-500 text-slate-950':'text-slate-400'}">2. المنيو</button><button onclick="appState.builderStep=4; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===4?'bg-amber-500 text-slate-950':'text-slate-400'}">3. النشر</button></div>${appState.builderStep===1?renderStep1(rest):''}${appState.builderStep===2?renderStep2(rest):''}${appState.builderStep===4?renderStep4(rest):''}</div>`;
-        }
-        function renderStep1(rest){
-            return `<div class="glass p-5 rounded-2xl space-y-4 text-xs"><input id="r_name" value="${rest.name}" class="w-full bg-slate-950 border border-white/10 p-2.5 rounded-xl text-white"><div class="grid grid-cols-3 gap-2">${TEMPLATES_CATALOG.map(t=>`<div onclick="globalDB.restaurants[currentRestId].template_id='${t.id}'; globalDB.restaurants[currentRestId].layout='${t.layout}'; syncCloud(); render();" class="border-2 rounded-xl p-2 cursor-pointer ${rest.template_id===t.id?'border-amber-500':'border-white/10'}"><img src="${t.preview}" class="h-16 w-full object-cover rounded-lg"><p class="text-[10px] mt-1">${t.name}</p></div>`).join('')}</div><button onclick="saveStep1()" class="gold-gradient text-slate-950 font-black px-5 py-2.5 rounded-xl">حفظ</button></div>`;
-        }
-        function saveStep1(){ globalDB.restaurants[currentRestId].name=document.getElementById('r_name').value; syncCloud(); appState.builderStep=2; render(); }
-        function renderStep2(rest){
-            return `<div class="glass p-5 rounded-2xl space-y-4 text-xs"><div class="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl"><textarea id="magic_box" placeholder="برجر 150, بيتزا 200" class="w-full bg-slate-950 border border-white/10 p-2 rounded-lg text-white"></textarea><button onclick="parseMagicText()" class="w-full gold-gradient text-slate-950 font-black py-2 rounded-lg mt-2">توليد</button></div><div class="space-y-1">${rest.menu_items.map((it,i)=>`<div class="bg-slate-950 p-2 rounded-xl flex justify-between"><span>${it.name} - ${it.price}ج</span><button onclick="globalDB.restaurants[currentRestId].menu_items.splice(${i},1); syncCloud(); render();" class="text-red-400"><i class="fa-solid fa-trash"></i></button></div>`).join('')}</div><button onclick="appState.builderStep=4; render();" class="gold-gradient text-slate-950 font-black px-4 py-2 rounded-xl">التالي</button></div>`;
-        }
-        function parseMagicText(){
-            const rest=globalDB.restaurants[currentRestId]; const text=document.getElementById('magic_box').value.trim(); if(!text) return;
-            text.split(/,|\n/).forEach(line=>{
-                const m=line.match(/\d+/); if(!m) return;
-                const price=Number(m[0]); const name=line.replace(m[0],'').replace(/ج/g,'').trim();
-                if(name) rest.menu_items.push({ id:'itm_'+Date.now()+Math.random(), category_id:rest.categories[0].id, name, description:'طازج', price, image:'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500', is_available:true, tags:[] });
-            }); syncCloud(); render();
-        }
-        function renderStep4(rest){
-            const isSub=rest.subscription?.isActive; const url=location.origin+location.pathname+`?view=menu&rest=${rest.id}`;
-            if(!isSub) return `<div class="glass p-6 rounded-3xl space-y-4 text-xs border-2 border-amber-500/50"><h2 class="font-black text-white text-center">تفعيل المنيو - ${PLATFORM_OWNER.monthlyPrice} جنيه</h2><div class="bg-slate-950 p-3 rounded-xl flex justify-between"><span dir="ltr" class="text-white font-black">${PLATFORM_OWNER.walletNumber}</span><button onclick="navigator.clipboard.writeText('${PLATFORM_OWNER.walletNumber}')" class="bg-amber-500 text-slate-950 px-3 py-1 rounded-lg">نسخ</button></div><a href="https://wa.me/2${PLATFORM_OWNER.walletNumber}?text=${encodeURIComponent('تفعيل مطعم '+rest.name+' بمبلغ '+PLATFORM_OWNER.monthlyPrice+' جنيه')}" target="_blank" class="block w-full bg-emerald-600 text-white text-center font-black py-3 rounded-xl">ارسل إيصال التحويل واتساب</a></div>`;
-            return `<div class="glass p-5 rounded-3xl space-y-4 text-xs border border-emerald-500/30"><div class="bg-emerald-500/20 text-emerald-400 p-2 rounded-xl text-center font-black">✅ مفعل</div><div class="flex gap-2"><input readonly value="${url}" class="flex-1 bg-slate-900 border border-white/10 p-2.5 rounded-xl text-xs"><button onclick="navigator.clipboard.writeText('${url}')" class="bg-amber-500 text-slate-950 px-4 rounded-xl">نسخ</button></div></div>`;
-        }
-
-        function renderStorefront(){
-            const restId=targetRestSlug||Object.keys(globalDB.restaurants)[0]; const rest=globalDB.restaurants[restId];
-            if(!rest) return `<div class="min-h-screen flex items-center justify-center text-white">المطعم غير موجود</div>`;
-            if(!rest.subscription?.isActive) return `<div class="min-h-screen flex items-center justify-center bg-slate-950 text-white text-center p-4">المنيو متوقف مؤقتاً بانتظار التفعيل</div>`;
-
-            const filtered = rest.menu_items.filter(i => {
-                if (!i.is_available) return false;
-                const matchCat = appState.activeCat === 'all' || i.category_id === appState.activeCat;
-                const matchQ = i.name.toLowerCase().includes(appState.search.toLowerCase());
-                return matchCat && matchQ;
-            });
-
-            const cartCount=appState.cart.reduce((s,i)=>s+i.qty,0); const cartTotal=appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
-            return `${renderNav()}<div class="min-h-screen pb-32" style="background:${rest.theme.bg}"><div class="max-w-3xl mx-auto px-4 pt-4 space-y-4">${appState.tableNumber?`<div class="bg-amber-500 text-slate-950 text-center py-1 font-black text-xs">طاولة ${appState.tableNumber}</div>`:''}<div class="glass p-4 rounded-3xl flex gap-3 items-center"><div class="w-12 h-12 rounded-2xl flex items-center justify-center text-xl text-white" style="background:${rest.theme.primary}">🔥</div><div><h1 class="font-black text-white">${rest.name}</h1><p class="text-[10px] text-emerald-400">● متصل</p></div></div><input value="${appState.search}" oninput="appState.search=this.value; render();" placeholder="ابحث..." class="w-full py-3 px-3 rounded-xl glass border border-white/10 text-white text-xs"><div class="flex gap-1 overflow-x-auto hide-scrollbar"><button onclick="appState.activeCat='all'; render();" class="px-3 py-1.5 rounded-lg text-xs font-black ${appState.activeCat==='all'?'bg-amber-500 text-slate-950':'bg-white/10'}">الكل</button>${rest.categories.map(c=>`<button onclick="appState.activeCat='${c.id}'; render();" class="px-3 py-1.5 rounded-lg text-xs font-black whitespace-nowrap ${appState.activeCat===c.id?'bg-amber-500 text-slate-950':'bg-white/10'}">${c.name}</button>`).join('')}</div><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${filtered.map(item=>`<div class="rounded-2xl glass border border-white/10 overflow-hidden"><img src="${item.image}" class="h-32 w-full object-cover"><div class="p-3 flex justify-between items-center"><div><h3 class="font-black text-xs text-white">${item.name}</h3><span class="text-amber-400 font-bold text-xs">${item.price}ج</span></div><button onclick="addToCart('${item.id}')" class="px-3 py-1.5 text-xs font-black text-white rounded-xl" style="background:${rest.theme.primary}">+ أضف</button></div></div>`).join('')}</div></div>${cartCount>0?`<div class="fixed bottom-5 left-4 right-4 max-w-md mx-auto"><button onclick="appState.cartOpen=true; render();" class="w-full py-3.5 px-5 rounded-2xl gold-gradient text-slate-950 font-black flex justify-between text-xs"><span>إتمام الطلب (${cartCount})</span><span>${cartTotal}ج</span></button></div>`:''}${appState.cartOpen?renderCheckoutModal(rest):''}${appState.trackerOpen?renderLiveOrderTracker(rest):''}</div>`;
-        }
-
-        function addToCart(id){
-            const restId=targetRestSlug||currentRestId||Object.keys(globalDB.restaurants)[0]; const rest=globalDB.restaurants[restId];
-            const item=rest.menu_items.find(i=>i.id===id); const f=appState.cart.find(c=>c.id===id);
-            if(f) f.qty++; else appState.cart.push({...item, qty:1}); render();
-        }
-        function renderCheckoutModal(rest){
-            return `<div class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 text-xs"><div class="glass p-5 rounded-3xl max-w-sm w-full space-y-3"><input id="cust_name" placeholder="اسمك" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white"><input id="cust_phone" placeholder="موبايل" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white"><button onclick="submitOrder()" class="w-full bg-emerald-600 text-white font-black py-3 rounded-xl">تأكيد</button><button onclick="appState.cartOpen=false; render();" class="w-full bg-slate-800 text-white py-2 rounded-xl">إلغاء</button></div></div>`;
-        }
-        function submitOrder(){
-            const restId=targetRestSlug||Object.keys(globalDB.restaurants)[0]; const rest=globalDB.restaurants[restId];
-            const name=document.getElementById('cust_name').value.trim(); const phone=document.getElementById('cust_phone').value.trim();
-            if(!name||!phone){ alert('كمل البيانات'); return; }
-            const total=appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
-            rest.orders.unshift({ id:'ORD-'+Date.now(), customer_name:name, phone, items_json:JSON.parse(JSON.stringify(appState.cart)), total, status:'new', table_number:appState.tableNumber||'دليفري', created_at:new Date().toLocaleTimeString('ar-EG') });
-            appState.activeOrderId=rest.orders[0].id; localStorage.setItem('tablia_active_order_id', appState.activeOrderId); appState.cart=[]; appState.cartOpen=false; appState.trackerOpen=true; syncCloud(); render(); playBell();
-        }
-        function renderLiveOrderTracker(rest){
-            const ord=rest.orders.find(o=>o.id===appState.activeOrderId); if(!ord) return '';
-            return `<div class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 text-xs"><div class="glass p-6 rounded-3xl max-w-sm w-full text-center space-y-3"><h3 class="font-black text-white">طلبك #${ord.id}</h3><p class="text-amber-400 font-bold">الحالة: ${ord.status}</p><p class="text-white">${ord.total} ج</p><button onclick="appState.trackerOpen=false; render();" class="w-full bg-slate-800 text-white py-2 rounded-xl">إغلاق</button></div></div>`;
-        }
-        function renderCashier(){
-            const rest=globalDB.restaurants[currentRestId]; if(!rest){ setPage('auth'); return ''; }
-            return `${renderNav()}<div class="max-w-4xl mx-auto px-4 py-4 space-y-4 text-xs"><h1 class="font-black text-white">شاشة الكاشير - ${rest.name}</h1><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${rest.orders.length===0?`<div class="col-span-2 glass p-10 text-center text-slate-400">لا يوجد طلبات</div>`:rest.orders.map((ord,i)=>`<div class="glass p-4 rounded-2xl space-y-2 border ${ord.status==='new'?'border-amber-500':'border-white/10'}"><div class="flex justify-between"><span class="font-black text-white">${ord.customer_name} - طاولة ${ord.table_number}</span><span class="text-amber-400 font-black">${ord.total}ج</span></div><div class="text-slate-300">${ord.items_json.map(x=>`${x.qty}x ${x.name}`).join(', ')}</div><div class="grid grid-cols-3 gap-1"><button onclick="globalDB.restaurants[currentRestId].orders[${i}].status='preparing'; syncCloud(); render();" class="bg-sky-600 text-white py-1 rounded">يحضر</button><button onclick="globalDB.restaurants[currentRestId].orders[${i}].status='ready'; syncCloud(); render();" class="bg-emerald-600 text-white py-1 rounded">جاهز</button><button onclick="globalDB.restaurants[currentRestId].orders[${i}].status='done'; syncCloud(); render();" class="bg-indigo-600 text-white py-1 rounded">تم</button></div></div>`).join('')}</div></div>`;
-        }
-        function renderDashboard(){
-            const rest=globalDB.restaurants[currentRestId]; if(!rest){ setPage('auth'); return ''; }
-            if(!appState.adminUnlocked) return `${renderNav()}<div class="max-w-md mx-auto py-12 px-4 text-center space-y-4 text-xs"><div class="glass p-6 rounded-3xl space-y-3 border border-amber-500/30"><h2 class="font-black text-amber-400">لوحة الإدمن</h2><input id="admin_pin" type="password" placeholder="2030" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-center text-white"><button onclick="if(document.getElementById('admin_pin').value==='${PLATFORM_OWNER.adminPass}'){appState.adminUnlocked=true;render();}else{alert('غلط')}" class="w-full gold-gradient text-slate-950 font-black py-3 rounded-xl">دخول</button></div></div>`;
-            return `${renderNav()}<div class="max-w-4xl mx-auto px-4 py-6 space-y-4 text-xs"><h1 class="font-black text-white">كل المطاعم</h1><div class="space-y-3">${Object.values(globalDB.restaurants).map(r=>`<div class="glass p-4 rounded-2xl flex justify-between items-center border ${r.subscription?.isActive?'border-emerald-500/40':'border-amber-500/40'}"><div><h3 class="font-black text-white">${r.name}</h3><p class="text-slate-400 text-[11px]">${r.phone} - ${r.subscription?.isActive?'مفعل':'غير مفعل'}</p></div><div class="flex gap-2"><button onclick="globalDB.restaurants['${r.id}'].subscription={isActive:true, expiresAt:Date.now()+2592000000}; syncCloud(); render();" class="bg-emerald-600 text-white px-3 py-2 rounded-xl">تفعيل</button><button onclick="globalDB.restaurants['${r.id}'].subscription={isActive:false}; syncCloud(); render();" class="bg-red-500/20 text-red-400 px-3 py-2 rounded-xl">إيقاف</button></div></div>`).join('')}</div></div>`;
-        }
-        function renderQRPrint(){
-            const rest=globalDB.restaurants[currentRestId]; if(!rest){ setPage('auth'); return ''; }
-            const base=location.origin+location.pathname+`?view=menu&rest=${rest.id}&t=`;
-            return `${renderNav()}<div class="max-w-3xl mx-auto px-4 py-6 space-y-4 text-xs"><div class="flex justify-between bg-slate-900 p-4 rounded-2xl"><h1 class="font-black text-white">QR - ${rest.name}</h1><button onclick="window.print()" class="gold-gradient text-slate-950 px-3 py-2 rounded-xl">اطبع</button></div><div class="grid grid-cols-2 sm:grid-cols-4 gap-2">${Array.from({length:rest.tablesCount},(_,i)=>i+1).map(n=>`<div class="bg-white p-2 rounded-xl text-center"><div class="font-black text-[11px] text-black">طاولة ${n}</div><img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(base+n)}" class="w-20 h-20 mx-auto"></div>`).join('')}</div></div>`;
-        }
-        render();
-    </script>
+<body class="pb-24">
+<audio id="cloud-bell" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+<div id="app"></div>
+<script>
+const firebaseConfig={apiKey:"AIzaSyCVofMvvbyMBGM1pQNeoG-gMT48Ll5IL4I",authDomain:"sofratech-2e033.firebaseapp.com",databaseURL:"https://sofratech-2e033-default-rtdb.firebaseio.com",projectId:"sofratech-2e033",storageBucket:"sofratech-2e033.firebasestorage.app",messagingSenderId:"742714705801",appId:"1:742714705801:web:ddd019d66fa7435f6f8358"};
+let cloudDB=null; try{firebase.initializeApp(firebaseConfig);cloudDB=firebase.database();}catch(e){}
+const PLATFORM_OWNER={walletNumber:'01015861991',monthlyPrice:300,adminPass:'2030'};
+let globalDB=JSON.parse(localStorage.getItem('tablia_multitenant_2030'))||{restaurants:{"rest_demo":{id:"rest_demo",ownerName:"محمد الحاتي",name:"مشويات الحاتي",phone:"01015861991",pass:"1234",template_id:"foodera-modern",layout:"foodera",theme:{primary:"#ea580c",bg:"#030712"},tablesCount:12,subscription:{isActive:true,expiresAt:Date.now()+2592000000},categories:[{id:'cat_1',name:'المشويات',icon:'🥩'},{id:'cat_2',name:'السندوتشات',icon:'🥙'}],menu_items:[{id:'itm_1',category_id:'cat_1',name:'كيلو كباب وكفتة',description:'لحم بلدي مشوي',price:680,image:'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500',is_available:true},{id:'itm_2',category_id:'cat_2',name:'ساندوتش شاورما',description:'فراخ تتبيلة خاصة',price:120,image:'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500',is_available:true}],orders:[]}}};
+function syncCloud(){localStorage.setItem('tablia_multitenant_2030',JSON.stringify(globalDB)); if(cloudDB) cloudDB.ref('tablia_multitenant_enterprise_2030').set(globalDB);}
+if(cloudDB){cloudDB.ref('tablia_multitenant_enterprise_2030').on('value',s=>{const d=s.val(); if(d){globalDB=d; render();} else syncCloud();});}
+const urlParams=new URLSearchParams(location.search); const isCustomerMode=urlParams.get('view')==='menu'; const targetRestSlug=urlParams.get('rest');
+let currentRestId=localStorage.getItem('tablia_logged_rest_id')||null;
+const appState={page:isCustomerMode?'storefront':(currentRestId?'builder':'auth'),authTab:'login',builderStep:1,activeCat:'all',search:'',cart:[],cartOpen:false,tableNumber:urlParams.get('t')||null,activeOrderId:localStorage.getItem('tablia_active_order_id')||null,trackerOpen:false,adminUnlocked:false};
+function setPage(p){appState.page=p; render(); scrollTo(0,0);}
+function render(){let c=''; if(isCustomerMode) c=renderStorefront(); else if(appState.page==='auth') c=renderAuthScreen(); else if(appState.page==='builder') c=renderBuilder(); else if(appState.page==='cashier') c=renderCashier(); else if(appState.page==='dashboard') c=renderDashboard(); else if(appState.page==='qr_print') c=renderQRPrint(); document.getElementById('app').innerHTML=c+ (isCustomerMode?'':renderBottomNav());}
+function renderNav(){return `<nav class="sticky top-0 z-50 glass border-b border-white/10 px-4 py-3"><div class="max-w-4xl mx-auto flex justify-between"><div class="flex gap-2 items-center"><div class="w-9 h-9 rounded-xl gold-gradient flex items-center justify-center font-black text-slate-950">ط</div><b class="text-white">Tablia 2030</b></div>${currentRestId?`<button onclick="currentRestId=null; localStorage.removeItem('tablia_logged_rest_id'); setPage('auth');" class="text-red-400 text-xs">خروج</button>`:''}</div></nav>`;}
+function renderBottomNav(){if(!currentRestId) return ''; return `<div class="fixed bottom-0 left-0 right-0 z-50 glass border-t border-white/10 px-2 py-2"><div class="max-w-md mx-auto grid grid-cols-4 gap-1 text-center"><button onclick="setPage('builder')" class="py-1 ${appState.page==='builder'?'text-amber-400':'text-slate-400'}"><i class="fa-solid fa-wand-magic-sparkles"></i><div class="text-[10px]">المنشئ</div></button><button onclick="setPage('cashier')" class="py-1 ${appState.page==='cashier'?'text-red-400':'text-slate-400'}"><i class="fa-solid fa-cash-register"></i><div class="text-[10px]">الكاشير</div></button><button onclick="setPage('dashboard')" class="py-1 ${appState.page==='dashboard'?'text-amber-400':'text-slate-400'}"><i class="fa-solid fa-chart-line"></i><div class="text-[10px]">الباقات</div></button><button onclick="setPage('qr_print')" class="py-1 ${appState.page==='qr_print'?'text-amber-400':'text-slate-400'}"><i class="fa-solid fa-qrcode"></i><div class="text-[10px]">QR</div></button></div></div>`;}
+function renderAuthScreen(){return `${renderNav()}<div class="max-w-md mx-auto p-4 space-y-4"><h1 class="text-2xl font-black text-center text-white">Tablia OS 2030</h1><div class="flex bg-slate-900 p-1 rounded-xl text-xs"><button onclick="appState.authTab='login';render()" class="flex-1 py-2 rounded-lg ${appState.authTab==='login'?'bg-amber-500 text-slate-950':'text-slate-400'}">دخول</button><button onclick="appState.authTab='register';render()" class="flex-1 py-2 rounded-lg ${appState.authTab==='register'?'bg-amber-500 text-slate-950':'text-slate-400'}">جديد</button></div>${appState.authTab==='login'?`<div class="glass p-6 rounded-3xl space-y-3"><input id="log_phone" placeholder="الموبايل" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white"><input id="log_pass" type="password" placeholder="الباسورد" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white"><button onclick="handleLogin()" class="w-full gold-gradient py-3 rounded-xl text-slate-950 font-black">دخول</button></div>`:`<div class="glass p-6 rounded-3xl space-y-3"><input id="reg_owner" placeholder="اسمك" class="w-full bg-slate-950 border p-3 rounded-xl text-white"><input id="reg_name" placeholder="اسم المطعم" class="w-full bg-slate-950 border p-3 rounded-xl text-white"><input id="reg_phone" placeholder="الموبايل" class="w-full bg-slate-950 border p-3 rounded-xl text-white"><input id="reg_pass" type="password" placeholder="الباسورد" class="w-full bg-slate-950 border p-3 rounded-xl text-white"><button onclick="handleRegister()" class="w-full gold-gradient py-3 rounded-xl font-black text-slate-950">إنشاء</button></div>`}</div>`;}
+function handleLogin(){const ph=document.getElementById('log_phone').value.trim(),pa=document.getElementById('log_pass').value.trim(); for(let id in globalDB.restaurants){if(globalDB.restaurants[id].phone===ph && globalDB.restaurants[id].pass===pa){currentRestId=id; localStorage.setItem('tablia_logged_rest_id',id); setPage('builder'); return;}} alert('بيانات غلط');}
+function handleRegister(){const o=document.getElementById('reg_owner').value.trim(),n=document.getElementById('reg_name').value.trim(),ph=document.getElementById('reg_phone').value.trim(),pa=document.getElementById('reg_pass').value.trim(); if(!o||!n||!ph||!pa){alert('كمل البيانات'); return;} const id='rest_'+Date.now(); globalDB.restaurants[id]={id,ownerName:o,name:n,phone:ph,pass:pa,template_id:'foodera-modern',layout:'foodera',theme:{primary:'#ea580c',bg:'#030712'},tablesCount:12,subscription:{isActive:false,expiresAt:null},categories:[{id:'cat_1',name:'الرئيسية',icon:'🍔'}],menu_items:[],orders:[]}; syncCloud(); currentRestId=id; localStorage.setItem('tablia_logged_rest_id',id); setPage('builder');}
+function renderBuilder(){const r=globalDB.restaurants[currentRestId]; if(!r){setPage('auth'); return '';} return `${renderNav()}<div class="max-w-3xl mx-auto p-4 space-y-4"><div class="flex gap-1 bg-slate-900 p-1 rounded-xl text-xs"><button onclick="appState.builderStep=1;render()" class="flex-1 py-2 rounded-lg ${appState.builderStep===1?'bg-amber-500 text-slate-950':'text-slate-400'}">القالب</button><button onclick="appState.builderStep=2;render()" class="flex-1 py-2 rounded-lg ${appState.builderStep===2?'bg-amber-500 text-slate-950':'text-slate-400'}">المنيو</button><button onclick="appState.builderStep=4;render()" class="flex-1 py-2 rounded-lg ${appState.builderStep===4?'bg-amber-500 text-slate-950':'text-slate-400'}">النشر</button></div>${appState.builderStep===1?renderStep1(r):''}${appState.builderStep===2?renderStep2(r):''}${appState.builderStep===4?renderStep4(r):''}</div>`;}
+function renderStep1(r){
+const T=[{id:'foodera-modern',layout:'foodera',name:'Foodera',img:'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500'},{id:'pizza-deli',layout:'pizza',name:'Pizza Deli',img:'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500'},{id:'dark-grill',layout:'dark_grill',name:'Dark Grill',img:'https://images.unsplash.com/photo-1544025162-d76694265947?w=500'}];
+return `<div class="glass p-5 rounded-2xl space-y-3 text-xs"><label class="text-slate-400">اسم المطعم</label><input id="r_name" value="${r.name}" class="w-full bg-slate-950 border border-white/10 p-2.5 rounded-xl text-white"><div class="grid grid-cols-3 gap-2">${T.map(t=>`<div onclick="globalDB.restaurants[currentRestId].template_id='${t.id}'; globalDB.restaurants[currentRestId].layout='${t.layout}'; syncCloud(); render();" class="cursor-pointer border-2 rounded-xl p-2 ${r.template_id===t.id?'border-amber-500':'border-white/10'}"><img src="${t.img}" class="h-16 w-full object-cover rounded-lg"><p class="text-[10px] mt-1 text-center">${t.name}</p></div>`).join('')}</div><button onclick="globalDB.restaurants[currentRestId].name=document.getElementById('r_name').value; syncCloud(); appState.builderStep=2; render();" class="gold-gradient px-5 py-2 rounded-xl text-slate-950 font-black">حفظ ومتابعة</button></div>`;
+}
+function renderStep2(r){return `<div class="glass p-5 rounded-2xl space-y-3 text-xs"><textarea id="magic_box" placeholder="برجر 150, بيتزا 200" class="w-full bg-slate-950 border border-white/10 p-2 rounded-lg text-white"></textarea><button onclick="parseMagicText()" class="w-full gold-gradient py-2 rounded-lg text-slate-950 font-black">توليد الأصناف</button><div class="space-y-1">${r.menu_items.map((it,i)=>`<div class="bg-slate-950 p-2 rounded-xl flex justify-between"><span>${it.name} - ${it.price}ج</span><button onclick="globalDB.restaurants[currentRestId].menu_items.splice(${i},1); syncCloud(); render();" class="text-red-400"><i class="fa-solid fa-trash"></i></button></div>`).join('')}</div><button onclick="appState.builderStep=4; render();" class="gold-gradient px-4 py-2 rounded-xl text-slate-950 font-black">التالي: النشر</button></div>`;}
+function parseMagicText(){const r=globalDB.restaurants[currentRestId]; const t=document.getElementById('magic_box').value.trim(); if(!t) return; t.split(/,|\n/).forEach(line=>{const m=line.match(/\d+/); if(!m) return; const pr=Number(m[0]); const name=line.replace(m[0],'').replace(/ج/g,'').trim(); if(name) r.menu_items.push({id:'itm_'+Date.now()+Math.random(),category_id:r.categories[0].id,name,description:'طازج',price:pr,image:'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500',is_available:true});}); syncCloud(); render();}
+function renderStep4(r){const isSub=r.subscription?.isActive; const url=location.origin+location.pathname+`?view=menu&rest=${r.id}`; if(!isSub) return `<div class="glass p-6 rounded-3xl space-y-4 text-xs border border-amber-500/50 text-center"><h2 class="font-black text-white">تفعيل المنيو - 300ج/شهر</h2><div class="bg-slate-900 p-3 rounded-xl"><span dir="ltr" class="text-white font-black">${PLATFORM_OWNER.walletNumber}</span></div><a href="https://wa.me/2${PLATFORM_OWNER.walletNumber}?text=${encodeURIComponent('تفعيل '+r.name)}" target="_blank" class="block bg-emerald-600 py-3 rounded-xl text-white font-black">ارسال إيصال واتساب</a></div>`; return `<div class="glass p-5 rounded-3xl space-y-3 text-xs border border-emerald-500/30"><div class="bg-emerald-500/20 text-emerald-400 p-2 rounded-xl text-center font-black">✅ مفعل</div><div class="flex gap-2"><input readonly value="${url}" class="flex-1 bg-slate-900 p-2 rounded-xl text-xs"><button onclick="navigator.clipboard.writeText('${url}')" class="bg-amber-500 px-4 rounded-xl text-slate-950 font-black">نسخ</button></div><button onclick="setPage('qr_print')" class="w-full bg-slate-800 py-2 rounded-xl">طباعة QR الطاولات</button></div>`;}
+function renderStorefront(){
+const restId=targetRestSlug||Object.keys(globalDB.restaurants)[0]; const rest=globalDB.restaurants[restId];
+if(!rest) return `<div class="min-h-screen flex items-center justify-center text-white">لا يوجد مطعم</div>`;
+if(!rest.subscription?.isActive) return `<div class="min-h-screen flex items-center justify-center bg-slate-950 text-white p-4 text-center">المنيو متوقف - بانتظار التفعيل</div>`;
+// الإصلاح المهم: فلترة صح
+const filtered=rest.menu_items.filter(i=>{
+if(!i.is_available) return false;
+const matchCat=appState.activeCat==='all' || i.category_id===appState.activeCat;
+const matchQ=i.name.toLowerCase().includes(appState.search.toLowerCase());
+return matchCat && matchQ;
+});
+const cartCount=appState.cart.reduce((s,i)=>s+i.qty,0); const cartTotal=appState.cart.reduce((s,i)=>s+i.price*i.qty,0);
+return `${renderNav()}<div class="min-h-screen pb-32"><div class="max-w-3xl mx-auto px-4 pt-4 space-y-4">${appState.tableNumber?`<div class="bg-amber-500 text-slate-950 text-center py-1 font-black text-xs">طاولة ${appState.tableNumber}</div>`:''}<div class="glass p-4 rounded-3xl flex gap-3 items-center"><div class="w-12 h-12 rounded-2xl bg-orange-600 flex items-center justify-center text-xl">🔥</div><div><h1 class="font-black text-white">${rest.name}</h1><p class="text-[10px] text-emerald-400">● متصل</p></div></div><input value="${appState.search}" oninput="appState.search=this.value; render();" placeholder="ابحث..." class="w-full py-3 px-3 rounded-xl glass border border-white/10 text-white text-xs"><div class="flex gap-1 overflow-x-auto"><button onclick="appState.activeCat='all'; render();" class="px-3 py-1.5 rounded-lg text-xs font-black ${appState.activeCat==='all'?'bg-amber-500 text-slate-950':'bg-white/10'}">الكل</button>${(rest.categories||[]).map(c=>`<button onclick="appState.activeCat='${c.id}'; render();" class="px-3 py-1.5 rounded-lg text-xs font-black ${appState.activeCat===c.id?'bg-amber-500 text-slate-950':'bg-white/10'}">${c.name}</button>`).join('')}</div><div class="grid grid-cols-2 gap-3">${filtered.map(it=>`<div class="rounded-2xl glass border border-white/10 overflow-hidden"><img src="${it.image}" class="h-24 w-full object-cover"><div class="p-2 flex justify-between items-center"><div><h3 class="font-black text-xs text-white">${it.name}</h3><span class="text-amber-400 text-xs font-bold">${it.price}ج</span></div><button onclick="addToCart('${it.id}')" class="bg-amber-500 text-slate-950 px-3 py-1 rounded-lg text-xs font-black">+</button></div></div>`).join('')}</div></div>${cartCount>0?`<div class="fixed bottom-5 left-4 right-4 max-w-md mx-auto"><button onclick="appState.cartOpen=true; render();" class="w-full py-3 rounded-2xl gold-gradient text-slate-950 font-black flex justify-between px-5 text-xs"><span>الطلب (${cartCount})</span><span>${cartTotal}ج</span></button></div>`:''}${appState.cartOpen?renderCheckoutModal():''}</div>`;
+}
+function addToCart(id){const rid=targetRestSlug||currentRestId||Object.keys(globalDB.restaurants)[0]; const r=globalDB.restaurants[rid]; const it=r.menu_items.find(x=>x.id===id); const f=appState.cart.find(x=>x.id===id); if(f) f.qty++; else appState.cart.push({...it,qty:1}); render();}
+function renderCheckoutModal(){return `<div class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 text-xs"><div class="glass p-5 rounded-3xl max-w-sm w-full space-y-3"><input id="cust_name" placeholder="اسمك" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white"><input id="cust_phone" placeholder="موبايل" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white"><button onclick="submitOrder()" class="w-full bg-emerald-600 py-3 rounded-xl text-white font-black">تأكيد الطلب</button><button onclick="appState.cartOpen=false; render();" class="w-full bg-slate-800 py-2 rounded-xl text-white">إلغاء</button></div></div>`;}
+function submitOrder(){const rid=targetRestSlug||Object.keys(globalDB.restaurants)[0]; const r=globalDB.restaurants[rid]; const n=document.getElementById('cust_name').value.trim(),p=document.getElementById('cust_phone').value.trim(); if(!n||!p){alert('كمل البيانات'); return;} const tot=appState.cart.reduce((s,i)=>s+i.price*i.qty,0); r.orders.unshift({id:'ORD-'+Date.now(),customer_name:n,phone:p,items_json:JSON.parse(JSON.stringify(appState.cart)),total:tot,status:'new',table_number:appState.tableNumber||'دليفري'}); appState.cart=[]; appState.cartOpen=false; syncCloud(); render(); document.getElementById('cloud-bell').play().catch(()=>{}); alert('تم الارسال للكاشير 🔔');}
+function renderCashier(){const r=globalDB.restaurants[currentRestId]; if(!r){setPage('auth'); return '';} return `${renderNav()}<div class="max-w-4xl mx-auto p-4 space-y-4 text-xs"><h1 class="font-black text-white">كاشير ${r.name} - ${r.orders.length} طلب</h1><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${r.orders.length===0?`<div class="col-span-2 glass p-10 text-center text-slate-400">لا يوجد طلبات</div>`:r.orders.map((o,i)=>`<div class="glass p-4 rounded-2xl space-y-2 ${o.status==='new'?'border-amber-500 border':'border-white/10'}"><div class="flex justify-between"><span class="text-white font-black">${o.customer_name} - ${o.table_number}</span><span class="text-amber-400 font-black">${o.total}ج</span></div><div class="text-slate-300 text-[11px]">${o.items_json.map(x=>x.qty+'x '+x.name).join(', ')}</div><div class="grid grid-cols-3 gap-1"><button onclick="globalDB.restaurants[currentRestId].orders[${i}].status='preparing'; syncCloud(); render();" class="bg-sky-600 py-1 rounded text-white">يحضر</button><button onclick="globalDB.restaurants[currentRestId].orders[${i}].status='ready'; syncCloud(); render();" class="bg-emerald-600 py-1 rounded text-white">جاهز</button><button onclick="globalDB.restaurants[currentRestId].orders[${i}].status='done'; syncCloud(); render();" class="bg-indigo-600 py-1 rounded text-white">تم</button></div></div>`).join('')}</div></div>`;}
+function renderDashboard(){const r=globalDB.restaurants[currentRestId]; if(!r){setPage('auth'); return '';} if(!appState.adminUnlocked) return `${renderNav()}<div class="max-w-md mx-auto py-12 p-4 text-center space-y-3 text-xs"><div class="glass p-6 rounded-3xl border border-amber-500/30 space-y-3"><h2 class="font-black text-amber-400">لوحة الادمن - كلمة السر 2030</h2><input id="admin_pin" type="password" placeholder="2030" class="w-full bg-slate-950 border p-3 rounded-xl text-center text-white"><button onclick="if(document.getElementById('admin_pin').value==='${PLATFORM_OWNER.adminPass}'){appState.adminUnlocked=true;render();} else alert('غلط')" class="w-full gold-gradient py-3 rounded-xl text-slate-950 font-black">دخول</button></div></div>`; return `${renderNav()}<div class="max-w-4xl mx-auto p-4 space-y-3 text-xs"><h1 class="font-black text-white">كل المطاعم المسجلة</h1>${Object.values(globalDB.restaurants).map(x=>`<div class="glass p-4 rounded-2xl flex justify-between items-center border ${x.subscription?.isActive?'border-emerald-500/40':'border-amber-500/40'}"><div><h3 class="text-white font-black">${x.name}</h3><p class="text-slate-400 text-[11px]">${x.phone} - ${x.subscription?.isActive?'مفعل':'غير مفعل'}</p></div><div class="flex gap-2"><button onclick="globalDB.restaurants['${x.id}'].subscription={isActive:true,expiresAt:Date.now()+2592000000}; syncCloud(); render();" class="bg-emerald-600 px-3 py-2 rounded-xl text-white">تفعيل</button><button onclick="globalDB.restaurants['${x.id}'].subscription={isActive:false}; syncCloud(); render();" class="bg-red-500/20 px-3 py-2 rounded-xl text-red-400">إيقاف</button></div></div>`).join('')}</div>`;}
+function renderQRPrint(){const r=globalDB.restaurants[currentRestId]; if(!r){setPage('auth'); return '';} const base=location.origin+location.pathname+`?view=menu&rest=${r.id}&t=`; return `${renderNav()}<div class="max-w-3xl mx-auto p-4 space-y-4 text-xs"><div class="flex justify-between bg-slate-900 p-4 rounded-2xl"><h1 class="text-white font-black">QR - ${r.name}</h1><button onclick="window.print()" class="gold-gradient px-3 py-2 rounded-xl text-slate-950 font-black">اطبع</button></div><div class="grid grid-cols-2 sm:grid-cols-4 gap-2">${Array.from({length:r.tablesCount},(_,i)=>i+1).map(n=>`<div class="bg-white p-2 rounded-xl text-center"><div class="text-black font-black text-[11px]">طاولة ${n}</div><img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(base+n)}" class="w-20 h-20 mx-auto"></div>`).join('')}</div></div>`;}
+render();
+</script>
 </body>
 </html>
