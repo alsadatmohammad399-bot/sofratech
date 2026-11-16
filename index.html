@@ -37,7 +37,7 @@
         let cloudDB = null;
         try { firebase.initializeApp(firebaseConfig); cloudDB = firebase.database(); } catch (e) {}
 
-        const PLATFORM_OWNER = { walletNumber: '01015861991', monthlyPrice: 300, adminPass: '2030' };
+        const PLATFORM_OWNER = { walletNumber: '01015861991', monthlyPrice: 600, adminPass: '2030' };
 
         let globalDB = JSON.parse(localStorage.getItem('tablia_multitenant_2030')) || {
             restaurants: {
@@ -153,22 +153,20 @@
         }
         function renderStep4(rest){
             const isSub=rest.subscription?.isActive; const url=location.origin+location.pathname+`?view=menu&rest=${rest.id}`;
-            if(!isSub) return `<div class="glass p-6 rounded-3xl space-y-4 text-xs border-2 border-amber-500/50"><h2 class="font-black text-white text-center">تفعيل المنيو - 300 جنيه</h2><div class="bg-slate-950 p-3 rounded-xl flex justify-between"><span dir="ltr" class="text-white font-black">${PLATFORM_OWNER.walletNumber}</span><button onclick="navigator.clipboard.writeText('${PLATFORM_OWNER.walletNumber}')" class="bg-amber-500 text-slate-950 px-3 py-1 rounded-lg">نسخ</button></div><a href="https://wa.me/2${PLATFORM_OWNER.walletNumber}?text=${encodeURIComponent('تفعيل مطعم '+rest.name)}" target="_blank" class="block w-full bg-emerald-600 text-white text-center font-black py-3 rounded-xl">ارسل إيصال التحويل واتساب</a></div>`;
+            if(!isSub) return `<div class="glass p-6 rounded-3xl space-y-4 text-xs border-2 border-amber-500/50"><h2 class="font-black text-white text-center">تفعيل المنيو - ${PLATFORM_OWNER.monthlyPrice} جنيه</h2><div class="bg-slate-950 p-3 rounded-xl flex justify-between"><span dir="ltr" class="text-white font-black">${PLATFORM_OWNER.walletNumber}</span><button onclick="navigator.clipboard.writeText('${PLATFORM_OWNER.walletNumber}')" class="bg-amber-500 text-slate-950 px-3 py-1 rounded-lg">نسخ</button></div><a href="https://wa.me/2${PLATFORM_OWNER.walletNumber}?text=${encodeURIComponent('تفعيل مطعم '+rest.name+' بمبلغ '+PLATFORM_OWNER.monthlyPrice+' جنيه')}" target="_blank" class="block w-full bg-emerald-600 text-white text-center font-black py-3 rounded-xl">ارسل إيصال التحويل واتساب</a></div>`;
             return `<div class="glass p-5 rounded-3xl space-y-4 text-xs border border-emerald-500/30"><div class="bg-emerald-500/20 text-emerald-400 p-2 rounded-xl text-center font-black">✅ مفعل</div><div class="flex gap-2"><input readonly value="${url}" class="flex-1 bg-slate-900 border border-white/10 p-2.5 rounded-xl text-xs"><button onclick="navigator.clipboard.writeText('${url}')" class="bg-amber-500 text-slate-950 px-4 rounded-xl">نسخ</button></div></div>`;
         }
 
-        // === هنا الإصلاح الأهم ===
         function renderStorefront(){
             const restId=targetRestSlug||Object.keys(globalDB.restaurants)[0]; const rest=globalDB.restaurants[restId];
             if(!rest) return `<div class="min-h-screen flex items-center justify-center text-white">المطعم غير موجود</div>`;
             if(!rest.subscription?.isActive) return `<div class="min-h-screen flex items-center justify-center bg-slate-950 text-white text-center p-4">المنيو متوقف مؤقتاً بانتظار التفعيل</div>`;
 
-            // الإصلاح: لازم نفلتر بالقسم + البحث مع بعض
             const filtered = rest.menu_items.filter(i => {
                 if (!i.is_available) return false;
                 const matchCat = appState.activeCat === 'all' || i.category_id === appState.activeCat;
                 const matchQ = i.name.toLowerCase().includes(appState.search.toLowerCase());
-                return matchCat && matchQ; // <-- ده السطر اللي كان ناقص
+                return matchCat && matchQ;
             });
 
             const cartCount=appState.cart.reduce((s,i)=>s+i.qty,0); const cartTotal=appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
