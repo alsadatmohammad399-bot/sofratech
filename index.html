@@ -52,12 +52,11 @@
         const DEFAULT_STORE = {
             restaurant: {
                 name: 'إمبر آند جريل',
-                taglet: 'أصل البرجر المشوي على الفحم',
+                taglet: 'أصل البرجر المشوي على الفحم والستيك',
                 logo: '🔥',
                 whatsapp: '201015861991',
                 deliveryFee: 15,
-                pin: '1234',
-                themeStyle: 'modern_dark'
+                pin: '1234'
             },
             categories: [
                 { id: 'all', name: 'الكل', icon: '🍽️' },
@@ -75,7 +74,7 @@
 
         let store = JSON.parse(JSON.stringify(DEFAULT_STORE));
 
-        // مزامنة سحابية شاملة
+        // مزامنة سحابية شاملة عبر Firebase
         if (fbDB) {
             fbDB.ref('store').on('value', (snapshot) => {
                 const val = snapshot.val();
@@ -92,14 +91,14 @@
         }
 
         function saveStore() {
-            localStorage.setItem('sofratech_app_store', JSON.stringify(store));
+            localStorage.setItem('sofratech_pro_store', JSON.stringify(store));
             if (fbDB) {
                 fbDB.ref('store').set(store);
             }
         }
 
         const ui = {
-            route: 'menu',
+            route: 'menu', // menu, offers, cart, checkout, track, builder, cashier
             activeCat: 'all',
             searchQuery: '',
             cart: [],
@@ -140,7 +139,7 @@
             app.innerHTML = content + renderFloatingNavBar();
         }
 
-        // شريط التنقل العائم السفلي المستوحى من التصاميم الاحترافية
+        // شريط التنقل العائم السفلي الفاخر (مستوحى من التصميم المطلوب)
         function renderFloatingNavBar() {
             const cartCount = ui.cart.reduce((s, i) => s + i.qty, 0);
             return `
@@ -170,6 +169,7 @@
             `;
         }
 
+        // واجهة الزبون الرئيسية (مطابقة للتصميم العصري)
         function renderCustomerApp() {
             const filteredMenu = store.menu.filter(i => {
                 const matchCat = ui.activeCat === 'all' || i.cat === ui.activeCat;
@@ -178,7 +178,7 @@
             });
 
             return `
-                <div class="min-h-screen bg-slate-950 text-white pb-20">
+                <div class="min-h-screen bg-slate-950 text-white pb-24">
                     <!-- رأس التطبيق -->
                     <header class="p-4 space-y-4 bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800/60">
                         <div class="flex justify-between items-center">
@@ -189,9 +189,7 @@
                                     <p class="text-[10px] text-slate-400">${store.restaurant.taglet}</p>
                                 </div>
                             </div>
-                            <div class="flex gap-2">
-                                <button onclick="navigate('#track')" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-xl text-xs font-bold animate-pulse">تتبع الطلب</button>
-                            </div>
+                            <button onclick="navigate('#track')" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-xl text-xs font-bold animate-pulse">تتبع الطلب</button>
                         </div>
 
                         <!-- شريط البحث -->
@@ -201,19 +199,19 @@
                         </div>
                     </header>
 
-                    <!-- بانر ترويجي فخم مستوحى من التطبيقات -->
+                    <!-- بانر ترويجي فخم -->
                     <div class="p-4">
                         <div class="relative rounded-3xl overflow-hidden bg-gradient-to-r from-amber-600 to-orange-600 p-5 shadow-2xl">
                             <div class="relative z-10 max-w-[60%] space-y-2">
                                 <span class="bg-black/30 text-amber-300 text-[10px] font-black px-2.5 py-1 rounded-full">🔥 عرض لفترة محدودة</span>
-                                <h2 class="text-lg font-black leading-tight text-white">وجبة العائلة المشوية + ديلفري مجاني</h2>
+                                <h2 class="text-lg font-black leading-tight text-white">وجبة البرجر المشوي المزدوجة + ديلفري مجاني</h2>
                                 <button onclick="navigate('#offers')" class="bg-white text-slate-950 font-black px-4 py-2 rounded-xl text-xs shadow-lg">اطلب الآن</button>
                             </div>
                             <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=60" class="absolute -left-10 -bottom-10 w-44 h-44 object-cover rounded-full opacity-60 rotate-12">
                         </div>
                     </div>
 
-                    <!-- الأقسام (Categories Icons) -->
+                    <!-- الأقسام الدائرية (Categories) -->
                     <div class="px-4 overflow-x-auto hide-scrollbar flex gap-3 pb-2">
                         ${store.categories.map(c => `
                             <button onclick="ui.activeCat='${c.id}'; render();" class="flex flex-col items-center gap-1.5 min-w-[72px] p-3 rounded-2xl border transition ${ui.activeCat===c.id?'bg-amber-500 text-slate-950 border-amber-400 font-black':'bg-slate-900 text-slate-300 border-slate-800'}">
@@ -223,7 +221,7 @@
                         `).join('')}
                     </div>
 
-                    <!-- قائمة الوجبات (Products Grid) -->
+                    <!-- قائمة الأطباق (Dishes Grid) -->
                     <div class="p-4 space-y-4">
                         <div class="flex justify-between items-center">
                             <h3 class="font-black text-sm text-amber-400">الأصناف الشهية</h3>
@@ -270,7 +268,7 @@
                             <span class="text-2xl">📸</span>
                             <div>
                                 <h2 class="font-black text-xs text-amber-300">استخراج المنيو بالذكاء الاصطناعي من صورة</h2>
-                                <p class="text-[10px] text-slate-300">ارفع صورة قائمة الطعام الورقية وسيقوم النظام باستخراج الأصناف فوراً!</p>
+                                <p class="text-[10px] text-slate-300">ارفع صورة قائمة الطعام وسيقوم النظام باستخراج الأصناف فوراً!</p>
                             </div>
                         </div>
                         <input type="file" id="menu_img_file" accept="image/*" class="w-full bg-slate-950 border border-slate-700 p-2 rounded-xl text-xs text-slate-300">
