@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سُفرة تك | نظام الكاشير وإشعارات الطلبات</title>
+    <title>سُفرة تك | نظام الكاشير السحابي الفوري</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <!-- مكتبة Firebase السحابية للربط الفوري بين الأجهزة -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -32,6 +35,27 @@
     <div id="printable-receipt" class="hidden"></div>
 
     <script>
+        // بيانات Firebase الخاصة بك (مفعلة ومتصلة بقاعدة البيانات)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCVofMvvbyMBGM1pQNeoG-gMT48Ll5IL4I",
+            authDomain: "sofratech-2e033.firebaseapp.com",
+            databaseURL: "https://sofratech-2e033-default-rtdb.firebaseio.com",
+            projectId: "sofratech-2e033",
+            storageBucket: "sofratech-2e033.firebasestorage.app",
+            messagingSenderId: "742714705801",
+            appId: "1:742714705801:web:ddd019d66fa7435f6f8358",
+            measurementId: "G-HXW0T44XM3"
+        };
+
+        // تهيئة فايربيس
+        let fbDB = null;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            fbDB = firebase.database();
+        } catch (e) {
+            console.error("Firebase init error:", e);
+        }
+
         const DEFAULT_DATA = {
             restaurant: {
                 name: 'مطعم الطاهي',
@@ -39,14 +63,15 @@
                 logo: '🍽️',
                 themeColor: '#d97706',
                 style: 'foodie_app',
-                whatsapp: '201015861991', // رقم هاتفك لاستلام إشعارات الواتساب
+                whatsapp: '201015861991',
                 deliveryFee: 15,
                 pin: '1234'
             },
             categories: [
                 { id: 'all', name: 'الكل', icon: '🍽️' },
                 { id: 'burgers', name: 'البرجر', icon: '🍔' },
-                { id: 'grills', name: 'المشويات', icon: '🥩' }
+                { id: 'grills', name: 'المشويات', icon: '🥩' },
+                { id: 'drinks', name: 'المشروبات', icon: '🥤' }
             ],
             menu: [
                 {
@@ -70,15 +95,25 @@
                     badge: 'مميز',
                     desc: 'قطع لحم بتلو طازجة مشوية على الفحم البلدي',
                     img: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500&auto=format&fit=crop&q=60'
+                },
+                {
+                    id: 103,
+                    name: 'عصير مانجو فريش',
+                    cat: 'drinks',
+                    price: 45,
+                    rating: '5.0',
+                    reviews: '410',
+                    badge: 'طازج',
+                    desc: 'عصير مانجو طبيعي 100% مثلج',
+                    img: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=500&auto=format&fit=crop&q=60'
                 }
             ],
-            orders: [],
-            serviceAlerts: []
+            orders: []
         };
 
         function loadState() {
             try {
-                const saved = localStorage.getItem('sofratech_db_v11');
+                const saved = localStorage.getItem('sofratech_db_v13');
                 if (saved) {
                     const parsed = JSON.parse(saved);
                     if (parsed && parsed.restaurant && Array.isArray(parsed.menu)) {
@@ -91,26 +126,27 @@
             return JSON.parse(JSON.stringify(DEFAULT_DATA));
         }
 
-        function saveState() {
-            localStorage.setItem('sofratech_db_v11', JSON.stringify(db));
-            // محاكاة التزامن الفوري بين التبويبات المتفتحة على نفس المتصفح
-            window.dispatchEvent(new Event('storage_updated'));
-        }
-
         let db = loadState();
 
-        window.addEventListener('storage_updated', () => {
-            db = loadState();
-            render();
-        });
-
-        // مزامنة التخزين بين النوافذ المختلفة
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'sofratech_db_v11') {
-                db = loadState();
-                render();
+        function saveState() {
+            localStorage.setItem('sofratech_db_v13', JSON.stringify(db));
+            if (fbDB) {
+                fbDB.ref('orders').set(db.orders);
             }
-        });
+        }
+
+        // الاستماع الفوري للطلبات سحابياً بين الأجهزة
+        if (fbDB) {
+            fbDB.ref('orders').on('value', (snapshot) => {
+                const val = snapshot.val();
+                if (val) {
+                    db.orders = Array.isArray(val) ? val : Object.values(val);
+                } else {
+                    db.orders = [];
+                }
+                render();
+            });
+        }
 
         const ui = {
             route: 'landing',
@@ -121,7 +157,7 @@
             customerName: '',
             deliveryMethod: 'branch',
             address: '',
-            paymentMethod: 'cash',
+            gpsCoords: '',
             lastOrder: null,
             cashierUnlocked: false
         };
@@ -131,6 +167,7 @@
             if (hash.includes('#menu')) ui.route = 'menu';
             else if (hash.includes('#cashier')) ui.route = 'cashier';
             else if (hash.includes('#builder')) ui.route = 'builder';
+            else if (hash.includes('#track')) ui.route = 'track_order';
             else ui.route = 'landing';
             render();
         }
@@ -165,8 +202,8 @@
             return `
                 <div class="min-h-screen bg-slate-950 text-white p-6 flex flex-col items-center justify-center text-center">
                     <div class="w-16 h-16 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center text-3xl font-black mb-4">🍽️</div>
-                    <h1 class="text-3xl md:text-5xl font-black mb-4">سُفرة <span class="text-amber-500">تك</span> — إدارة المنيو والطلبات</h1>
-                    <p class="text-slate-400 mb-8 max-w-md text-sm">النظام المتكامل لإرسال الطلبات للكاشير وإشعارات الهاتف الفورية.</p>
+                    <h1 class="text-3xl md:text-5xl font-black mb-4">سُفرة <span class="text-amber-500">تك</span> — الكاشير السحابي</h1>
+                    <p class="text-slate-400 mb-8 max-w-md text-sm">متصل بقاعدة البيانات السحابية لضمان وصول الطلبات للكاشير فوراً من أي هاتف.</p>
                     
                     <div class="flex flex-wrap justify-center gap-4 mb-8">
                         <button onclick="navigate('#menu')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-6 py-3.5 rounded-2xl text-sm transition">📱 فتح منيو الزبون</button>
@@ -174,7 +211,7 @@
                     </div>
 
                     <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl text-right max-w-lg w-full text-xs space-y-2">
-                        <p class="text-emerald-400 font-bold">🔗 روابط التشغيل:</p>
+                        <p class="text-emerald-400 font-bold">🔗 الروابط:</p>
                         <p class="text-slate-300 select-all">رابط الزبون: ${baseUrl}#menu</p>
                         <p class="text-amber-300 select-all">رابط الكاشير: ${baseUrl}#cashier</p>
                     </div>
@@ -186,12 +223,12 @@
             return `
                 <div class="min-h-screen bg-slate-900 text-white p-6 max-w-xl mx-auto space-y-6">
                     <div class="flex justify-between items-center border-b border-slate-800 pb-4">
-                        <h2 class="text-lg font-black text-amber-400">⚙️ إعدادات المطعم والربط</h2>
+                        <h2 class="text-lg font-black text-amber-400">⚙️ إعدادات المطعم</h2>
                         <button onclick="navigate('#menu')" class="text-xs bg-slate-800 px-3 py-1.5 rounded-xl">المنيو</button>
                     </div>
                     <div class="space-y-4 text-xs">
                         <div>
-                            <label class="block text-slate-400 mb-1">رقم واتساب استلام الإشعارات (رقمك الشخصي)</label>
+                            <label class="block text-slate-400 mb-1">رقم واتساب الإشعارات</label>
                             <input type="text" id="cfg_wa" value="${db.restaurant.whatsapp}" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold">
                         </div>
                         <div>
@@ -215,6 +252,7 @@
         function renderCustomerMenu() {
             const cartCount = ui.cart.reduce((s, i) => s + i.qty, 0);
             const cartTotal = ui.cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            const activeOrder = db.orders.find(o => o.phone === ui.phone && o.status !== 'delivered');
 
             return `
                 <div class="min-h-screen bg-slate-950 text-white pb-32">
@@ -227,6 +265,7 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
+                            ${activeOrder ? `<button onclick="navigate('#track')" class="text-xs font-black bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-xl border border-emerald-500/30 animate-pulse">🚚 تتبع طلبك</button>` : ''}
                             <button onclick="navigate('#builder')" class="text-xs bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl text-amber-400">الإعدادات</button>
                             <button onclick="ui.route='cart'; render();" class="relative bg-slate-900 p-2.5 rounded-full border border-slate-800">
                                 <i class="fa-solid fa-bag-shopping"></i>
@@ -238,7 +277,7 @@
                     <div class="max-w-2xl mx-auto p-4 space-y-4">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             ${db.menu.map(item => `
-                                <div class="bg-slate-900 border border-slate-800 p-4 rounded-3xl flex flex-col justify-between">
+                                <div class="bg-slate-900 border border-slate-800 p-4 rounded-3xl flex flex-col justify-between shadow-xl">
                                     <div class="w-full h-36 rounded-2xl overflow-hidden mb-3">
                                         <img src="${item.img}" class="w-full h-full object-cover">
                                     </div>
@@ -248,7 +287,7 @@
                                     </div>
                                     <div class="flex justify-between items-center mt-4 pt-3 border-t border-slate-800">
                                         <span class="font-black text-amber-400">EG ${item.price}</span>
-                                        <button onclick="addItemToCart(${item.id})" class="bg-amber-500 text-slate-950 px-4 py-2 rounded-xl font-black text-xs">إضافة +</button>
+                                        <button onclick="addItemToCart(${item.id})" class="bg-amber-500 text-slate-950 px-4 py-2 rounded-xl font-black text-xs hover:scale-105 transition">إضافة +</button>
                                     </div>
                                 </div>
                             `).join('')}
@@ -257,7 +296,7 @@
 
                     ${cartCount > 0 ? `
                         <div class="fixed bottom-6 left-4 right-4 max-w-lg mx-auto z-40">
-                            <button onclick="ui.route='cart'; render();" class="w-full py-4 px-6 rounded-2xl bg-amber-500 text-slate-950 font-black shadow-2xl flex justify-between items-center">
+                            <button onclick="ui.route='cart'; render();" class="w-full py-4 px-6 rounded-2xl bg-amber-500/90 backdrop-blur-xl text-slate-950 font-black shadow-2xl flex justify-between items-center border border-white/20 animate-bounce">
                                 <span>عرض السلة وإتمام الطلب (${cartCount})</span>
                                 <span>EG ${cartTotal.toFixed(2)}</span>
                             </button>
@@ -295,7 +334,7 @@
                     </div>
 
                     ${ui.cart.length > 0 ? `
-                        <button onclick="ui.route='checkout'; render();" class="w-full bg-amber-500 text-slate-950 font-black py-4 rounded-2xl text-sm">متابعة لتأكيد الطلب</button>
+                        <button onclick="ui.route='checkout'; render();" class="w-full bg-amber-500 text-slate-950 font-black py-4 rounded-2xl text-sm shadow-lg">متابعة لتأكيد الطلب</button>
                     ` : ''}
                 </div>
             `;
@@ -303,10 +342,11 @@
 
         function renderCheckoutPage() {
             const subtotal = ui.cart.reduce((s, i) => s + (i.price * i.qty), 0);
-            const total = subtotal + db.restaurant.deliveryFee;
+            const deliveryFee = ui.deliveryMethod === 'home' ? db.restaurant.deliveryFee : 0;
+            const total = subtotal + deliveryFee;
 
             return `
-                <div class="min-h-screen bg-slate-950 text-white p-4 max-w-lg mx-auto space-y-4 pb-20">
+                <div class="min-h-screen bg-slate-950 text-white p-4 max-w-lg mx-auto space-y-4 pb-28">
                     <div class="flex justify-between items-center pb-3 border-b border-slate-800">
                         <button onclick="ui.route='cart'; render();" class="text-xs bg-slate-900 px-3 py-1.5 rounded-xl">السلة</button>
                         <h1 class="font-black text-lg">إتمام الطلب</h1>
@@ -320,21 +360,59 @@
                         <label class="block text-slate-400">الاسم *</label>
                         <input type="text" id="chk_name" value="${ui.customerName}" placeholder="اسمك الكريم" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold">
 
-                        <label class="block text-slate-400">العنوان أو رقم الطاولة</label>
-                        <input type="text" id="chk_address" value="${ui.address}" placeholder="العنوان بالتفصيل أو رقم الطاولة" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold">
+                        <label class="block text-slate-400">طريقة الاستلام</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="ui.deliveryMethod='branch'; render();" class="py-2.5 rounded-xl border font-bold ${ui.deliveryMethod==='branch'?'border-amber-500 bg-amber-500/20 text-amber-400':'border-slate-800 bg-slate-950'}">استلام من الفرع</button>
+                            <button onclick="ui.deliveryMethod='home'; render();" class="py-2.5 rounded-xl border font-bold ${ui.deliveryMethod==='home'?'border-amber-500 bg-amber-500/20 text-amber-400':'border-slate-800 bg-slate-950'}">توصيل دليفري</button>
+                        </div>
+
+                        ${ui.deliveryMethod === 'home' ? `
+                            <button onclick="detectGPSLocation()" type="button" class="w-full bg-amber-500 text-slate-950 font-bold py-3 rounded-xl flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-crosshairs"></i> تحديد العنوان تلقائياً (GPS)
+                            </button>
+                            <textarea id="chk_address" rows="2" placeholder="العنوان بالتفصيل..." class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold">${ui.address}</textarea>
+                        ` : ''}
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-2 text-xs">
+                        <div class="flex justify-between text-slate-400"><span>المجموع</span><span>EG ${subtotal}</span></div>
+                        <div class="flex justify-between text-slate-400"><span>التوصيل</span><span>EG ${deliveryFee}</span></div>
+                        <div class="border-t border-slate-800 pt-2 flex justify-between font-black text-amber-400 text-sm">
+                            <span>الإجمالي</span><span>EG ${total}</span>
+                        </div>
                     </div>
 
                     <button onclick="submitFinalOrder()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-2xl text-sm shadow-xl">
-                        🚀 تأكيد وإرسال الطلب (إلى الكاشير والواتساب)
+                        🚀 تأكيد وإرسال الطلب (سحابياً + واتساب)
                     </button>
                 </div>
             `;
         }
 
+        async function detectGPSLocation() {
+            if (!navigator.geolocation) { alert('المتصفح لا يدعم الـ GPS'); return; }
+            alert('📍 جاري تحديد موقعك...');
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
+                ui.address = `إحداثيات GPS: ${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+                render();
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=ar`);
+                    const data = await res.json();
+                    if (data && data.display_name) {
+                        ui.address = data.display_name;
+                        render();
+                    }
+                } catch(e) {}
+            }, () => { alert('يرجى السماح بالوصول للموقع.'); });
+        }
+
         function submitFinalOrder() {
             const phone = document.getElementById('chk_phone').value.trim();
             const name = document.getElementById('chk_name').value.trim();
-            const address = document.getElementById('chk_address').value.trim();
+            const addressInput = document.getElementById('chk_address');
+            const address = addressInput ? addressInput.value.trim() : 'استلام من الفرع';
 
             if (!phone || !name) {
                 alert('⚠️ يرجى إدخال الاسم ورقم الهاتف!');
@@ -346,7 +424,8 @@
             ui.address = address;
 
             const subtotal = ui.cart.reduce((s, i) => s + (i.price * i.qty), 0);
-            const total = subtotal + db.restaurant.deliveryFee;
+            const deliveryFee = ui.deliveryMethod === 'home' ? db.restaurant.deliveryFee : 0;
+            const total = subtotal + deliveryFee;
 
             const orderObj = {
                 id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
@@ -355,26 +434,23 @@
                 address: address || 'استلام من الفرع',
                 items: JSON.parse(JSON.stringify(ui.cart)),
                 total: total,
-                status: 'pending',
+                status: 'pending', // pending, preparing, on_the_way, delivered
                 time: 'الآن'
             };
 
-            // 1. حفظ الطلب محلياً ليظهر فوراً في شاشة الكاشير
+            // حفظ الطلب سحابياً ومحلياً
             db.orders.unshift(orderObj);
             saveState();
 
             ui.lastOrder = orderObj;
             ui.cart = [];
 
-            // 2. إرسال إشعار فوري عبر الواتساب لرقم هاتفك الشخصي
-            const itemsText = orderObj.items.map(i => `- ${i.qty}x ${i.name} (${i.price * i.qty} جج)`).join('%0A');
+            // فتح واتساب لإرسال إشعار لهاتفك
+            const itemsText = orderObj.items.map(i => `- ${i.qty}x ${i.name} (${i.price * i.qty} ج)`).join('%0A');
             const waMessage = `🚨 *طلب جديد للمطعم!*%0A%0A🆔 رقم الطلب: ${orderObj.id}%0A👤 العميل: ${name}%0A📞 الهاتف: ${phone}%0A📍 العنوان: ${address}%0A%0A🍽️ *الأصناف:*%0A${itemsText}%0A%0A💰 *الإجمالي:* ${total} ج.م`;
-            
-            // فتح واتساب أوتوماتيكياً لإرسال التنبيه لهاتفك
             window.open(`https://wa.me/${db.restaurant.whatsapp}?text=${waMessage}`, '_blank');
 
-            ui.route = 'order_success';
-            render();
+            navigate('#track');
         }
 
         function renderOrderSuccess() {
@@ -382,8 +458,45 @@
                 <div class="min-h-screen bg-slate-950 text-white p-6 flex flex-col items-center justify-center text-center space-y-4">
                     <div class="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-3xl">✓</div>
                     <h2 class="text-2xl font-black">تم إرسال طلبك بنجاح!</h2>
-                    <p class="text-xs text-slate-400">تم إرسال إشعار فوري للكاشير وعبر الواتساب.</p>
-                    <button onclick="ui.route='menu'; render();" class="bg-amber-500 text-slate-950 font-black px-6 py-3 rounded-xl text-xs">العودة للمنيو</button>
+                    <p class="text-xs text-slate-400">ظهر الطلب فوراً في شاشة الكاشير وواتساب.</p>
+                    <button onclick="navigate('#menu')" class="bg-amber-500 text-slate-950 font-black px-6 py-3 rounded-xl text-xs">العودة للمنيو</button>
+                </div>
+            `;
+        }
+
+        function renderTrackOrder() {
+            const ord = db.orders.find(o => o.phone === ui.phone && o.status !== 'delivered') || ui.lastOrder;
+            if (!ord) {
+                return `<div class="min-h-screen bg-slate-950 text-white p-6 text-center space-y-4"><p>لا توجد طلبات نشطة حالياً.</p><button onclick="navigate('#menu')" class="bg-amber-500 text-slate-950 px-4 py-2 rounded-xl font-bold">المنيو</button></div>`;
+            }
+
+            const steps = [
+                { key: 'pending', label: 'قيد المراجعة ⏳' },
+                { key: 'preparing', label: 'جاري التحضير 🔥' },
+                { key: 'on_the_way', label: 'خرج مع الدليفري 🛵' },
+                { key: 'delivered', label: 'تم التسليم ✅' }
+            ];
+            const currentIndex = steps.findIndex(s => s.key === ord.status);
+
+            return `
+                <div class="min-h-screen bg-slate-950 text-white p-6 max-w-lg mx-auto space-y-6">
+                    <div class="flex justify-between items-center pb-4 border-b border-slate-800">
+                        <h1 class="font-black text-xl text-amber-400">تتبع الطلب (${ord.id})</h1>
+                        <button onclick="navigate('#menu')" class="text-xs bg-slate-800 px-3 py-1.5 rounded-xl">المنيو</button>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-6">
+                        <div class="space-y-4">
+                            ${steps.map((st, idx) => `
+                                <div class="flex items-center gap-4 ${idx <= currentIndex ? 'text-amber-400 font-black' : 'text-slate-600'}">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center border-2 ${idx <= currentIndex ? 'border-amber-500 bg-amber-500/20 text-amber-400' : 'border-slate-700 bg-slate-950'}">
+                                        ${idx < currentIndex ? '✓' : idx + 1}
+                                    </div>
+                                    <span class="text-sm">${st.label}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
                 </div>
             `;
         }
@@ -393,7 +506,7 @@
                 return `
                     <div class="min-h-screen bg-slate-950 text-white p-6 flex items-center justify-center">
                         <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl max-w-sm w-full text-center space-y-4">
-                            <h2 class="font-black text-lg text-amber-400">شاشة الكاشير</h2>
+                            <h2 class="font-black text-lg text-amber-400">شاشة الكاشير السحابية</h2>
                             <input type="password" id="pin_box" placeholder="أدخل رمز PIN (1234)" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-center text-xl font-black tracking-widest text-white">
                             <button onclick="unlockCashier()" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl text-sm">دخول</button>
                         </div>
@@ -404,9 +517,8 @@
             return `
                 <div class="min-h-screen bg-slate-950 text-white p-6 max-w-4xl mx-auto space-y-6">
                     <div class="flex justify-between items-center pb-4 border-b border-slate-800">
-                        <h1 class="text-xl font-black text-amber-400">🖥️ لوحة الكاشير (الطلبات الواردة لحظياً)</h1>
+                        <h1 class="text-xl font-black text-amber-400">🖥️ لوحة الكاشير (متزامنة سحابياً ⚡)</h1>
                         <div class="flex gap-2">
-                            <button onclick="db=loadState(); render();" class="bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl text-xs font-bold text-amber-400">🔄 تحديث الطلبات</button>
                             <button onclick="ui.cashierUnlocked=false; render();" class="bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl text-xs text-red-400">قفل</button>
                         </div>
                     </div>
@@ -414,14 +526,14 @@
                     <div class="space-y-4">
                         ${db.orders.length === 0 ? `
                             <div class="bg-slate-900 border border-slate-800 p-10 rounded-3xl text-center text-slate-500">
-                                لا توجد طلبات جديدة حالياً.
+                                لا توجد طلبات جديدة. الطلبات ستظهر هنا سحابياً فور إرسالها من أي جهاز!
                             </div>
                         ` : db.orders.map((ord, idx) => `
                             <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col md:flex-row justify-between gap-4">
                                 <div class="space-y-1 text-xs">
                                     <div class="flex items-center gap-2">
                                         <span class="font-black text-amber-400 text-sm">${ord.id}</span>
-                                        <span class="bg-slate-800 px-2 py-0.5 rounded text-[10px]">${ord.status}</span>
+                                        <span class="bg-slate-800 px-2 py-0.5 rounded text-[10px] text-emerald-400">● ${ord.status}</span>
                                     </div>
                                     <p class="font-bold text-white">👤 ${ord.customer} — 📞 ${ord.phone}</p>
                                     <p class="text-slate-400">📍 ${ord.address}</p>
@@ -429,15 +541,31 @@
                                         ${ord.items.map(i => `<div>• ${i.qty}x ${i.name} (${i.price * i.qty} ج.م)</div>`).join('')}
                                     </div>
                                 </div>
-                                <div class="flex flex-col justify-between items-end">
+                                <div class="flex flex-col justify-between items-end gap-3">
                                     <span class="font-black text-base text-amber-400">EG ${ord.total}</span>
-                                    <button onclick="db.orders.splice(${idx},1); saveState(); render();" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-black">تم التسليم والأرشفة</button>
+                                    
+                                    <div class="flex gap-1.5 flex-wrap">
+                                        <button onclick="updateStatus(${idx}, 'preparing')" class="bg-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold">تحضير 🔥</button>
+                                        <button onclick="updateStatus(${idx}, 'on_the_way')" class="bg-amber-600 px-2.5 py-1 rounded-lg text-[10px] font-bold">مع الدليفري 🛵</button>
+                                        <button onclick="updateStatus(${idx}, 'delivered')" class="bg-emerald-600 px-2.5 py-1 rounded-lg text-[10px] font-bold">تم التسليم ✅</button>
+                                    </div>
+
+                                    <button onclick="printReceipt(${idx})" class="bg-slate-800 px-3 py-1.5 rounded-xl text-xs font-bold">
+                                        <i class="fa-solid fa-print"></i> طباعة الفاتورة 🧾
+                                    </button>
                                 </div>
                             </div>
                         `).join('')}
                     </div>
                 </div>
             `;
+        }
+
+        function updateStatus(idx, status) {
+            db.orders[idx].status = status;
+            saveState();
+            render();
+            alert(`✅ تم تحديث حالة الطلب إلى: ${status}`);
         }
 
         function unlockCashier() {
@@ -448,6 +576,44 @@
             } else {
                 alert('❌ الرمز غير صحيح!');
             }
+        }
+
+        function printReceipt(idx) {
+            const ord = db.orders[idx];
+            const html = `
+                <div style="font-family:Cairo,sans-serif; direction:rtl; padding:20px; max-width:300px; margin:auto; background:#fff; color:#000;">
+                    <h2 style="text-align:center; margin-bottom:5px;">🍽️ ${db.restaurant.name}</h2>
+                    <p style="text-align:center; font-size:11px; color:#666; margin-bottom:15px;">${db.restaurant.taglet}</p>
+                    <hr style="border:1px dashed #ccc; margin:10px 0;">
+                    <p style="font-size:12px;"><strong>رقم الطلب:</strong> ${ord.id}</p>
+                    <p style="font-size:12px;"><strong>العميل:</strong> ${ord.customer} (${ord.phone})</p>
+                    <p style="font-size:12px;"><strong>العنوان:</strong> ${ord.address}</p>
+                    <hr style="border:1px dashed #ccc; margin:10px 0;">
+                    <table style="width:100%; font-size:12px; border-collapse:collapse;">
+                        <thead>
+                            <tr style="border-bottom:1px solid #000;">
+                                <th style="text-align:right; padding-bottom:5px;">الصنف</th>
+                                <th style="text-align:center; padding-bottom:5px;">الكمية</th>
+                                <th style="text-align:left; padding-bottom:5px;">السعر</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${ord.items.map(i => `
+                                <tr>
+                                    <td style="padding:4px 0;">${i.name}</td>
+                                    <td style="text-align:center; padding:4px 0;">${i.qty}</td>
+                                    <td style="text-align:left; padding:4px 0;">${i.price * i.qty} ج.م</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <hr style="border:1px dashed #ccc; margin:10px 0;">
+                    <h3 style="text-align:left; font-size:14px; margin:0;">الإجمالي: EG ${ord.total.toFixed(2)}</h3>
+                    <p style="text-align:center; font-size:10px; margin-top:20px; color:#555;">شكراً لتعاملكم معنا ❤️</p>
+                </div>
+            `;
+            document.getElementById('printable-receipt').innerHTML = html;
+            window.print();
         }
 
         syncRouteFromHash();
