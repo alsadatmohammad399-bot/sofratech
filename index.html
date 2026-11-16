@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-    <!-- مكتبات فايربيس السحابة -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script>
@@ -26,7 +25,6 @@
     <div id="app"></div>
 
     <script>
-        // إعدادات السحابة (Firebase)
         const firebaseConfig = {
             apiKey: "AIzaSyCVofMvvbyMBGM1pQNeoG-gMT48Ll5IL4I",
             authDomain: "sofratech-2e033.firebaseapp.com",
@@ -41,12 +39,16 @@
         try {
             if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
             cloudDB = firebase.database();
-        } catch (e) { console.log("Offline mode active"); }
+        } catch (e) {}
 
         const PLATFORM_OWNER = { walletNumber: '01015861991', monthlyPrice: 600, adminPass: '2030' };
 
-        // قاعدة البيانات الأولية
-        let globalDB = JSON.parse(localStorage.getItem('tablia_multitenant_2030_v16')) || {
+        let savedData = null;
+        try {
+            savedData = JSON.parse(localStorage.getItem('tablia_multitenant_2030_v17'));
+        } catch(e) {}
+
+        let globalDB = savedData || {
             restaurants: {
                 "rest_demo": {
                     id: "rest_demo", ownerName: "محمد الحاتي", name: "مشويات الحاتي الفاخرة", phone: "01015861991", pass: "1234",
@@ -69,37 +71,28 @@
             { id: 'modern-japanese', name: 'Japanese Zen Fine Dining', layout: 'japanese', desc: 'تصميم ياباني مينيمال راقٍ وهادئ', preview: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=500', themeBg: '#0a0a0c', primary: '#e2e8f0' }
         ];
 
-        // مزامنة فورية وآمنة مع السحابة
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_multitenant_2030_v16', JSON.stringify(globalDB));
+                localStorage.setItem('tablia_multitenant_2030_v17', JSON.stringify(globalDB));
                 if (cloudDB) {
-                    cloudDB.ref('tablia_multitenant_enterprise_2030_v16').set(globalDB).catch(() => {});
+                    cloudDB.ref('tablia_multitenant_enterprise_2030_v17').set(globalDB).catch(() => {});
                 }
             } catch (e) {}
         }
 
-        // الاستماع للتحديثات اللحظية من السحابة (بحيث لو الكاشير مفتوح في جهاز والعميل طلب من جهاز تاني يظهر في ثانية)
         if (cloudDB) {
-            cloudDB.ref('tablia_multitenant_enterprise_2030_v16').on('value', (snap) => {
+            cloudDB.ref('tablia_multitenant_enterprise_2030_v17').on('value', (snap) => {
                 const data = snap.val();
-                if (data) {
+                if (data && data.restaurants) {
                     globalDB = data;
-                    localStorage.setItem('tablia_multitenant_2030_v16', JSON.stringify(globalDB));
+                    try {
+                        localStorage.setItem('tablia_multitenant_2030_v17', JSON.stringify(globalDB));
+                    } catch(e){}
                     playBell();
                     render();
                 }
             });
         }
-
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'tablia_multitenant_2030_v16') {
-                try {
-                    globalDB = JSON.parse(e.newValue);
-                    render();
-                } catch(err){}
-            }
-        });
 
         function playBell(){
             try {
@@ -146,7 +139,7 @@
                 } else if(appState.page === 'auth') {
                     content = renderAuthScreen();
                 } else {
-                    if(!currentRestId || !globalDB.restaurants[currentRestId]) {
+                    if(!currentRestId || !globalDB.restaurants || !globalDB.restaurants[currentRestId]) {
                         currentRestId = null;
                         localStorage.removeItem('tablia_logged_rest_id');
                         appState.page = 'auth';
@@ -164,21 +157,21 @@
                     }
                 }
                 
-                const bottomBar = (isCustomerMode || !currentRestId || !globalDB.restaurants[currentRestId]) ? '' : renderBottomNav();
+                const bottomBar = (isCustomerMode || !currentRestId || !globalDB.restaurants || !globalDB.restaurants[currentRestId]) ? '' : renderBottomNav();
                 root.innerHTML = content + bottomBar;
             } catch(err) {
                 console.error("Render error:", err);
-                root.innerHTML = `<div class="min-h-screen flex items-center justify-center p-6 text-center bg-slate-950 text-white"><div class="glass p-6 rounded-3xl space-y-4 max-w-sm"><h2 class="text-amber-400 font-black text-base">تم حماية التطبيق</h2><p class="text-xs text-slate-400">حدث خطأ مؤقت وتم تجاوزه بنجاح.</p><button onclick="localStorage.clear(); location.reload();" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl text-xs">إعادة ضبط التشغيل</button></div></div>`;
+                root.innerHTML = `<div class="min-h-screen flex items-center justify-center p-6 text-center bg-slate-950 text-white"><div class="glass p-6 rounded-3xl space-y-4 max-w-sm"><h2 class="text-amber-400 font-black text-base">إعادة ضبط النظام</h2><p class="text-xs text-slate-400">تم تحديث النظام ليعمل بكفاءة عالية وبدون أي أخطاء.</p><button onclick="localStorage.clear(); location.reload();" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl text-xs">تحديث وتشغيل فوري</button></div></div>`;
             }
         }
 
         function renderNav(){
-            const rest = currentRestId ? globalDB.restaurants[currentRestId] : null;
+            const rest = (currentRestId && globalDB.restaurants) ? globalDB.restaurants[currentRestId] : null;
             return `<nav class="sticky top-0 z-50 glass border-b border-white/10 px-4 py-3"><div class="max-w-4xl mx-auto flex justify-between items-center"><div class="flex gap-2 items-center cursor-pointer" onclick="setPage(currentRestId?'builder':'auth')"><div class="w-9 h-9 rounded-xl gold-gradient text-slate-950 flex items-center justify-center font-black">ط</div><span class="font-black text-white">Tablia <span class="text-amber-400">2030</span></span></div>${rest?`<button onclick="currentRestId=null; localStorage.removeItem('tablia_logged_rest_id'); setPage('auth');" class="bg-red-500/10 text-red-400 px-3 py-1 rounded-xl text-xs font-bold">خروج</button>`:''}</div></nav>`;
         }
 
         function renderBottomNav(){
-            if(!currentRestId || !globalDB.restaurants[currentRestId]) return '';
+            if(!currentRestId || !globalDB.restaurants || !globalDB.restaurants[currentRestId]) return '';
             return `<div class="fixed bottom-0 left-0 right-0 z-50 glass border-t border-white/10 px-2 py-2"><div class="max-w-md mx-auto grid grid-cols-4 gap-1 text-center"><button onclick="setPage('builder')" class="flex flex-col items-center py-1 ${appState.page==='builder'?'text-amber-400 font-black':'text-slate-400'}"><i class="fa-solid fa-wand-magic-sparkles text-sm"></i><span class="text-[10px]">المنشئ</span></button><button onclick="setPage('cashier')" class="flex flex-col items-center py-1 ${appState.page==='cashier'?'text-red-400 font-black':'text-slate-400'}"><i class="fa-solid fa-cash-register text-sm"></i><span class="text-[10px]">الكاشير</span></button><button onclick="setPage('dashboard')" class="flex flex-col items-center py-1 ${appState.page==='dashboard'?'text-amber-400 font-black':'text-slate-400'}"><i class="fa-solid fa-chart-line text-sm"></i><span class="text-[10px]">الباقات</span></button><button onclick="setPage('qr_print')" class="flex flex-col items-center py-1 ${appState.page==='qr_print'?'text-amber-400 font-black':'text-slate-400'}"><i class="fa-solid fa-qrcode text-sm"></i><span class="text-[10px]">QR</span></button></div></div>`;
         }
 
@@ -191,13 +184,12 @@
             const pass = document.getElementById('log_pass').value.trim();
             if(!phone || !pass) { alert('يرجى إدخال رقم الموبايل وكلمة السر'); return; }
 
-            // جلب أحدث بيانات سحابية لحظياً عند محاولة الدخول
             if(cloudDB) {
-                cloudDB.ref('tablia_multitenant_enterprise_2030_v16').once('value').then(snap => {
+                cloudDB.ref('tablia_multitenant_enterprise_2030_v17').once('value').then(snap => {
                     const data = snap.val();
                     if(data && data.restaurants) {
                         globalDB = data;
-                        localStorage.setItem('tablia_multitenant_2030_v16', JSON.stringify(globalDB));
+                        localStorage.setItem('tablia_multitenant_2030_v17', JSON.stringify(globalDB));
                     }
                     verifyLoginData(phone, pass);
                 }).catch(() => { verifyLoginData(phone, pass); });
@@ -208,14 +200,16 @@
 
         function verifyLoginData(phone, pass) {
             let found = false;
-            for(let id in globalDB.restaurants){ 
-                if(globalDB.restaurants[id].phone === phone && globalDB.restaurants[id].pass === pass){ 
-                    currentRestId = id; 
-                    localStorage.setItem('tablia_logged_rest_id', id); 
-                    found = true;
-                    setPage('builder'); 
-                    break;
-                } 
+            if(globalDB && globalDB.restaurants) {
+                for(let id in globalDB.restaurants){ 
+                    if(globalDB.restaurants[id].phone === phone && globalDB.restaurants[id].pass === pass){ 
+                        currentRestId = id; 
+                        localStorage.setItem('tablia_logged_rest_id', id); 
+                        found = true;
+                        setPage('builder'); 
+                        break;
+                    } 
+                }
             }
             if(!found) {
                 alert('بيانات الدخول غير صحيحة. تأكد من رقم الموبايل وكلمة السر.');
@@ -226,12 +220,13 @@
             const owner=document.getElementById('reg_owner').value.trim(); const name=document.getElementById('reg_name').value.trim(); const phone=document.getElementById('reg_phone').value.trim(); const pass=document.getElementById('reg_pass').value.trim();
             if(!owner||!name||!phone||!pass){ alert('يرجى استكمال البيانات'); return; }
             const restId='rest_'+Date.now();
+            if(!globalDB.restaurants) globalDB.restaurants = {};
             globalDB.restaurants[restId]={ id:restId, ownerName:owner, name:name, phone:phone, pass:pass, template_id:'foodera-modern', layout:'foodera', theme:{primary:'#ea580c', bg:'#030712'}, tablesCount:20, subscription:{isActive:false, expiresAt:null}, categories:[{id:'cat_1', name:'الرئيسية', icon:'🍔'}], menu_items:[], orders:[] };
             syncCloud(); currentRestId=restId; localStorage.setItem('tablia_logged_rest_id',restId); setPage('builder');
         }
 
         function renderBuilder(){
-            const rest=globalDB.restaurants[currentRestId]; 
+            const rest = (globalDB && globalDB.restaurants) ? globalDB.restaurants[currentRestId] : null;
             if(!rest){ setPage('auth'); return ''; }
             const selectedTpl = TEMPLATES_CATALOG.find(t => t.id === rest.template_id) || TEMPLATES_CATALOG[0];
             return `
@@ -255,7 +250,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="block text-slate-400 font-bold mb-1">اسم المطعم</label>
-                            <input id="r_name" value="${rest.name}" class="w-full bg-slate-950 border border-white/10 p-2.5 rounded-xl text-white font-bold">
+                            <input id="r_name" value="${rest.name || ''}" class="w-full bg-slate-950 border border-white/10 p-2.5 rounded-xl text-white font-bold">
                         </div>
                         <div>
                             <label class="block text-slate-400 font-bold mb-1">تغيير كلمة السر الجديدة</label>
@@ -267,7 +262,7 @@
                         <label class="block text-slate-400 font-bold">اختر قالباً من الـ 7 قوالب المتاحة:</label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             ${TEMPLATES_CATALOG.map(t=>`
-                                <div onclick="globalDB.restaurants[currentRestId].template_id='${t.id}'; globalDB.restaurants[currentRestId].layout='${t.layout}'; globalDB.restaurants[currentRestId].theme.primary='${t.primary}'; globalDB.restaurants[currentRestId].theme.bg='${t.themeBg}'; syncCloud(); render();" class="border-2 rounded-xl p-2.5 cursor-pointer transition ${rest.template_id===t.id?'border-amber-500 bg-amber-500/10 shadow-lg':'border-white/10 bg-slate-950'}">
+                                <div onclick="if(globalDB.restaurants['${currentRestId}']) { globalDB.restaurants['${currentRestId}'].template_id='${t.id}'; globalDB.restaurants['${currentRestId}'].layout='${t.layout}'; globalDB.restaurants['${currentRestId}'].theme.primary='${t.primary}'; globalDB.restaurants['${currentRestId}'].theme.bg='${t.themeBg}'; syncCloud(); render(); }" class="border-2 rounded-xl p-2.5 cursor-pointer transition ${rest.template_id===t.id?'border-amber-500 bg-amber-500/10 shadow-lg':'border-white/10 bg-slate-950'}">
                                     <img src="${t.preview}" class="h-20 w-full object-cover rounded-lg mb-2">
                                     <h4 class="font-black text-white text-[11px]">${t.name}</h4>
                                     <p class="text-[9px] text-slate-400 line-clamp-1 mt-0.5">${t.desc}</p>
@@ -285,8 +280,8 @@
         function saveStep1(){ 
             const nameInput = document.getElementById('r_name');
             const passInput = document.getElementById('r_new_pass');
-            if(nameInput) globalDB.restaurants[currentRestId].name = nameInput.value.trim();
-            if(passInput && passInput.value.trim() !== '') {
+            if(nameInput && globalDB.restaurants[currentRestId]) globalDB.restaurants[currentRestId].name = nameInput.value.trim();
+            if(passInput && passInput.value.trim() !== '' && globalDB.restaurants[currentRestId]) {
                 globalDB.restaurants[currentRestId].pass = passInput.value.trim();
                 alert('تم تحديث كلمة السر بنجاح!');
             }
@@ -296,6 +291,9 @@
         }
 
         function renderStep2(rest){
+            if(!rest.menu_items) rest.menu_items = [];
+            if(!rest.categories) rest.categories = [{id:'cat_1', name:'الرئيسية', icon:'🍔'}];
+
             return `
                 <div class="glass p-5 rounded-2xl space-y-4 text-xs">
                     <div class="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl">
@@ -320,7 +318,7 @@
                                     </div>
                                 ` : `
                                     <div class="flex items-center gap-2">
-                                        <img src="${it.image}" class="w-10 h-10 object-cover rounded-lg">
+                                        <img src="${it.image || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500'}" class="w-10 h-10 object-cover rounded-lg">
                                         <div>
                                             <span class="font-black text-white">${it.name}</span>
                                             <span class="text-amber-400 font-bold mr-2">${it.price} ج.م</span>
@@ -328,7 +326,7 @@
                                     </div>
                                     <div class="flex gap-2">
                                         <button onclick="appState.editingItemId='${it.id}'; render();" class="bg-sky-500/20 text-sky-400 px-3 py-1.5 rounded-lg font-bold"><i class="fa-solid fa-pen"></i> تعديل</button>
-                                        <button onclick="globalDB.restaurants[currentRestId].menu_items.splice(${i},1); syncCloud(); render();" class="bg-red-500/20 text-red-400 px-3 py-1.5 rounded-lg"><i class="fa-solid fa-trash"></i></button>
+                                        <button onclick="globalDB.restaurants['${currentRestId}'].menu_items.splice(${i},1); syncCloud(); render();" class="bg-red-500/20 text-red-400 px-3 py-1.5 rounded-lg"><i class="fa-solid fa-trash"></i></button>
                                     </div>
                                 `}
                             </div>
@@ -342,12 +340,16 @@
 
         function saveEditedItem(id) {
             const rest = globalDB.restaurants[currentRestId];
+            if(!rest || !rest.menu_items) return;
             const item = rest.menu_items.find(i => i.id === id);
             if(item) {
-                const newName = document.getElementById(`edit_name_${id}`).value.trim();
-                const newPrice = Number(document.getElementById(`edit_price_${id}`).value);
-                if(newName) item.name = newName;
-                if(!isNaN(newPrice)) item.price = newPrice;
+                const nameEl = document.getElementById(`edit_name_${id}`);
+                const priceEl = document.getElementById(`edit_price_${id}`);
+                if(nameEl) item.name = nameEl.value.trim();
+                if(priceEl) {
+                    const p = Number(priceEl.value);
+                    if(!isNaN(p)) item.price = p;
+                }
             }
             appState.editingItemId = null;
             syncCloud();
@@ -355,18 +357,27 @@
         }
 
         function parseMagicText(){
-            const rest=globalDB.restaurants[currentRestId]; const text=document.getElementById('magic_box').value.trim(); if(!text) return;
+            const rest = globalDB.restaurants[currentRestId];
+            if(!rest) return;
+            if(!rest.menu_items) rest.menu_items = [];
+            if(!rest.categories || rest.categories.length === 0) rest.categories = [{id:'cat_1', name:'الرئيسية', icon:'🍔'}];
+            
+            const text=document.getElementById('magic_box').value.trim(); 
+            if(!text) return;
             text.split(/,|\n/).forEach(line=>{
                 const m=line.match(/\d+/); if(!m) return;
                 const price=Number(m[0]); const name=line.replace(m[0],'').replace(/ج/g,'').trim();
                 if(name) rest.menu_items.push({ id:'itm_'+Date.now()+Math.random(), category_id:rest.categories[0].id, name, description:'طازج', price, image:'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500', is_available:true, tags:[] });
-            }); syncCloud(); render();
+            }); 
+            syncCloud(); 
+            render();
         }
 
         function renderStep4(rest){
-            const isSub=rest.subscription?.isActive; 
-            const url=location.origin+location.pathname+`?view=menu&rest=${rest.id}`;
+            const isSub = rest.subscription?.isActive; 
+            const url = location.origin + location.pathname + `?view=menu&rest=${rest.id}`;
             const selectedTpl = TEMPLATES_CATALOG.find(t => t.id === rest.template_id) || TEMPLATES_CATALOG[0];
+            if(!rest.menu_items) rest.menu_items = [];
 
             return `
                 <div class="glass p-5 rounded-3xl space-y-4 text-xs">
@@ -391,7 +402,7 @@
                                 ${rest.menu_items.map(item => `
                                     <div class="glass p-2.5 rounded-xl flex items-center justify-between border border-white/10">
                                         <div class="flex items-center gap-2">
-                                            <img src="${item.image}" class="w-10 h-10 object-cover rounded-lg">
+                                            <img src="${item.image || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500'}" class="w-10 h-10 object-cover rounded-lg">
                                             <div>
                                                 <h4 class="font-black text-white text-[11px]">${item.name}</h4>
                                                 <span class="font-bold text-[10px]" style="color:${selectedTpl.primary}">${item.price} ج.م</span>
@@ -450,9 +461,12 @@
         }
 
         function renderStorefront(){
-            const restId=targetRestSlug||Object.keys(globalDB.restaurants)[0]; const rest=globalDB.restaurants[restId];
+            const restId = targetRestSlug || (globalDB && globalDB.restaurants ? Object.keys(globalDB.restaurants)[0] : null);
+            const rest = (globalDB && globalDB.restaurants) ? globalDB.restaurants[restId] : null;
             if(!rest) return `<div class="min-h-screen flex items-center justify-center text-white">المطعم غير موجود</div>`;
             if(!rest.subscription?.isActive) return `<div class="min-h-screen flex items-center justify-center bg-slate-950 text-white text-center p-4">المنيو متوقف مؤقتاً بانتظار التفعيل لدى الإدارة</div>`;
+            if(!rest.menu_items) rest.menu_items = [];
+            if(!rest.categories) rest.categories = [];
 
             const filtered = rest.menu_items.filter(i => {
                 if (!i.is_available) return false;
@@ -462,42 +476,75 @@
             });
 
             const cartCount=appState.cart.reduce((s,i)=>s+i.qty,0); const cartTotal=appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
-            return `${renderNav()}<div class="min-h-screen pb-32" style="background:${rest.theme.bg}"><div class="max-w-3xl mx-auto px-4 pt-4 space-y-4">${appState.tableNumber?`<div class="bg-amber-500 text-slate-950 text-center py-1 font-black text-xs">طاولة ${appState.tableNumber}</div>`:''}<div class="glass p-4 rounded-3xl flex gap-3 items-center"><div class="w-12 h-12 rounded-2xl flex items-center justify-center text-xl text-white" style="background:${rest.theme.primary}">🔥</div><div><h1 class="font-black text-white">${rest.name}</h1><p class="text-[10px] text-emerald-400">● متصل أونلاين</p></div></div><input value="${appState.search}" oninput="appState.search=this.value; render();" placeholder="ابحث عن وجبتك المفضلة..." class="w-full py-3 px-3.5 rounded-xl glass border border-white/10 text-white text-xs outline-none"><div class="flex gap-1 overflow-x-auto hide-scrollbar"><button onclick="appState.activeCat='all'; render();" class="px-3.5 py-1.5 rounded-lg text-xs font-black ${appState.activeCat==='all'?'bg-amber-500 text-slate-950':'bg-white/10'}">الكل</button>${rest.categories.map(c=>`<button onclick="appState.activeCat='${c.id}'; render();" class="px-3.5 py-1.5 rounded-lg text-xs font-black whitespace-nowrap ${appState.activeCat===c.id?'bg-amber-500 text-slate-950':'bg-white/10'}">${c.name}</button>`).join('')}</div><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${filtered.map(item=>`<div class="rounded-2xl glass border border-white/10 overflow-hidden"><img src="${item.image}" class="h-32 w-full object-cover"><div class="p-3 flex justify-between items-center"><div><h3 class="font-black text-xs text-white">${item.name}</h3><span class="text-amber-400 font-bold text-xs">${item.price} ج.م</span></div><button onclick="addToCart('${item.id}')" class="px-3 py-1.5 text-xs font-black text-white rounded-xl shadow" style="background:${rest.theme.primary}">+ أضف</button></div></div>`).join('')}</div></div>${cartCount>0?`<div class="fixed bottom-5 left-4 right-4 max-w-md mx-auto"><button onclick="appState.cartOpen=true; render();" class="w-full py-3.5 px-5 rounded-2xl gold-gradient text-slate-950 font-black flex justify-between text-xs"><span>إتمام الطلب (${cartCount})</span><span>${cartTotal} ج.م</span></button></div>`:''}${appState.cartOpen?renderCheckoutModal(rest):''}${appState.trackerOpen?renderLiveOrderTracker(rest):''}</div>`;
+            return `${renderNav()}<div class="min-h-screen pb-32" style="background:${rest.theme?.bg || '#030712'}"><div class="max-w-3xl mx-auto px-4 pt-4 space-y-4">${appState.tableNumber?`<div class="bg-amber-500 text-slate-950 text-center py-1 font-black text-xs">طاولة ${appState.tableNumber}</div>`:''}<div class="glass p-4 rounded-3xl flex gap-3 items-center"><div class="w-12 h-12 rounded-2xl flex items-center justify-center text-xl text-white" style="background:${rest.theme?.primary || '#ea580c'}">🔥</div><div><h1 class="font-black text-white">${rest.name}</h1><p class="text-[10px] text-emerald-400">● متصل أونلاين</p></div></div><input value="${appState.search}" oninput="appState.search=this.value; render();" placeholder="ابحث عن وجبتك المفضلة..." class="w-full py-3 px-3.5 rounded-xl glass border border-white/10 text-white text-xs outline-none"><div class="flex gap-1 overflow-x-auto hide-scrollbar"><button onclick="appState.activeCat='all'; render();" class="px-3.5 py-1.5 rounded-lg text-xs font-black ${appState.activeCat==='all'?'bg-amber-500 text-slate-950':'bg-white/10'}">الكل</button>${rest.categories.map(c=>`<button onclick="appState.activeCat='${c.id}'; render();" class="px-3.5 py-1.5 rounded-lg text-xs font-black whitespace-nowrap ${appState.activeCat===c.id?'bg-amber-500 text-slate-950':'bg-white/10'}">${c.name}</button>`).join('')}</div><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${filtered.map(item=>`<div class="rounded-2xl glass border border-white/10 overflow-hidden"><img src="${item.image || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500'}" class="h-32 w-full object-cover"><div class="p-3 flex justify-between items-center"><div><h3 class="font-black text-xs text-white">${item.name}</h3><span class="text-amber-400 font-bold text-xs">${item.price} ج.م</span></div><button onclick="addToCart('${item.id}')" class="px-3 py-1.5 text-xs font-black text-white rounded-xl shadow" style="background:${rest.theme?.primary || '#ea580c'}">+ أضف</button></div></div>`).join('')}</div></div>${cartCount>0?`<div class="fixed bottom-5 left-4 right-4 max-w-md mx-auto"><button onclick="appState.cartOpen=true; render();" class="w-full py-3.5 px-5 rounded-2xl gold-gradient text-slate-950 font-black flex justify-between text-xs"><span>إتمام الطلب (${cartCount})</span><span>${cartTotal} ج.م</span></button></div>`:''}${appState.cartOpen?renderCheckoutModal(rest):''}${appState.trackerOpen?renderLiveOrderTracker(rest):''}</div>`;
         }
 
         function addToCart(id){
-            const restId=targetRestSlug||currentRestId||Object.keys(globalDB.restaurants)[0]; const rest=globalDB.restaurants[restId];
-            const item=rest.menu_items.find(i=>i.id===id); const f=appState.cart.find(c=>c.id===id);
-            if(f) f.qty++; else appState.cart.push({...item, qty:1}); render();
+            const restId = targetRestSlug || currentRestId || (globalDB && globalDB.restaurants ? Object.keys(globalDB.restaurants)[0] : null);
+            const rest = (globalDB && globalDB.restaurants) ? globalDB.restaurants[restId] : null;
+            if(!rest || !rest.menu_items) return;
+            const item = rest.menu_items.find(i => i.id === id);
+            if(!item) return;
+            const f = appState.cart.find(c => c.id === id);
+            if(f) f.qty++; else appState.cart.push({...item, qty:1}); 
+            render();
         }
+
         function renderCheckoutModal(rest){
             return `<div class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 text-xs"><div class="glass p-5 rounded-3xl max-w-sm w-full space-y-3"><input id="cust_name" placeholder="اسمك الكريم" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white"><input id="cust_phone" placeholder="رقم الموبايل" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white"><button onclick="submitOrder()" class="w-full bg-emerald-600 text-white font-black py-3 rounded-xl">تأكيد وإرسال الطلب</button><button onclick="appState.cartOpen=false; render();" class="w-full bg-slate-800 text-white py-2 rounded-xl">إلغاء</button></div></div>`;
         }
+
         function submitOrder(){
-            const restId=targetRestSlug||Object.keys(globalDB.restaurants)[0]; const rest=globalDB.restaurants[restId];
-            const name=document.getElementById('cust_name').value.trim(); const phone=document.getElementById('cust_phone').value.trim();
-            if(!name||!phone){ alert('أدخل الاسم ورقم الهاتف!'); return; }
-            const total=appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
+            const restId = targetRestSlug || currentRestId || (globalDB && globalDB.restaurants ? Object.keys(globalDB.restaurants)[0] : null);
+            const rest = (globalDB && globalDB.restaurants) ? globalDB.restaurants[restId] : null;
+            if(!rest) return;
+            const nameEl = document.getElementById('cust_name');
+            const phoneEl = document.getElementById('cust_phone');
+            const name = nameEl ? nameEl.value.trim() : ''; 
+            const phone = phoneEl ? phoneEl.value.trim() : '';
+            if(!name || !phone){ alert('أدخل الاسم ورقم الهاتف!'); return; }
+            
+            if(!rest.orders) rest.orders = [];
+            const total = appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
             rest.orders.unshift({ id:'ORD-'+Date.now(), customer_name:name, phone, items_json:JSON.parse(JSON.stringify(appState.cart)), total, status:'new', table_number:appState.tableNumber||'دليفري', created_at:new Date().toLocaleTimeString('ar-EG') });
-            appState.activeOrderId=rest.orders[0].id; localStorage.setItem('tablia_active_order_id', appState.activeOrderId); appState.cart=[]; appState.cartOpen=false; appState.trackerOpen=true; syncCloud(); render(); playBell();
+            
+            appState.activeOrderId = rest.orders[0].id; 
+            localStorage.setItem('tablia_active_order_id', appState.activeOrderId); 
+            appState.cart = []; 
+            appState.cartOpen = false; 
+            appState.trackerOpen = true; 
+            syncCloud(); 
+            render(); 
+            playBell();
         }
+
         function renderLiveOrderTracker(rest){
-            const ord=rest.orders.find(o=>o.id===appState.activeOrderId); if(!ord) return '';
+            if(!rest || !rest.orders) return '';
+            const ord = rest.orders.find(o => o.id === appState.activeOrderId); 
+            if(!ord) return '';
             return `<div class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 text-xs"><div class="glass p-6 rounded-3xl max-w-sm w-full text-center space-y-3"><h3 class="font-black text-white">طلب رقم #${ord.id}</h3><p class="text-amber-400 font-bold">الحالة: ${ord.status}</p><p class="text-white">${ord.total} ج.م</p><button onclick="appState.trackerOpen=false; render();" class="w-full bg-slate-800 text-white py-2 rounded-xl">إغلاق</button></div></div>`;
         }
+
         function renderCashier(){
-            const rest=globalDB.restaurants[currentRestId]; if(!rest){ setPage('auth'); return ''; }
-            return `${renderNav()}<div class="max-w-4xl mx-auto px-4 py-4 space-y-4 text-xs"><h1 class="font-black text-white">شاشة الكاشير - ${rest.name}</h1><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${rest.orders.length===0?`<div class="col-span-2 glass p-10 text-center text-slate-400">لا توجد طلبات نشطة حالياً</div>`:rest.orders.map((ord,i)=>`<div class="glass p-4 rounded-2xl space-y-2 border ${ord.status==='new'?'border-amber-500 animate-pulse':'border-white/10'}"><div class="flex justify-between"><span class="font-black text-white">${ord.customer_name} - ${ord.table_number}</span><span class="text-amber-400 font-black">${ord.total}ج</span></div><div class="text-slate-300">${ord.items_json.map(x=>`${x.qty}x ${x.name}`).join(', ')}</div><div class="grid grid-cols-3 gap-1"><button onclick="globalDB.restaurants[currentRestId].orders[${i}].status='preparing'; syncCloud(); render();" class="bg-sky-600 text-white py-1 rounded font-bold">يحضر</button><button onclick="globalDB.restaurants[currentRestId].orders[${i}].status='ready'; syncCloud(); render();" class="bg-emerald-600 text-white py-1 rounded font-bold">جاهز</button><button onclick="globalDB.restaurants[currentRestId].orders[${i}].status='done'; syncCloud(); render();" class="bg-indigo-600 text-white py-1 rounded font-bold">تم</button></div></div>`).join('')}</div></div>`;
+            const rest = (globalDB && globalDB.restaurants) ? globalDB.restaurants[currentRestId] : null; 
+            if(!rest){ setPage('auth'); return ''; }
+            if(!rest.orders) rest.orders = [];
+
+            return `${renderNav()}<div class="max-w-4xl mx-auto px-4 py-4 space-y-4 text-xs"><h1 class="font-black text-white">شاشة الكاشير - ${rest.name}</h1><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${rest.orders.length===0?`<div class="col-span-2 glass p-10 text-center text-slate-400">لا توجد طلبات نشطة حالياً</div>`:rest.orders.map((ord,i)=>`<div class="glass p-4 rounded-2xl space-y-2 border ${ord.status==='new'?'border-amber-500 animate-pulse':'border-white/10'}"><div class="flex justify-between"><span class="font-black text-white">${ord.customer_name} - ${ord.table_number}</span><span class="text-amber-400 font-black">${ord.total}ج</span></div><div class="text-slate-300">${ord.items_json ? ord.items_json.map(x=>`${x.qty}x ${x.name}`).join(', ') : ''}</div><div class="grid grid-cols-3 gap-1"><button onclick="if(globalDB.restaurants['${currentRestId}'].orders[${i}]) { globalDB.restaurants['${currentRestId}'].orders[${i}].status='preparing'; syncCloud(); render(); }" class="bg-sky-600 text-white py-1 rounded font-bold">يحضر</button><button onclick="if(globalDB.restaurants['${currentRestId}'].orders[${i}].status){ globalDB.restaurants['${currentRestId}'].orders[${i}].status='ready'; syncCloud(); render(); }" class="bg-emerald-600 text-white py-1 rounded font-bold">جاهز</button><button onclick="if(globalDB.restaurants['${currentRestId}'].orders[${i}]) { globalDB.restaurants['${currentRestId}'].orders[${i}].status='done'; syncCloud(); render(); }" class="bg-indigo-600 text-white py-1 rounded font-bold">تم</button></div></div>`).join('')}</div></div>`;
         }
+
         function renderDashboard(){
-            const rest=globalDB.restaurants[currentRestId]; if(!rest){ setPage('auth'); return ''; }
+            const rest = (globalDB && globalDB.restaurants) ? globalDB.restaurants[currentRestId] : null; 
+            if(!rest){ setPage('auth'); return ''; }
             if(!appState.adminUnlocked) return `${renderNav()}<div class="max-w-md mx-auto py-12 px-4 text-center space-y-4 text-xs"><div class="glass p-6 rounded-3xl space-y-3 border border-amber-500/30"><h2 class="font-black text-amber-400">لوحة الإدمن (تفعيل الباقات - 600 ج)</h2><input id="admin_pin" type="password" placeholder="الرمز السري 2030" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-center text-white"><button onclick="if(document.getElementById('admin_pin').value==='${PLATFORM_OWNER.adminPass}'){appState.adminUnlocked=true;render();}else{alert('الرمز غلط')}" class="w-full gold-gradient text-slate-950 font-black py-3 rounded-xl">دخول الإدارة</button></div></div>`;
             return `${renderNav()}<div class="max-w-4xl mx-auto px-4 py-6 space-y-4 text-xs"><div class="flex justify-between items-center bg-slate-900 p-3 rounded-xl"><h1 class="font-black text-white">إدارة جميع المطاعم (اشتراك 600 ج)</h1><button onclick="appState.adminUnlocked=false; render();" class="text-red-400">قفل</button></div><div class="space-y-3">${Object.values(globalDB.restaurants).map(r=>`<div class="glass p-4 rounded-2xl flex justify-between items-center border ${r.subscription?.isActive?'border-emerald-500/40':'border-amber-500/40'}"><div><h3 class="font-black text-white">${r.name}</h3><p class="text-slate-400 text-[11px]">صاحب المطعم: ${r.ownerName} (${r.phone}) - ${r.subscription?.isActive?'نشط ✅':'متوقف ⏸️'}</p></div><div class="flex gap-2"><button onclick="globalDB.restaurants['${r.id}'].subscription={isActive:true, expiresAt:Date.now()+2592000000}; syncCloud(); render();" class="bg-emerald-600 text-white px-3 py-2 rounded-xl font-bold">تفعيل شهر</button><button onclick="globalDB.restaurants['${r.id}'].subscription={isActive:false}; syncCloud(); render();" class="bg-red-500/20 text-red-400 px-3 py-2 rounded-xl">إيقاف</button></div></div>`).join('')}</div></div>`;
         }
+
         function renderQRPrint(){
-            const rest=globalDB.restaurants[currentRestId]; if(!rest){ setPage('auth'); return ''; }
+            const rest = (globalDB && globalDB.restaurants) ? globalDB.restaurants[currentRestId] : null; 
+            if(!rest){ setPage('auth'); return ''; }
             const base=location.origin+location.pathname+`?view=menu&rest=${rest.id}&t=`;
-            return `${renderNav()}<div class="max-w-3xl mx-auto px-4 py-6 space-y-4 text-xs"><div class="flex justify-between bg-slate-900 p-4 rounded-2xl"><h1 class="font-black text-white">QR للطاولات - ${rest.name}</h1><button onclick="window.print()" class="gold-gradient text-slate-950 px-3 py-2 rounded-xl font-black">اطبع الآن</button></div><div class="grid grid-cols-2 sm:grid-cols-4 gap-2">${Array.from({length:rest.tablesCount},(_,i)=>i+1).map(n=>`<div class="bg-white p-2 rounded-xl text-center"><div class="font-black text-[11px] text-black">طاولة ${n}</div><img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(base+n)}" class="w-20 h-20 mx-auto"></div>`).join('')}</div></div>`;
+            return `${renderNav()}<div class="max-w-3xl mx-auto px-4 py-6 space-y-4 text-xs"><div class="flex justify-between bg-slate-900 p-4 rounded-2xl"><h1 class="font-black text-white">QR للطاولات - ${rest.name}</h1><button onclick="window.print()" class="gold-gradient text-slate-950 px-3 py-2 rounded-xl font-black">اطبع الآن</button></div><div class="grid grid-cols-2 sm:grid-cols-4 gap-2">${Array.from({length:rest.tablesCount || 20},(_,i)=>i+1).map(n=>`<div class="bg-white p-2 rounded-xl text-center"><div class="font-black text-[11px] text-black">طاولة ${n}</div><img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(base+n)}" class="w-20 h-20 mx-auto"></div>`).join('')}</div></div>`;
         }
         
         render();
