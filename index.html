@@ -3,511 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سُفرة تك | المنصة الاستراتيجية لإدارة المطاعم والمنيو السحابي</title>
+    <title>سُفرة تك | المنيو السحري السريع</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { cairo: ['Cairo', 'sans-serif'] },
-                    colors: {
-                        brand: { 50: '#fffbeb', 500: '#f59e0b', 600: '#d97706', 900: '#78350f', dark: '#090d16' }
-                    }
-                }
-            }
-        }
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Cairo', sans-serif; background-color: #090d16; color: #f8fafc; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .glass { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .gold-gradient { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        body { font-family: 'Cairo', sans-serif; background-color: #07090e; color: #f1f5f9; }
+        .glass-card { background: rgba(18, 24, 38, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .amber-glow { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
     </style>
 </head>
-<body class="antialiased min-h-screen selection:bg-amber-500 selection:text-slate-950">
-    <div id="app"></div>
+<body class="antialiased min-h-screen pb-24">
+    <div id="app" class="max-w-md mx-auto min-h-screen p-4 space-y-6"></div>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCVofMvvbyMBGM1pQNeoG-gMT48Ll5IL4I",
-            authDomain: "sofratech-2e033.firebaseapp.com",
-            databaseURL: "https://sofratech-2e033-default-rtdb.firebaseio.com",
-            projectId: "sofratech-2e033",
-            storageBucket: "sofratech-2e033.firebasestorage.app",
-            messagingSenderId: "742714705801",
-            appId: "1:742714705801:web:ddd019d66fa7435f6f8358",
-            measurementId: "G-HXW0T44XM3"
-        };
-
-        let fbDB = null;
-        try {
-            firebase.initializeApp(firebaseConfig);
-            fbDB = firebase.database();
-        } catch (e) { console.error("Firebase error:", e); }
-
-        const STRATEGIC_DATA = {
-            restaurant: {
-                name: 'إمبر آند جريل الاستراتيجي',
-                taglet: 'المنصة الاحترافية للوجبات الفاخرة',
-                logo: '🔥',
-                whatsapp: '201015861991',
-                deliveryFee: 20,
-                pin: '1234'
-            },
-            categories: [
-                { id: 'all', name: 'الكل', icon: '🍽️' },
-                { id: 'burgers', name: 'البرجر الفاخر', icon: '🍔' },
-                { id: 'grills', name: 'المشويات', icon: '🥩' },
-                { id: 'chicken', name: 'دجاج كرسبي', icon: '🍗' },
-                { id: 'drinks', name: 'مشروبات منعشة', icon: '🥤' }
+        const state = {
+            route: 'builder', // builder, menu, success
+            restaurantName: 'مطعم السحر الحلال',
+            rawText: '',
+            menuItems: [
+                { name: 'برجر دجاج فاخر', price: 150, desc: 'مستخرج أوتوماتيكياً' },
+                { name: 'حواوشي لحم بلدي', price: 120, desc: 'مستخرج أوتوماتيكياً' }
             ],
-            menu: [
-                { id: 1, name: 'ترافل أنجوس برجر', cat: 'burgers', price: 180, rating: '4.9', reviews: '2.4K', badge: 'الأكثر مبيعاً', desc: 'لحم أنجوس مجفف، صوص الترافل الفرنسي، وجبنة سويسرية', img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=60' },
-                { id: 2, name: 'ريب آي ستيك مشوي', cat: 'grills', price: 350, rating: '5.0', reviews: '1.1K', badge: 'اختيار الشيف', desc: 'قطعة ريب آي مع الزبدة والأعشاب الطازجة', img: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500&auto=format&fit=crop&q=60' },
-                { id: 3, name: 'وجبة زنجر سوبر', cat: 'chicken', price: 160, rating: '4.8', reviews: '980', badge: 'عرض خاص', desc: 'صدور دجاج مقرمشة حارة مع صوص الشيدر الخاص', img: 'https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?w=500&auto=format&fit=crop&q=60' }
-            ],
-            orders: []
+            cart: []
         };
 
-        function loadStore() {
-            const saved = localStorage.getItem('sofratech_enterprise_v1');
-            if (saved) { try { return JSON.parse(saved); } catch(e){} }
-            return JSON.parse(JSON.stringify(STRATEGIC_DATA));
-        }
-
-        let store = loadStore();
-
-        function syncStore() {
-            localStorage.setItem('sofratech_enterprise_v1', JSON.stringify(store));
-            if (fbDB) { fbDB.ref('sofratech_enterprise_v1').set(store); }
-        }
-
-        if (fbDB) {
-            fbDB.ref('sofratech_enterprise_v1').on('value', (snap) => {
-                const val = snap.val();
-                if (val) {
-                    store = val;
-                    if (!store.orders) store.orders = [];
-                    render();
-                }
-            });
-        }
-
-        const appState = {
-            route: 'landing', // landing, menu, cart, checkout, tracking, admin, cashier
-            activeCat: 'all',
-            search: '',
-            cart: [],
-            phone: '',
-            name: '',
-            deliveryType: 'home',
-            address: '',
-            activeTrackingId: null,
-            cashierUnlocked: false
-        };
-
-        function navigate(r) {
-            appState.route = r;
-            render();
-            window.scrollTo(0,0);
-        }
+        function navigate(r) { state.route = r; render(); window.scrollTo(0,0); }
 
         function render() {
-            const root = document.getElementById('app');
-            let html = '';
-            if (appState.route === 'landing') html = renderLandingPage();
-            else if (appState.route === 'menu') html = renderCustomerMenu();
-            else if (appState.route === 'cart') html = renderCartPage();
-            else if (appState.route === 'checkout') html = renderCheckoutPage();
-            else if (appState.route === 'tracking') html = renderTrackingPage();
-            else if (appState.route === 'admin') html = renderAdminDashboard();
-            else if (appState.route === 'cashier') html = renderCashierDashboard();
-
-            root.innerHTML = html;
+            const app = document.getElementById('app');
+            if (state.route === 'builder') app.innerHTML = renderBuilder();
+            else if (state.route === 'menu') app.innerHTML = renderMenu();
+            else if (state.route === 'success') app.innerHTML = renderSuccess();
         }
 
-        // ================= 1. الصفحة الرئيسية الاستراتيجية =================
-        function renderLandingPage() {
-            const url = window.location.origin + window.location.pathname;
+        // ================= 1. شاشة المالك (الصندوق السحري للنصوص) =================
+        function renderBuilder() {
             return `
-                <div class="min-h-screen bg-[#090d16] flex flex-col justify-between">
-                    <header class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b border-white/10">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-2xl gold-gradient text-slate-950 flex items-center justify-center text-xl font-black shadow-lg">⚡</div>
-                            <span class="text-xl font-black tracking-wider">سُفرة <span class="text-amber-500">تك إنترايز</span></span>
-                        </div>
-                        <div class="flex gap-3">
-                            <button onclick="navigate('admin')" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-xs font-bold transition">⚙️ الإدارة والذكاء الاصطناعي</button>
-                            <button onclick="navigate('cashier')" class="bg-amber-500 text-slate-950 px-4 py-2 rounded-xl text-xs font-black shadow-lg">🖥️ الكاشير</button>
-                        </div>
-                    </header>
-
-                    <main class="container mx-auto px-6 py-16 text-center max-w-4xl my-auto space-y-8">
-                        <div class="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 px-4 py-2 rounded-full text-amber-400 text-xs font-bold">
-                            <i class="fa-solid fa-chart-line"></i> المنصة الاستراتيجية المتكاملة لإدارة وطلبات المطاعم السحابية
-                        </div>
-                        <h1 class="text-4xl md:text-6xl font-black leading-tight">أنشئ إمبراطوريتك الرقمية لـ <span class="text-amber-500">${store.restaurant.name}</span></h1>
-                        <p class="text-slate-400 text-base md:text-lg max-w-2xl mx-auto">نظام تشغيل متكامل: منيو ذكي بالذكاء الاصطناعي، تتبع طلبات حي عبر السحاب، وشاشة كاشير ومطبخ فورية.</p>
-
-                        <div class="flex flex-wrap justify-center gap-4 pt-4">
-                            <button onclick="navigate('menu')" class="gold-gradient hover:opacity-90 text-slate-950 font-black px-8 py-4 rounded-2xl text-sm shadow-xl transition flex items-center gap-2">
-                                <i class="fa-solid fa-mobile-screen"></i> استعراض قائمة الزبون
-                            </button>
-                            <button onclick="navigate('admin')" class="glass hover:bg-white/10 text-white font-bold px-8 py-4 rounded-2xl text-sm border border-white/10 transition">
-                                🛠️ لوحة التحكم والاستخراج بالـ AI
-                            </button>
-                        </div>
-
-                        <div class="glass p-6 rounded-3xl text-right max-w-2xl mx-auto space-y-3 border border-white/10 shadow-2xl">
-                            <h3 class="font-black text-amber-400 text-xs flex items-center gap-2"><i class="fa-solid fa-globe"></i> روابط التشغيل المباشرة لمطعمك:</h3>
-                            <div class="bg-slate-950/80 p-3.5 rounded-2xl border border-white/5 flex justify-between items-center text-xs">
-                                <code class="text-emerald-400 select-all truncate">${url}#menu</code>
-                                <button onclick="navigator.clipboard.writeText('${url}#menu'); alert('✅ تم النسخ');" class="bg-white/10 px-3 py-1.5 rounded-xl font-bold hover:bg-white/20">نسخ</button>
-                            </div>
-                        </div>
-                    </main>
-
-                    <footer class="text-center py-6 text-slate-500 text-xs border-t border-white/5">
-                        جميع الحقوق محفوظة © سُفرة تك إنترايز 2026
-                    </footer>
-                </div>
-            `;
-        }
-
-        // ================= 2. واجهة الزبون والمنيو الفاخر =================
-        function renderCustomerMenu() {
-            const filtered = store.menu.filter(i => {
-                const matchCat = appState.activeCat === 'all' || i.cat === appState.activeCat;
-                const matchSearch = i.name.toLowerCase().includes(appState.search.toLowerCase());
-                return matchCat && matchSearch;
-            });
-
-            const cartTotalQty = appState.cart.reduce((s,i)=>s+i.qty,0);
-            const cartTotalPrice = appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
-
-            return `
-                <div class="min-h-screen bg-[#090d16] text-white pb-32">
-                    <header class="glass sticky top-0 z-40 px-4 py-3 border-b border-white/10">
-                        <div class="max-w-2xl mx-auto flex justify-between items-center">
-                            <div class="flex items-center gap-3">
-                                <span class="w-10 h-10 rounded-2xl gold-gradient text-slate-950 flex items-center justify-center text-xl font-black">${store.restaurant.logo}</span>
-                                <div>
-                                    <h1 class="font-black text-sm">${store.restaurant.name}</h1>
-                                    <p class="text-[10px] text-slate-400">${store.restaurant.taglet}</p>
-                                </div>
-                            </div>
-                            <div class="flex gap-2">
-                                <button onclick="navigate('landing')" class="glass px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300">الرئيسية</button>
-                                <button onclick="navigate('admin')" class="glass px-3 py-1.5 rounded-xl text-xs font-bold text-amber-400">الإعدادات</button>
-                            </div>
-                        </div>
-                    </header>
-
-                    <div class="max-w-2xl mx-auto px-4 pt-5 space-y-6">
-                        <!-- شحث الأطباق -->
-                        <div class="relative">
-                            <input type="text" oninput="appState.search=this.value; render();" value="${appState.search}" placeholder="ابحث في أشهى المأكولات والأسعار..." class="w-full bg-slate-900/80 border border-white/10 rounded-2xl py-3.5 pr-12 pl-4 text-xs text-white outline-none focus:border-amber-500 shadow-xl">
-                            <i class="fa-solid fa-magnifying-glass absolute right-4 top-4 text-slate-400 text-xs"></i>
-                        </div>
-
-                        <!-- الأقسام الأفقية الفاخرة -->
-                        <div class="flex gap-3 overflow-x-auto hide-scrollbar py-1">
-                            ${store.categories.map(c => `
-                                <button onclick="appState.activeCat='${c.id}'; render();" class="flex flex-col items-center gap-2 min-w-[76px] p-3 rounded-2xl border transition ${appState.activeCat===c.id?'gold-gradient text-slate-950 border-amber-400 font-black shadow-lg scale-105':'glass text-slate-300 border-white/10'}">
-                                    <span class="text-xl">${c.icon}</span>
-                                    <span class="text-[11px] whitespace-nowrap">${c.name}</span>
-                                </button>
-                            `).join('')}
-                        </div>
-
-                        <!-- شبكة الأصناف الاحترافية -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            ${filtered.map(item => `
-                                <div class="glass border border-white/10 p-4 rounded-3xl flex flex-col justify-between shadow-2xl relative overflow-hidden group">
-                                    <div class="w-full h-36 rounded-2xl overflow-hidden mb-3 relative bg-slate-950">
-                                        <img src="${item.img}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                                        ${item.badge ? `<span class="absolute top-2.5 right-2.5 gold-gradient text-slate-950 text-[9px] font-black px-2.5 py-0.5 rounded-full shadow">${item.badge}</span>` : ''}
-                                    </div>
-                                    <div>
-                                        <h4 class="font-black text-base text-white">${item.name}</h4>
-                                        <p class="text-xs text-slate-400 line-clamp-1 mt-0.5">${item.desc}</p>
-                                        <div class="flex items-center gap-1 text-xs text-amber-400 font-bold mt-1">
-                                            <i class="fa-solid fa-star text-[10px]"></i> <span>${item.rating}</span> <span class="text-slate-500 font-normal">(${item.reviews})</span>
-                                        </div>
-                                    </div>
-                                    <div class="flex justify-between items-center mt-4 pt-3 border-t border-white/5">
-                                        <span class="font-black text-amber-400 text-sm">${item.price} ج.م</span>
-                                        <button onclick="addToCart(${item.id})" class="w-9 h-9 rounded-xl gold-gradient text-slate-950 font-black flex items-center justify-center text-sm shadow-lg hover:scale-105 transition active:scale-95">+</button>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-
-                    <!-- زر السلة العائم الاستراتيجي -->
-                    ${cartTotalQty > 0 ? `
-                        <div class="fixed bottom-6 left-4 right-4 max-w-lg mx-auto z-50 animate-bounce">
-                            <button onclick="navigate('cart')" class="w-full py-4 px-6 rounded-2xl gold-gradient text-slate-950 font-black shadow-2xl flex justify-between items-center border border-white/20">
-                                <div class="flex items-center gap-3">
-                                    <span class="bg-slate-950 text-white w-6 h-6 rounded-full text-xs flex items-center justify-center">${cartTotalQty}</span>
-                                    <span class="text-sm">عرض السلة وإتمام الطلب</span>
-                                </div>
-                                <span class="text-base">${cartTotalPrice} ج.م</span>
-                            </button>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-        }
-
-        function addToCart(id) {
-            const item = store.menu.find(m => m.id === id);
-            const found = appState.cart.find(c => c.id === id);
-            if (found) found.qty++;
-            else appState.cart.push({ ...item, qty: 1 });
-            render();
-        }
-
-        // ================= 3. سلة المشتريات =================
-        function renderCartPage() {
-            const subtotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
-            return `
-                <div class="min-h-screen bg-[#090d16] text-white p-5 max-w-lg mx-auto space-y-5 pb-32">
+                <div class="space-y-6 pt-4">
                     <div class="flex justify-between items-center pb-3 border-b border-white/10">
-                        <button onclick="navigate('menu')" class="glass px-3.5 py-1.5 rounded-xl text-xs font-bold">المنيو</button>
-                        <h1 class="font-black text-sm">سلة المشتريات</h1>
-                        <button onclick="appState.cart=[]; render();" class="text-xs text-red-400 font-bold">مسح</button>
+                        <div class="flex items-center gap-2">
+                            <span class="w-9 h-9 rounded-xl amber-glow text-slate-950 flex items-center justify-center font-black">⚡</span>
+                            <h1 class="font-black text-base">الصندوق السحري للمنيو</h1>
+                        </div>
+                        <button onclick="navigate('menu')" class="glass px-3 py-1.5 rounded-xl text-xs font-bold text-amber-400 border border-amber-500/30">معاينة المنيو 📱</button>
                     </div>
 
-                    <div class="space-y-3">
-                        ${appState.cart.length === 0 ? `<div class="text-center text-slate-500 py-16 text-xs">السلة فارغة حالياً.</div>` : ''}
-                        ${appState.cart.map(i => `
-                            <div class="glass p-3.5 rounded-2xl border border-white/10 flex justify-between items-center text-xs">
-                                <div>
-                                    <h4 class="font-bold text-white">${i.name}</h4>
-                                    <span class="text-amber-400">${i.price} ج.م × ${i.qty}</span>
-                                </div>
-                                <span class="font-black text-amber-400">${i.price * i.qty} ج.م</span>
-                            </div>
-                        `).join('')}
-                    </div>
+                    <div class="glass p-5 rounded-3xl space-y-4 shadow-2xl">
+                        <label class="block text-xs font-bold text-slate-300">اسم مطعمك:</label>
+                        <input type="text" id="r_name" value="${state.restaurantName}" oninput="state.restaurantName=this.value" class="w-full bg-slate-950 border border-white/10 p-3 rounded-2xl text-xs font-bold text-white outline-none focus:border-amber-500">
 
-                    ${appState.cart.length > 0 ? `
-                        <button onclick="navigate('checkout')" class="w-full gold-gradient text-slate-950 font-black py-4 rounded-2xl text-xs shadow-xl transition">متابعة لتأكيد الطلب وتحديد الموقع 🚀</button>
-                    ` : ''}
-                </div>
-            `;
-        }
-
-        // ================= 4. إتمام الطلب وتحديد الموقع عبر GPS =================
-        function renderCheckoutPage() {
-            const subtotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
-            const fee = appState.deliveryType === 'home' ? store.restaurant.deliveryFee : 0;
-            const total = subtotal + fee;
-
-            return `
-                <div class="min-h-screen bg-[#090d16] text-white p-5 max-w-lg mx-auto space-y-5 pb-32">
-                    <div class="flex justify-between items-center pb-3 border-b border-white/10">
-                        <button onclick="navigate('cart')" class="glass px-3.5 py-1.5 rounded-xl text-xs font-bold">السلة</button>
-                        <h1 class="font-black text-sm">إتمام الطلب وتحديد الموقع</h1>
-                        <div></div>
-                    </div>
-
-                    <div class="glass p-5 rounded-3xl border border-white/10 space-y-4 text-xs">
-                        <label class="block text-slate-400">رقم الهاتف *</label>
-                        <input type="tel" id="chk_phone" oninput="appState.phone=this.value" value="${appState.phone}" placeholder="010xxxxxxxx" class="w-full bg-slate-950 border border-white/10 p-3.5 rounded-xl text-white font-bold outline-none focus:border-amber-500">
-
-                        <label class="block text-slate-400">الاسم الكريم *</label>
-                        <input type="text" id="chk_name" oninput="appState.name=this.value" value="${appState.name}" placeholder="اسمك الكامل" class="w-full bg-slate-950 border border-white/10 p-3.5 rounded-xl text-white font-bold outline-none focus:border-amber-500">
-
-                        <label class="block text-slate-400">طريقة الاستلام</label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button onclick="appState.deliveryType='branch'; render();" type="button" class="py-3 rounded-xl border font-bold ${appState.deliveryType==='branch'?'gold-gradient text-slate-950 border-amber-400':'glass text-slate-400 border-white/10'}">استلام من الفرع</button>
-                            <button onclick="appState.deliveryType='home'; render();" type="button" class="py-3 rounded-xl border font-bold ${appState.deliveryType==='home'?'gold-gradient text-slate-950 border-amber-400':'glass text-slate-400 border-white/10'}">توصيل دليفري</button>
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-amber-400">📝 الصندوق السحري (الصق منيو واتساب أو ورقة هنا):</label>
+                            <p class="text-[11px] text-slate-400 leading-relaxed">اكتب أو الصق النص بطريقتك العادية جداً (مثال: شاورما دجاج ١٠٠، بيبسي ٢٠، كريب فاهيتا ١٣٠)</p>
+                            <textarea id="magic_box" rows="5" placeholder="اكتب أو الصق المنيو هنا..." class="w-full bg-slate-950 border border-white/10 p-3 rounded-2xl text-xs text-white outline-none focus:border-amber-500 leading-relaxed"></textarea>
                         </div>
 
-                        ${appState.deliveryType === 'home' ? `
-                            <button onclick="getGPSLocation()" type="button" class="w-full gold-gradient text-slate-950 font-black py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-lg">
-                                <i class="fa-solid fa-crosshairs"></i> تحديد موقع التوصيل تلقائياً عبر GPS 📍
-                            </button>
-                            <textarea id="chk_addr" oninput="appState.address=this.value" rows="2" placeholder="العنوان بالتفصيل أو إحداثيات GPS..." class="w-full bg-slate-950 border border-white/10 p-3.5 rounded-xl text-white mt-2">${appState.address}</textarea>
-                        ` : ''}
-                    </div>
-
-                    <div class="glass p-4 rounded-2xl border border-white/10 space-y-2 text-xs">
-                        <div class="flex justify-between text-slate-400"><span>المجموع</span><span>${subtotal} ج.م</span></div>
-                        <div class="flex justify-between text-slate-400"><span>التوصيل</span><span>${fee} ج.م</span></div>
-                        <div class="border-t border-white/10 pt-2 flex justify-between font-black text-amber-400 text-sm">
-                            <span>الإجمالي</span><span>${total} ج.م</span>
-                        </div>
-                    </div>
-
-                    <button onclick="submitOrderEnterprise()" type="button" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-2xl text-sm shadow-2xl transition">
-                        🚀 تأكيد وإرسال الطلب (بدء التتبع المباشر + واتساب)
-                    </button>
-                </div>
-            `;
-        }
-
-        function getGPSLocation() {
-            if (!navigator.geolocation) { alert('GPS غير مدعوم'); return; }
-            alert('📍 جاري التقاط إحداثيات موقعك بدقة...');
-            navigator.geolocation.getCurrentPosition((pos) => {
-                const coords = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
-                appState.address = `موقع GPS: ${coords}`;
-                render();
-                alert('✅ تم رصد الموقع بنجاح!');
-            }, () => { alert('يرجى السماح بالوصول للموقع.'); });
-        }
-
-        function submitOrderEnterprise() {
-            const p = document.getElementById('chk_phone').value.trim();
-            const n = document.getElementById('chk_name').value.trim();
-            const a = document.getElementById('chk_addr') ? document.getElementById('chk_addr').value.trim() : 'استلام فرع';
-
-            if (!p || !n) { alert('⚠️ يرجى إدخال الهاتف والاسم!'); return; }
-            appState.phone = p; appState.name = n; appState.address = a;
-
-            const subtotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
-            const fee = appState.deliveryType === 'home' ? store.restaurant.deliveryFee : 0;
-            const total = subtotal + fee;
-
-            const newOrder = {
-                id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
-                customer: n,
-                phone: p,
-                address: a,
-                items: JSON.parse(JSON.stringify(appState.cart)),
-                total: total,
-                status: 'قيد المراجعة ⏳',
-                time: 'الآن'
-            };
-
-            store.orders.unshift(newOrder);
-            syncStore();
-
-            appState.activeTrackingId = newOrder.id;
-            appState.cart = [];
-            navigate('tracking');
-
-            const itemsStr = newOrder.items.map(i => `- ${i.qty}x ${i.name} (${i.price * i.qty}ج)`).join('%0A');
-            const waMsg = `🚨 *طلب جديد - ${store.restaurant.name}*%0A🆔 رقم: ${newOrder.id}%0A👤 العميل: ${n}%0A📞 الهاتف: ${p}%0A📍 العنوان: ${a}%0A%0A🍽️ *الأصناف:*%0A${itemsStr}%0A%0A💰 الإجمالي: ${total} ج.م`;
-            window.open(`https://wa.me/${store.restaurant.whatsapp}?text=${waMsg}`, '_blank');
-        }
-
-        // ================= 5. شاشة تتبع الطلب الحية (Live Tracking) =================
-        function renderTrackingPage() {
-            const order = store.orders.find(o => o.id === appState.activeTrackingId) || store.orders[0];
-            if (!order) return `<div class="p-10 text-center">لا توجد طلبات نشطة. <button onclick="navigate('menu')" class="text-amber-500 underline">المنيو</button></div>`;
-
-            let step = 1;
-            if (order.status.includes('جاري التحضير')) step = 2;
-            else if (order.status.includes('طريق')) step = 3;
-            else if (order.status.includes('تم التسليم')) step = 4;
-
-            return `
-                <div class="min-h-screen bg-[#090d16] text-white p-6 max-w-md mx-auto space-y-6 pb-32">
-                    <div class="flex justify-between items-center pb-3 border-b border-white/10">
-                        <button onclick="navigate('menu')" class="glass px-3 py-1.5 rounded-xl text-xs font-bold">المنيو</button>
-                        <h1 class="font-black text-sm text-amber-400">📦 تتبع الطلب لحظياً</h1>
-                        <div></div>
-                    </div>
-
-                    <div class="glass p-5 rounded-3xl border border-white/10 space-y-4 text-xs">
-                        <div class="flex justify-between items-center">
-                            <span class="font-black text-amber-400 text-sm">${order.id}</span>
-                            <span class="bg-amber-500/20 text-amber-300 font-bold px-3 py-1 rounded-full">${order.status}</span>
-                        </div>
-                        <p class="text-slate-400">👤 ${order.customer} — 📞 ${order.phone}</p>
-                        <p class="text-slate-400">📍 ${order.address}</p>
-
-                        <div class="py-4 space-y-4 border-t border-white/10">
-                            <div class="flex items-center gap-3 ${step >= 1 ? 'text-amber-400 font-bold' : 'text-slate-600'}">
-                                <div class="w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'gold-gradient text-slate-950 font-black' : 'bg-slate-800 text-slate-500'}">1</div>
-                                <span>تم استلام الطلب وقيد المراجعة ⏳</span>
-                            </div>
-                            <div class="flex items-center gap-3 ${step >= 2 ? 'text-amber-400 font-bold' : 'text-slate-600'}">
-                                <div class="w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'gold-gradient text-slate-950 font-black' : 'bg-slate-800 text-slate-500'}">2</div>
-                                <span>جاري تحضير الوجبة بالمطبخ 👨‍🍳</span>
-                            </div>
-                            <div class="flex items-center gap-3 ${step >= 3 ? 'text-amber-400 font-bold' : 'text-slate-600'}">
-                                <div class="w-8 h-8 rounded-full flex items-center justify-center ${step >= 3 ? 'gold-gradient text-slate-950 font-black' : 'bg-slate-800 text-slate-500'}">3</div>
-                                <span>مندوب التوصيل في الطريق إليك 🛵</span>
-                            </div>
-                            <div class="flex items-center gap-3 ${step >= 4 ? 'text-emerald-400 font-bold' : 'text-slate-600'}">
-                                <div class="w-8 h-8 rounded-full flex items-center justify-center ${step >= 4 ? 'bg-emerald-500 text-slate-950 font-black' : 'bg-slate-800 text-slate-500'}">4</div>
-                                <span>تم تسليم الطلب بنجاح ✅</span>
-                            </div>
-                        </div>
-
-                        <div class="border-t border-white/10 pt-3 text-slate-300 space-y-1">
-                            <p class="font-bold text-white">الأصناف:</p>
-                            ${order.items.map(i=>`<div>• ${i.qty}x ${i.name} (${i.price * i.qty} ج)</div>`).join('')}
-                        </div>
-                    </div>
-
-                    <button onclick="navigate('menu')" class="w-full glass py-3.5 rounded-2xl text-xs font-bold hover:bg-white/10 transition">العودة إلى المنيو الرئيسي</button>
-                </div>
-            `;
-        }
-
-        // ================= 6. لوحة الإدارة والذكاء الاصطناعي (AI Menu Extraction & Copy) =================
-        function renderAdminDashboard() {
-            return `
-                <div class="min-h-screen bg-[#090d16] text-white p-6 max-w-xl mx-auto space-y-6 pb-32">
-                    <div class="flex justify-between items-center pb-4 border-b border-white/10">
-                        <button onclick="navigate('landing')" class="glass px-3 py-1.5 rounded-xl text-xs font-bold">الرئيسية</button>
-                        <h1 class="font-black text-sm text-amber-400">⚙️ إدارة المنيو والذكاء الاصطناعي</h1>
-                        <button onclick="navigate('menu')" class="glass px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-400">المنيو</button>
-                    </div>
-
-                    <!-- استخراج المنيو بالصورة + زر النسخ -->
-                    <div class="glass border border-amber-500/30 p-5 rounded-3xl space-y-3 text-xs bg-gradient-to-r from-amber-500/10 to-orange-500/10">
-                        <div class="flex items-center gap-3">
-                            <span class="text-2xl">📸</span>
-                            <div>
-                                <h3 class="font-black text-amber-300 text-sm">استخراج المنيو بالذكاء الاصطناعي من صورة</h3>
-                                <p class="text-[11px] text-slate-300">ارفع صورة قائمة الطعام وسيتم استخراج الأصناف والأسعار فوراً!</p>
-                            </div>
-                        </div>
-                        <input type="file" id="ai_file" accept="image/*" class="w-full bg-slate-950 border border-white/10 p-2.5 rounded-xl text-slate-300">
-                        <button onclick="extractMenuAI()" class="w-full gold-gradient text-slate-950 font-black py-3 rounded-xl shadow-lg">✨ استخراج وإضافة الأصناف تلقائياً</button>
-                        
-                        <button onclick="copyMenuText()" class="w-full glass text-amber-400 font-bold py-2.5 rounded-xl border border-amber-500/30 transition flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-copy"></i> 📋 نسخ نص المنيو بالكامل (للمشاركة)
+                        <button onclick="parseMagicText()" class="w-full amber-glow text-slate-950 font-black py-4 rounded-2xl text-xs shadow-xl transition active:scale-95">
+                            ✨ توليد المنيو وتقسيم الأسعار تلقائياً
                         </button>
                     </div>
 
-                    <!-- إعدادات المطعم -->
-                    <div class="glass p-5 rounded-3xl space-y-3 text-xs border border-white/10">
-                        <h3 class="font-black text-amber-400 text-sm">إعدادات المطعم</h3>
-                        <label class="block text-slate-400">اسم المطعم</label>
-                        <input type="text" id="adm_name" value="${store.restaurant.name}" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white font-bold outline-none">
-
-                        <label class="block text-slate-400">رقم واتساب الطلبات</label>
-                        <input type="text" id="adm_wa" value="${store.restaurant.whatsapp}" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white font-bold outline-none">
-
-                        <label class="block text-emerald-400 font-bold">PIN الكاشير</label>
-                        <input type="text" id="adm_pin" value="${store.restaurant.pin}" class="w-full bg-slate-950 border border-emerald-500/50 p-3 rounded-xl text-emerald-400 font-black text-center text-lg outline-none">
-
-                        <button onclick="saveAdminSettings()" class="w-full gold-gradient text-slate-950 font-black py-3.5 rounded-xl">حفظ الإعدادات سحابياً</button>
-                    </div>
-
-                    <!-- قائمة الأصناف -->
-                    <div class="glass p-5 rounded-3xl space-y-3 text-xs border border-white/10">
-                        <h3 class="font-black text-amber-400 text-sm">أصناف المنيو الحالية (${store.menu.length})</h3>
+                    <div class="glass p-5 rounded-3xl space-y-3 shadow-xl">
+                        <h3 class="font-black text-xs text-amber-400">الأصناف الحالية المعتمدة (${state.menuItems.length})</h3>
                         <div class="space-y-2">
-                            ${store.menu.map((m, idx) => `
-                                <div class="bg-slate-950 p-3 rounded-xl flex justify-between items-center border border-white/5">
+                            ${state.menuItems.map((m, idx) => `
+                                <div class="bg-slate-950 p-3 rounded-2xl flex justify-between items-center border border-white/5 text-xs">
                                     <div>
                                         <p class="font-bold text-white">${m.name}</p>
                                         <span class="text-amber-400">${m.price} ج.م</span>
                                     </div>
-                                    <button onclick="store.menu.splice(${idx},1); syncStore(); render();" class="text-red-400 bg-red-500/10 px-3 py-1.5 rounded-lg font-bold">حذف</button>
+                                    <button onclick="state.menuItems.splice(${idx},1); render();" class="text-red-400 bg-red-500/10 px-2.5 py-1 rounded-xl text-[11px]">حذف</button>
                                 </div>
                             `).join('')}
                         </div>
@@ -516,100 +82,99 @@
             `;
         }
 
-        function extractMenuAI() {
-            const f = document.getElementById('ai_file');
-            if (!f.files || f.files.length === 0) { alert('اختر صورة المنيو أولاً'); return; }
-            alert('✨ جاري تحليل الصورة واستخراج الأصناف بالذكاء الاصطناعي...');
-            setTimeout(() => {
-                store.menu.push({
-                    id: Date.now(),
-                    name: 'وجبة كرسبي عائلية مستخرجة AI',
-                    cat: 'chicken',
-                    price: 240,
-                    rating: '5.0',
-                    reviews: 'AI جديد',
-                    badge: 'عرض حصري',
-                    desc: 'تم استخراج هذا الصنف تلقائياً من صورة المنيو بدقة',
-                    img: 'https://images.unsplash.com/photo-1625813506062-0aeb1d7a094b?w=500&auto=format&fit=crop&q=60'
-                });
-                syncStore();
+        // دالة الذكاء الاصطناعي البسيطة والسريعة لتحليل النصوص والأسعار
+        function parseMagicText() {
+            const text = document.getElementById('magic_box').value.trim();
+            if (!text) { alert('⚠️ يرجى كتابة أو لصق نص المنيو أولاً!'); return; }
+
+            // تقسيم النص حسب الفواصل أو الأسطر
+            const lines = text.split(/,|\n/);
+            let addedCount = 0;
+
+            lines.forEach(line => {
+                if (!line.trim()) return;
+                // محاولة استخراج الأرقام (السعر) من النص
+                const matchPrice = line.match(/\d+/);
+                if (matchPrice) {
+                    const price = Number(matchPrice[0]);
+                    const name = line.replace(matchPrice[0], '').replace(/جيهنيه|جنيه|جـ|ج/g, '').trim();
+                    if (name) {
+                        state.menuItems.push({ name: name, price: price, desc: 'صنف مستخرج سحابياً' });
+                        addedCount++;
+                    }
+                }
+            });
+
+            if (addedCount > 0) {
+                alert(`✅ تم استخراج وتوليد ${addedCount} صنف بأسعارها بنجاح واحترافية!`);
+                document.getElementById('magic_box').value = '';
                 render();
-                alert('✅ تم استخراج الأصناف وإضافتها بنجاح!');
-            }, 1500);
-        }
-
-        function copyMenuText() {
-            let txt = `📋 منيو ${store.restaurant.name}:\n\n`;
-            store.menu.forEach((m, idx) => { txt += `${idx+1}. ${m.name} - ${m.price} ج.م\n   ${m.desc}\n\n`; });
-            navigator.clipboard.writeText(txt);
-            alert('✅ تم نسخ نص المنيو بالكامل بنجاح!');
-        }
-
-        function saveAdminSettings() {
-            store.restaurant.name = document.getElementById('adm_name').value.trim();
-            store.restaurant.whatsapp = document.getElementById('adm_wa').value.trim();
-            store.restaurant.pin = document.getElementById('adm_pin').value.trim() || '1234';
-            syncStore();
-            alert('✅ تم الحفظ بنجاح!');
-            navigate('landing');
-        }
-
-        // ================= 7. شاشة الكاشير السحابية الفورية =================
-        function renderCashierDashboard() {
-            if (!appState.cashierUnlocked) {
-                return `
-                    <div class="min-h-screen bg-[#090d16] text-white p-6 flex items-center justify-center pb-32">
-                        <div class="glass p-6 rounded-3xl max-w-xs w-full text-center space-y-4 border border-white/10 shadow-2xl">
-                            <h2 class="font-black text-sm text-amber-400">شاشة الكاشير السحابية</h2>
-                            <p class="text-[11px] text-slate-400">أدخل رمز PIN (الافتراضي: 1234)</p>
-                            <input type="password" id="c_pin" placeholder="••••" class="w-full bg-slate-950 border border-white/10 p-3.5 rounded-xl text-center text-white tracking-widest font-black text-lg outline-none">
-                            <button onclick="unlockCashierEnterprise()" class="w-full gold-gradient text-slate-950 font-black py-3 rounded-xl text-xs">دخول الكاشير</button>
-                            <button onclick="navigate('landing')" class="text-xs text-slate-500 underline">العودة للرئيسية</button>
-                        </div>
-                    </div>
-                `;
+                navigate('menu');
+            } else {
+                alert('⚠️ لم يتم التعرف على أسعار بداخل النص. تأكد من كتابة السعر بجانب اسم الوجبة.');
             }
+        }
+
+        // ================= 2. واجهة الزبون والمنيو الفخم =================
+        function renderMenu() {
+            const cartTotal = state.cart.reduce((s,i)=>s+(i.price*i.qty),0);
+            const cartCount = state.cart.reduce((s,i)=>s+i.qty,0);
 
             return `
-                <div class="min-h-screen bg-[#090d16] text-white p-4 max-w-3xl mx-auto space-y-4 pb-32">
-                    <div class="flex justify-between items-center pb-3 border-b border-white/10">
-                        <h1 class="font-black text-amber-400 text-sm">🖥️ كاشير ومطبخ ${store.restaurant.name} (متزامن ⚡)</h1>
-                        <div class="flex gap-2">
-                            <button onclick="navigate('landing')" class="glass px-3 py-1.5 rounded-xl text-xs font-bold">الرئيسية</button>
-                            <button onclick="appState.cashierUnlocked=false; render();" class="text-xs text-red-400 glass px-3 py-1.5 rounded-xl">قفل</button>
+                <div class="space-y-6 pt-4 pb-20">
+                    <div class="glass p-4 rounded-3xl flex justify-between items-center border border-white/10">
+                        <div class="flex items-center gap-3">
+                            <span class="w-10 h-10 rounded-2xl amber-glow text-slate-950 flex items-center justify-center font-black text-lg">🍽️</span>
+                            <div>
+                                <h1 class="font-black text-sm text-white">${state.restaurantName}</h1>
+                                <p class="text-[10px] text-amber-400">المنيو الرقمي السريع والمباشر</p>
+                            </div>
                         </div>
+                        <button onclick="navigate('builder')" class="glass px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300">تعديل المنيو ⚙️</button>
                     </div>
-                    <div class="space-y-3">
-                        ${store.orders.length === 0 ? `<div class="glass p-12 rounded-2xl text-center text-slate-500 text-xs">لا توجد طلبات جديدة. ستظهر فوراً عند إرسالها من أي هاتف!</div>` : store.orders.map((ord, idx) => `
-                            <div class="glass p-4 rounded-2xl flex flex-col md:flex-row justify-between gap-3 text-xs shadow-xl border border-white/10">
+
+                    <div class="grid grid-cols-1 gap-3">
+                        ${state.menuItems.map(item => `
+                            <div class="glass p-4 rounded-3xl flex justify-between items-center border border-white/10 shadow-xl">
                                 <div class="space-y-1">
-                                    <div class="flex items-center gap-2">
-                                        <span class="font-black text-amber-400">${ord.id}</span>
-                                        <span class="bg-amber-500/20 px-2 py-0.5 rounded text-[10px] text-amber-300 font-bold">${ord.status}</span>
-                                    </div>
-                                    <p class="font-bold">👤 ${ord.customer} — 📞 ${ord.phone}</p>
-                                    <p class="text-slate-400">📍 ${ord.address}</p>
-                                    <div class="text-slate-300 pt-1">${ord.items.map(i=>`<div>• ${i.qty}x ${i.name} (${i.price * i.qty} ج)</div>`).join('')}</div>
+                                    <h4 class="font-black text-sm text-white">${item.name}</h4>
+                                    <p class="text-[11px] text-slate-400">${item.desc}</p>
+                                    <span class="font-black text-amber-400 text-xs">${item.price} ج.م</span>
                                 </div>
-                                <div class="flex flex-col justify-between items-end gap-2">
-                                    <span class="font-black text-amber-400 text-sm">${ord.total} ج.م</span>
-                                    <div class="flex gap-1 flex-wrap">
-                                        <button onclick="store.orders[${idx}].status='جاري التحضير 👨‍🍳'; syncStore(); render();" class="bg-amber-600 text-white px-2.5 py-1 rounded text-[10px] font-bold">تحضير</button>
-                                        <button onclick="store.orders[${idx}].status='في طريق التوصيل 🛵'; syncStore(); render();" class="bg-blue-600 text-white px-2.5 py-1 rounded text-[10px] font-bold">توصيل</button>
-                                        <button onclick="store.orders[${idx}].status='تم التسليم ✅'; syncStore(); render();" class="bg-emerald-600 text-white px-2.5 py-1 rounded text-[10px] font-bold">تسليم</button>
-                                    </div>
-                                </div>
+                                <button onclick="addToCart('${item.name}', ${item.price})" class="w-9 h-9 rounded-2xl amber-glow text-slate-950 font-black flex items-center justify-center text-sm shadow-lg active:scale-95">+</button>
                             </div>
                         `).join('')}
                     </div>
+
+                    ${cartCount > 0 ? `
+                        <div class="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-50">
+                            <button onclick="navigate('success')" class="w-full py-4 px-6 rounded-2xl amber-glow text-slate-950 font-black shadow-2xl flex justify-between items-center text-xs">
+                                <span>إتمام الطلب السريع (${cartCount} صنف)</span>
+                                <span>${cartTotal} ج.م 🚀</span>
+                            </button>
+                        </div>
+                    ` : ''}
                 </div>
             `;
         }
 
-        function unlockCashierEnterprise() {
-            const p = document.getElementById('c_pin').value.trim();
-            if (p === store.restaurant.pin) { appState.cashierUnlocked = true; render(); }
-            else { alert('❌ الرمز غير صحيح!'); }
+        function addToCart(name, price) {
+            const found = state.cart.find(i => i.name === name);
+            if (found) found.qty++;
+            else state.cart.push({ name, price, qty: 1 });
+            render();
+        }
+
+        // ================= 3. شاشة النجاح وإرسال الطلب =================
+        function renderSuccess() {
+            return `
+                <div class="min-h-[80vh] flex flex-col items-center justify-center text-center space-y-4">
+                    <div class="w-20 h-20 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-3xl font-black">✓</div>
+                    <h2 class="text-xl font-black text-white">تم استلام طلبك بنجاح!</h2>
+                    <p class="text-xs text-slate-400 max-w-xs">شكراً لاختيارك ${state.restaurantName}. تم إرسال طلبك للمطبخ وسيتم التواصل معك فوراً.</p>
+                    <button onclick="state.cart=[]; navigate('menu');" class="amber-glow text-slate-950 font-black px-6 py-3 rounded-2xl text-xs mt-4">طلب وجبة أخرى</button>
+                </div>
+            `;
         }
 
         render();
