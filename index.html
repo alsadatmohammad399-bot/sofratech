@@ -25,8 +25,8 @@
     <script>
         const PLATFORM_OWNER = { walletNumber: '01015861991', monthlyPrice: 600, adminPass: '2030' };
 
-        // قاعدة البيانات المحلية الفورية الآمنة 100% ضد الشاشة السوداء
-        let globalDB = JSON.parse(localStorage.getItem('tablia_multitenant_2030_v9')) || {
+        // قاعدة البيانات المحلية مع إصدار جديد نظيف تماماً
+        let globalDB = JSON.parse(localStorage.getItem('tablia_multitenant_2030_v10')) || {
             restaurants: {
                 "rest_demo": {
                     id: "rest_demo", ownerName: "محمد الحاتي", name: "مشويات الحاتي الفاخرة", phone: "01015861991", pass: "1234",
@@ -51,10 +51,8 @@
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_multitenant_2030_v9', JSON.stringify(globalDB));
-            } catch (e) {
-                console.error("Storage error", e);
-            }
+                localStorage.setItem('tablia_multitenant_2030_v10', JSON.stringify(globalDB));
+            } catch (e) {}
         }
 
         function playBell(){
@@ -68,8 +66,27 @@
         const urlParams = new URLSearchParams(window.location.search);
         const isCustomerMode = urlParams.get('view') === 'menu';
         const targetRestSlug = urlParams.get('rest');
+        
         let currentRestId = localStorage.getItem('tablia_logged_rest_id') || null;
-        const appState = { page: isCustomerMode ? 'storefront' : (currentRestId ? 'builder' : 'auth'), authTab: 'login', builderStep: 1, activeCat: 'all', search: '', cart: [], cartOpen: false, tableNumber: urlParams.get('t')||null, gpsCoords:null, gpsStatus:'', activeOrderId: localStorage.getItem('tablia_active_order_id')||null, trackerOpen:false, adminUnlocked:false };
+        // حماية أمان إضافية: التأكد أن المطعم المخزن موجود حقاً وإلا يتم إعادة الضبط
+        if (currentRestId && (!globalDB.restaurants || !globalDB.restaurants[currentRestId])) {
+            localStorage.removeItem('tablia_logged_rest_id');
+            currentRestId = null;
+        }
+
+        const appState = { 
+            page: isCustomerMode ? 'storefront' : (currentRestId ? 'builder' : 'auth'), 
+            authTab: 'login', 
+            builderStep: 1, 
+            activeCat: 'all', 
+            search: '', 
+            cart: [], 
+            cartOpen: false, 
+            tableNumber: urlParams.get('t')||null, 
+            activeOrderId: localStorage.getItem('tablia_active_order_id')||null, 
+            trackerOpen:false, 
+            adminUnlocked:false 
+        };
 
         function setPage(p){ appState.page=p; render(); window.scrollTo(0,0); }
 
@@ -77,55 +94,85 @@
             const root = document.getElementById('app');
             if(!root) return;
             try {
-                let content='';
-                if(isCustomerMode) content=renderStorefront();
-                else if(appState.page==='auth') content=renderAuthScreen();
-                else if(appState.page==='builder') content=renderBuilder();
-                else if(appState.page==='cashier') content=renderCashier();
-                else if(appState.page==='dashboard') content=renderDashboard();
-                else if(appState.page==='qr_print') content=renderQRPrint();
-                else content=renderBuilder();
+                let content = '';
+                if(isCustomerMode) {
+                    content = renderStorefront();
+                } else if(appState.page === 'auth') {
+                    content = renderAuthScreen();
+                } else {
+                    // حماية إضافية ضد أي صفحة إدارية بدون مطعم مسجل
+                    if(!currentRestId || !globalDB.restaurants[currentRestId]) {
+                        currentRestId = null;
+                        localStorage.removeItem('tablia_logged_rest_id');
+                        appState.page = 'auth';
+                        content = renderAuthScreen();
+                    } else if(appState.page === 'builder') {
+                        content = renderBuilder();
+                    } else if(appState.page === 'cashier') {
+                        content = renderCashier();
+                    } else if(appState.page === 'dashboard') {
+                        content = renderDashboard();
+                    } else if(appState.page === 'qr_print') {
+                        content = renderQRPrint();
+                    } else {
+                        content = renderBuilder();
+                    }
+                }
                 
-                const bottomBar = isCustomerMode ? '' : renderBottomNav();
+                const bottomBar = (isCustomerMode || !currentRestId || !globalDB.restaurants[currentRestId]) ? '' : renderBottomNav();
                 root.innerHTML = content + bottomBar;
             } catch(err) {
                 console.error("Render error:", err);
-                root.innerHTML = `<div class="min-h-screen flex items-center justify-center p-6 text-center bg-slate-950 text-white"><div class="glass p-6 rounded-3xl space-y-4 max-w-sm"><h2 class="text-amber-400 font-black text-base">تم تأمين التطبيق</h2><p class="text-xs text-slate-400">حدث خطأ في العرض وتم منعه.</p><button onclick="localStorage.clear(); location.reload();" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl text-xs">إعادة تشغيل فورية</button></div></div>`;
+                root.innerHTML = `<div class="min-h-screen flex items-center justify-center p-6 text-center bg-slate-950 text-white"><div class="glass p-6 rounded-3xl space-y-4 max-w-sm"><h2 class="text-amber-400 font-black text-base">تم حماية التطبيق</h2><p class="text-xs text-slate-400">حدث خطأ مؤقت وتم تجاوزه بنجاح.</p><button onclick="localStorage.clear(); location.reload();" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl text-xs">إعادة ضبط التشغيل</button></div></div>`;
             }
         }
 
         function renderNav(){
-            const rest=currentRestId?globalDB.restaurants[currentRestId]:null;
-            return `<nav class="sticky top-0 z-50 glass border-b border-white/10 px-4 py-3"><div class="max-w-4xl mx-auto flex justify-between items-center"><div class="flex gap-2 items-center cursor-pointer" onclick="setPage(currentRestId?'builder':'auth')"><div class="w-9 h-9 rounded-xl gold-gradient text-slate-950 flex items-center justify-center font-black">ط</div><span class="font-black text-white">Tablia <span class="text-amber-400">2030</span></span></div>${currentRestId?`<button onclick="currentRestId=null; localStorage.removeItem('tablia_logged_rest_id'); setPage('auth');" class="bg-red-500/10 text-red-400 px-3 py-1 rounded-xl text-xs font-bold">خروج</button>`:''}</div></nav>`;
+            const rest = currentRestId ? globalDB.restaurants[currentRestId] : null;
+            return `<nav class="sticky top-0 z-50 glass border-b border-white/10 px-4 py-3"><div class="max-w-4xl mx-auto flex justify-between items-center"><div class="flex gap-2 items-center cursor-pointer" onclick="setPage(currentRestId?'builder':'auth')"><div class="w-9 h-9 rounded-xl gold-gradient text-slate-950 flex items-center justify-center font-black">ط</div><span class="font-black text-white">Tablia <span class="text-amber-400">2030</span></span></div>${rest?`<button onclick="currentRestId=null; localStorage.removeItem('tablia_logged_rest_id'); setPage('auth');" class="bg-red-500/10 text-red-400 px-3 py-1 rounded-xl text-xs font-bold">خروج</button>`:''}</div></nav>`;
         }
+
         function renderBottomNav(){
-            if(!currentRestId) return '';
+            if(!currentRestId || !globalDB.restaurants[currentRestId]) return '';
             return `<div class="fixed bottom-0 left-0 right-0 z-50 glass border-t border-white/10 px-2 py-2"><div class="max-w-md mx-auto grid grid-cols-4 gap-1 text-center"><button onclick="setPage('builder')" class="flex flex-col items-center py-1 ${appState.page==='builder'?'text-amber-400 font-black':'text-slate-400'}"><i class="fa-solid fa-wand-magic-sparkles text-sm"></i><span class="text-[10px]">المنشئ</span></button><button onclick="setPage('cashier')" class="flex flex-col items-center py-1 ${appState.page==='cashier'?'text-red-400 font-black':'text-slate-400'}"><i class="fa-solid fa-cash-register text-sm"></i><span class="text-[10px]">الكاشير</span></button><button onclick="setPage('dashboard')" class="flex flex-col items-center py-1 ${appState.page==='dashboard'?'text-amber-400 font-black':'text-slate-400'}"><i class="fa-solid fa-chart-line text-sm"></i><span class="text-[10px]">الباقات</span></button><button onclick="setPage('qr_print')" class="flex flex-col items-center py-1 ${appState.page==='qr_print'?'text-amber-400 font-black':'text-slate-400'}"><i class="fa-solid fa-qrcode text-sm"></i><span class="text-[10px]">QR</span></button></div></div>`;
         }
 
         function renderAuthScreen(){
             return `${renderNav()}<div class="max-w-md mx-auto px-4 py-10 space-y-6"><div class="text-center"><h1 class="text-2xl font-black text-white">Tablia OS 2030</h1></div><div class="flex bg-slate-900 p-1 rounded-xl text-xs"><button onclick="appState.authTab='login'; render();" class="flex-1 py-2.5 rounded-lg font-bold ${appState.authTab==='login'?'bg-amber-500 text-slate-950':'text-slate-400'}">دخول</button><button onclick="appState.authTab='register'; render();" class="flex-1 py-2.5 rounded-lg font-bold ${appState.authTab==='register'?'bg-amber-500 text-slate-950':'text-slate-400'}">مطعم جديد</button></div>${appState.authTab==='login'?`<div class="glass p-6 rounded-3xl space-y-4 text-xs"><input id="log_phone" placeholder="رقم الموبايل" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white"><input id="log_pass" type="password" placeholder="كلمة السر" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white"><button onclick="handleLogin()" class="w-full gold-gradient text-slate-950 font-black py-3 rounded-xl">دخول</button></div>`:`<div class="glass p-6 rounded-3xl space-y-4 text-xs"><input id="reg_owner" placeholder="اسمك" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white"><input id="reg_name" placeholder="اسم المطعم" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white"><input id="reg_phone" placeholder="رقم الموبايل" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white"><input id="reg_pass" type="password" placeholder="كلمة السر" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white"><button onclick="handleRegister()" class="w-full gold-gradient text-slate-950 font-black py-3 rounded-xl">إنشاء</button></div>`}</div>`;
         }
+
         function handleLogin(){
             const phone=document.getElementById('log_phone').value.trim(); const pass=document.getElementById('log_pass').value.trim();
             for(let id in globalDB.restaurants){ if(globalDB.restaurants[id].phone===phone && globalDB.restaurants[id].pass===pass){ currentRestId=id; localStorage.setItem('tablia_logged_rest_id',id); setPage('builder'); return; } }
-            alert('بيانات غلط');
+            alert('بيانات الدخول غير صحيحة');
         }
+
         function handleRegister(){
             const owner=document.getElementById('reg_owner').value.trim(); const name=document.getElementById('reg_name').value.trim(); const phone=document.getElementById('reg_phone').value.trim(); const pass=document.getElementById('reg_pass').value.trim();
-            if(!owner||!name||!phone||!pass){ alert('كمل البيانات'); return; }
+            if(!owner||!name||!phone||!pass){ alert('يرجى استكمال البيانات'); return; }
             const restId='rest_'+Date.now();
             globalDB.restaurants[restId]={ id:restId, ownerName:owner, name:name, phone:phone, pass:pass, template_id:'foodera-modern', layout:'foodera', theme:{primary:'#ea580c', bg:'#030712'}, tablesCount:20, subscription:{isActive:false, expiresAt:null}, categories:[{id:'cat_1', name:'الرئيسية', icon:'🍔'}], menu_items:[], orders:[] };
             syncCloud(); currentRestId=restId; localStorage.setItem('tablia_logged_rest_id',restId); setPage('builder');
         }
 
         function renderBuilder(){
-            const rest=globalDB.restaurants[currentRestId]; if(!rest){ setPage('auth'); return ''; }
-            return `${renderNav()}<div class="max-w-3xl mx-auto px-4 py-6 space-y-5"><div class="flex gap-1 bg-slate-900 p-1 rounded-xl text-[11px]"><button onclick="appState.builderStep=1; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===1?'bg-amber-500 text-slate-950 font-black':'text-slate-400'}">1. اختيار ومعاينة القالب</button><button onclick="appState.builderStep=2; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===2?'bg-amber-500 text-slate-950 font-black':'text-slate-400'}">2. المنيو</button><button onclick="appState.builderStep=4; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===4?'bg-amber-500 text-slate-950 font-black':'text-slate-400'}">3. النشر</button></div>${appState.builderStep===1?renderStep1(rest):''}${appState.builderStep===2?renderStep2(rest):''}${appState.builderStep===4?renderStep4(rest):''}</div>`;
+            const rest=globalDB.restaurants[currentRestId]; 
+            if(!rest){ setPage('auth'); return ''; }
+            const selectedTpl = TEMPLATES_CATALOG.find(t => t.id === rest.template_id) || TEMPLATES_CATALOG[0];
+            return `
+                ${renderNav()}
+                <div class="max-w-3xl mx-auto px-4 py-6 space-y-5">
+                    <div class="flex gap-1 bg-slate-900 p-1 rounded-xl text-[11px]">
+                        <button onclick="appState.builderStep=1; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===1?'bg-amber-500 text-slate-950 font-black':'text-slate-400'}">1. القالب والمعاينة</button>
+                        <button onclick="appState.builderStep=2; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===2?'bg-amber-500 text-slate-950 font-black':'text-slate-400'}">2. المنيو</button>
+                        <button onclick="appState.builderStep=4; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===4?'bg-amber-500 text-slate-950 font-black':'text-slate-400'}">3. النشر</button>
+                    </div>
+                    ${appState.builderStep===1 ? renderStep1(rest, selectedTpl) : (appState.builderStep===2 ? renderStep2(rest) : renderStep4(rest))}
+                </div>
+            `;
         }
 
-        function renderStep1(rest){
-            const selectedTpl = TEMPLATES_CATALOG.find(t => t.id === rest.template_id) || TEMPLATES_CATALOG[0];
+        function renderStep1(rest, selectedTpl){
             return `
                 <div class="glass p-5 rounded-2xl space-y-4 text-xs">
                     <h2 class="font-black text-white text-sm">الخطوة 1: اختيار القالب والمعاينة الفورية</h2>
@@ -135,7 +182,7 @@
                     </div>
                     
                     <div class="space-y-2">
-                        <label class="block text-slate-400 font-bold">اختر قالباً من الـ 7 قوالب المتاحة (اضغط على القالب لرؤية معاينته فورا):</label>
+                        <label class="block text-slate-400 font-bold">اختر قالباً من الـ 7 قوالب المتاحة:</label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             ${TEMPLATES_CATALOG.map(t=>`
                                 <div onclick="globalDB.restaurants[currentRestId].template_id='${t.id}'; globalDB.restaurants[currentRestId].layout='${t.layout}'; globalDB.restaurants[currentRestId].theme.primary='${t.primary}'; globalDB.restaurants[currentRestId].theme.bg='${t.themeBg}'; syncCloud(); render();" class="border-2 rounded-xl p-2.5 cursor-pointer transition ${rest.template_id===t.id?'border-amber-500 bg-amber-500/10 shadow-lg':'border-white/10 bg-slate-950'}">
@@ -168,7 +215,7 @@
                                     <div class="text-[10px] font-bold" style="color:${selectedTpl.primary}">150 ج.م</div>
                                 </div>
                                 <div class="glass p-2.5 rounded-xl border border-white/10 space-y-1 flex flex-col justify-between">
-                                    <div class="text-[10px] text-slate-400">هكذا سيظهر تصميم البطاقات والبانر لعملائك تماماً عند اختيار هذا القالب.</div>
+                                    <div class="text-[10px] text-slate-400">هكذا سيظهر تصميم البطاقات والبانر لعملائك تماماً.</div>
                                     <div class="w-full py-1 text-center text-[9px] font-black text-white rounded-lg" style="background:${selectedTpl.primary}">أضف للسلة +</div>
                                 </div>
                             </div>
@@ -179,6 +226,7 @@
                 </div>
             `;
         }
+
         function saveStep1(){ 
             const nameInput = document.getElementById('r_name');
             if(nameInput) globalDB.restaurants[currentRestId].name = nameInput.value.trim();
@@ -188,8 +236,20 @@
         }
 
         function renderStep2(rest){
-            return `<div class="glass p-5 rounded-2xl space-y-4 text-xs"><div class="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl"><textarea id="magic_box" placeholder="برجر 150, بيتزا 200" class="w-full bg-slate-950 border border-white/10 p-2 rounded-lg text-white" rows="2"></textarea><button onclick="parseMagicText()" class="w-full gold-gradient text-slate-950 font-black py-2 rounded-lg mt-2">توليد الأصناف تلقائياً</button></div><div class="space-y-1">${rest.menu_items.map((it,i)=>`<div class="bg-slate-950 p-2 rounded-xl flex justify-between items-center"><span>${it.name} - ${it.price}ج</span><button onclick="globalDB.restaurants[currentRestId].menu_items.splice(${i},1); syncCloud(); render();" class="text-red-400"><i class="fa-solid fa-trash"></i></button></div>`).join('')}</div><button onclick="appState.builderStep=4; render();" class="gold-gradient text-slate-950 font-black px-4 py-2 rounded-xl">التالي: النشر ➔</button></div>`;
+            return `
+                <div class="glass p-5 rounded-2xl space-y-4 text-xs">
+                    <div class="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl">
+                        <textarea id="magic_box" placeholder="برجر 150, بيتزا 200" class="w-full bg-slate-950 border border-white/10 p-2 rounded-lg text-white" rows="2"></textarea>
+                        <button onclick="parseMagicText()" class="w-full gold-gradient text-slate-950 font-black py-2 rounded-lg mt-2">توليد الأصناف تلقائياً</button>
+                    </div>
+                    <div class="space-y-1">
+                        ${rest.menu_items.map((it,i)=>`<div class="bg-slate-950 p-2 rounded-xl flex justify-between items-center"><span>${it.name} - ${it.price}ج</span><button onclick="globalDB.restaurants[currentRestId].menu_items.splice(${i},1); syncCloud(); render();" class="text-red-400"><i class="fa-solid fa-trash"></i></button></div>`).join('')}
+                    </div>
+                    <button onclick="appState.builderStep=4; render();" class="gold-gradient text-slate-950 font-black px-4 py-2 rounded-xl">التالي: النشر ➔</button>
+                </div>
+            `;
         }
+
         function parseMagicText(){
             const rest=globalDB.restaurants[currentRestId]; const text=document.getElementById('magic_box').value.trim(); if(!text) return;
             text.split(/,|\n/).forEach(line=>{
@@ -198,6 +258,7 @@
                 if(name) rest.menu_items.push({ id:'itm_'+Date.now()+Math.random(), category_id:rest.categories[0].id, name, description:'طازج', price, image:'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500', is_available:true, tags:[] });
             }); syncCloud(); render();
         }
+
         function renderStep4(rest){
             const isSub=rest.subscription?.isActive; const url=location.origin+location.pathname+`?view=menu&rest=${rest.id}`;
             if(!isSub) return `<div class="glass p-6 rounded-3xl space-y-4 text-xs border-2 border-amber-500/50"><h2 class="font-black text-white text-center">تفعيل المنيو - ${PLATFORM_OWNER.monthlyPrice} جنيه شهرياً</h2><div class="bg-slate-950 p-3 rounded-xl flex justify-between items-center"><span dir="ltr" class="text-white font-black">${PLATFORM_OWNER.walletNumber}</span><button onclick="navigator.clipboard.writeText('${PLATFORM_OWNER.walletNumber}')" class="bg-amber-500 text-slate-950 px-3 py-1 rounded-lg">نسخ</button></div><a href="https://wa.me/2${PLATFORM_OWNER.walletNumber}?text=${encodeURIComponent('تفعيل مطعم '+rest.name+' بمبلغ '+PLATFORM_OWNER.monthlyPrice+' جنيه')}" target="_blank" class="block w-full bg-emerald-600 text-white text-center font-black py-3 rounded-xl">ارسل إيصال التحويل واتساب</a></div>`;
