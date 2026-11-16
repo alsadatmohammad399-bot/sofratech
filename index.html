@@ -44,7 +44,7 @@
 
         let globalDB = { restaurants: {} };
         try {
-            const raw = localStorage.getItem('tablia_multitenant_2030_v25');
+            const raw = localStorage.getItem('tablia_multitenant_2030_v27');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) {}
 
@@ -53,7 +53,7 @@
                 restaurants: {
                     "rest_demo": {
                         id: "rest_demo", ownerName: "محمد الحاتي", name: "دليكاتسي وريستو", phone: "01015861991", pass: "1234",
-                        template_id: "tahey-red", tablesCount: 20,
+                        template_id: "tahey-red", tablesCount: 20, deliveryFee: 25,
                         address: "الإسكندرية، ميامي", wifiName: "Delicacy_Free", wifiPass: "357159357",
                         subscription: { isActive: true, expiresAt: Date.now() + 30*24*60*60*1000 },
                         theme: { primary: '#dc2626', bg: '#111827', accent: '#facc15' },
@@ -79,17 +79,25 @@
             { id: 'minimal-white', name: 'نور - Minimal', desc: 'أبيض أنيق ومريح للمطاعم الصحية والكافيهات', layout: 'minimal', preview: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800', theme: { primary: '#171717', bg: '#ffffff', accent: '#737373' }, badge: '✨ راقي' }
         ];
 
+        function checkSubscription(rest) {
+            if (!rest || !rest.subscription) return false;
+            if (rest.subscription.expiresAt && Date.now() > rest.subscription.expiresAt) {
+                rest.subscription.isActive = false;
+            }
+            return rest.subscription.isActive;
+        }
+
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_multitenant_2030_v25', JSON.stringify(globalDB));
+                localStorage.setItem('tablia_multitenant_2030_v27', JSON.stringify(globalDB));
                 if (cloudDB) {
-                    cloudDB.ref('tablia_multitenant_enterprise_2030_v25').set(globalDB).catch(() => {});
+                    cloudDB.ref('tablia_multitenant_enterprise_2030_v27').set(globalDB).catch(() => {});
                 }
             } catch (e) {}
         }
 
         if (cloudDB) {
-            cloudDB.ref('tablia_multitenant_enterprise_2030_v25').on('value', (snap) => {
+            cloudDB.ref('tablia_multitenant_enterprise_2030_v27').on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.restaurants) {
                     if (currentRestId && data.restaurants[currentRestId]) {
@@ -103,7 +111,7 @@
                     }
                     globalDB = data;
                     try {
-                        localStorage.setItem('tablia_multitenant_2030_v25', JSON.stringify(globalDB));
+                        localStorage.setItem('tablia_multitenant_2030_v27', JSON.stringify(globalDB));
                     } catch(e){}
                     render();
                 }
@@ -136,15 +144,15 @@
             activeCat: 'all', 
             search: '', 
             cart: [], 
-            cartOpen: false, 
+            checkoutView: false, // صفحة إتمام الطلب المستقلة
             tableNumber: urlParams.get('t')||null, 
             activeOrderId: localStorage.getItem('tablia_active_order_id')||null, 
             trackerOpen: false, 
             superAdminUnlocked: false,
-            editingItemId: null,
             drawerOpen: false,
             modalType: null,
             gpsLocation: null,
+            gpsStatus: 'جاري التقاط الموقع تلقائياً...',
             previewTpl: null
         };
 
@@ -184,22 +192,21 @@
                 root.innerHTML = content + bottomBar + (appState.previewTpl ? renderPreviewModal() : '');
             } catch(err) {
                 console.error("Render error:", err);
-                root.innerHTML = `<div class="min-h-screen flex items-center justify-center p-6 text-center bg-slate-950 text-white"><div class="glass p-6 rounded-3xl space-y-4 max-w-sm"><h2 class="text-amber-400 font-black text-base">إعادة تشغيل النظام</h2><p class="text-xs text-slate-400">تم تحديث النظام ليعمل بكفاءة عالية وبدون أي أخطاء.</p><button onclick="localStorage.clear(); location.reload();" class="w-full bg-red-600 text-white font-black py-3 rounded-xl text-xs">تحديث وتشغيل فوري</button></div></div>`;
+                root.innerHTML = `<div class="min-h-screen flex items-center justify-center p-6 text-center bg-slate-950 text-white"><div class="glass p-6 rounded-3xl space-y-4 max-w-sm"><h2 class="text-amber-400 font-black text-base">إعادة تشغيل النظام</h2><p class="text-xs text-slate-400">تم تحديث النظام ليعمل بكفاءة عالية.</p><button onclick="localStorage.clear(); location.reload();" class="w-full bg-red-600 text-white font-black py-3 rounded-xl text-xs">تحديث وتشغيل فوري</button></div></div>`;
             }
         }
 
-        // لوحة تحكم الأدمن الخاصة بك وحدك (عبر رابط ?view=superadmin)
         function renderSuperAdminView(){
             if(!appState.superAdminUnlocked) {
                 return `
                     <div class="min-h-screen flex items-center justify-center p-4 bg-slate-950 text-white">
-                        <div class="glass p-6 rounded-3xl max-w-sm w-full space-y-4 text-xs">
+                        <div class="glass p-6 rounded-3xl max-w-sm w-full space-y-4 text-xs text-slate-900">
                             <div class="text-center space-y-1">
                                 <div class="w-12 h-12 rounded-2xl bg-red-600 text-white mx-auto flex items-center justify-center font-black text-lg">ط</div>
                                 <h2 class="font-black text-sm text-slate-900">لوحة الإدارة العليا (الأدمن فقط)</h2>
-                                <p class="text-[10px] text-slate-500">أدخل كلمة السر الخاصة بك لتفعيل حسابات المطاعم</p>
+                                <p class="text-[10px] text-slate-500">أدخل كلمة السر لتفعيل حسابات المطاعم</p>
                             </div>
-                            <input id="super_pin" type="password" placeholder="أدخل كلمة السر السرية" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-center text-slate-900 outline-none focus:border-red-600 font-bold">
+                            <input id="super_pin" type="password" placeholder="كلمة السر السرية" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-center text-slate-900 outline-none focus:border-red-600 font-bold">
                             <button onclick="if(document.getElementById('super_pin').value==='${PLATFORM_OWNER.adminPass}'){appState.superAdminUnlocked=true;render();}else{alert('كلمة السر غير صحيحة!')}" class="w-full bg-red-600 text-white font-black py-3.5 rounded-xl shadow">دخول لوحة التحكم العامة</button>
                             <a href="?" class="block text-center text-slate-400 text-[10px] hover:underline pt-2">العودة للرئيسية</a>
                         </div>
@@ -212,27 +219,31 @@
                     <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
                         <div class="flex items-center gap-2">
                             <div class="w-9 h-9 rounded-xl bg-red-600 text-white flex items-center justify-center font-black">ط</div>
-                            <h1 class="font-black text-slate-900 text-sm">إدارة وتفعيل حسابات مطاعم المنصة</h1>
+                            <h1 class="font-black text-slate-900 text-sm">إدارة وتفعيل مطاعم المنصة (اشتراك شهر 30 يوم)</h1>
                         </div>
                         <a href="?" class="bg-slate-100 text-slate-700 font-bold px-3 py-2 rounded-xl">خروج</a>
                     </div>
 
                     <div class="space-y-3">
-                        ${Object.values(globalDB.restaurants).map(r => `
-                            <div class="bg-white p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border ${r.subscription?.isActive?'border-emerald-500/40':'border-amber-500/40'} shadow-sm">
-                                <div>
-                                    <h3 class="font-black text-slate-900 text-sm">${r.name}</h3>
-                                    <p class="text-slate-500 text-[11px] mt-0.5">المالك: ${r.ownerName} (${r.phone}) | العنوان: ${r.address||'الإسكندرية'}</p>
-                                    <span class="inline-block mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${r.subscription?.isActive?'bg-emerald-50 text-emerald-600':'bg-amber-50 text-amber-600'}">
-                                        ${r.subscription?.isActive ? 'الحساب مفعل ونشط ✅' : 'الحساب غير مفعل (معاينة فقط) ⏸️'}
-                                    </span>
+                        ${Object.values(globalDB.restaurants).map(r => {
+                            const active = checkSubscription(r);
+                            const daysLeft = r.subscription?.expiresAt ? Math.ceil((r.subscription.expiresAt - Date.now()) / (1000*60*60*24)) : 0;
+                            return `
+                                <div class="bg-white p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border ${active?'border-emerald-500/40':'border-amber-500/40'} shadow-sm">
+                                    <div>
+                                        <h3 class="font-black text-slate-900 text-sm">${r.name}</h3>
+                                        <p class="text-slate-500 text-[11px] mt-0.5">المالك: ${r.ownerName} (${r.phone}) | سعر الدليفري: ${r.deliveryFee||25} ج.م</p>
+                                        <span class="inline-block mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${active?'bg-emerald-50 text-emerald-600':'bg-amber-50 text-amber-600'}">
+                                            ${active ? `مفعل ونشط (متبقي ${daysLeft} يوم) ✅` : 'الحساب منتهي أو غير مفعل (معاينة فقط) ⏸️'}
+                                        </span>
+                                    </div>
+                                    <div class="flex gap-2 w-full sm:w-auto">
+                                        <button onclick="globalDB.restaurants['${r.id}'].subscription={isActive:true, expiresAt:Date.now()+(30*24*60*60*1000)}; syncCloud(); render();" class="flex-1 sm:flex-none bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-bold hover:bg-emerald-500 transition">تفعيل شهر ✓</button>
+                                        <button onclick="globalDB.restaurants['${r.id}'].subscription={isActive:false, expiresAt:Date.now()}; syncCloud(); render();" class="flex-1 sm:flex-none bg-red-50 text-red-600 px-4 py-2.5 rounded-xl font-bold hover:bg-red-100 transition">إيقاف ✕</button>
+                                    </div>
                                 </div>
-                                <div class="flex gap-2 w-full sm:w-auto">
-                                    <button onclick="globalDB.restaurants['${r.id}'].subscription={isActive:true, expiresAt:Date.now()+2592000000}; syncCloud(); render();" class="flex-1 sm:flex-none bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-bold hover:bg-emerald-500 transition">تفعيل الحساب ✓</button>
-                                    <button onclick="globalDB.restaurants['${r.id}'].subscription={isActive:false}; syncCloud(); render();" class="flex-1 sm:flex-none bg-red-50 text-red-600 px-4 py-2.5 rounded-xl font-bold hover:bg-red-100 transition">إيقاف التفعيل ✕</button>
-                                </div>
-                            </div>
-                        `).join('')}
+                            `;
+                        }).join('')}
                     </div>
                 </div>
             `;
@@ -253,7 +264,7 @@
             <div class="max-w-md mx-auto px-4 py-12 space-y-6">
                 <div class="text-center space-y-2">
                     <h1 class="text-2xl font-black text-slate-900">منصة مطاعم المستقبل</h1>
-                    <p class="text-xs text-slate-500">أنشئ منيو مطعمك واختر قالبك الفاخر بكل سهولة</p>
+                    <p class="text-xs text-slate-500">أنشئ منيو مطعمك واضبط سعر الدليفري بكل سهولة</p>
                 </div>
                 <div class="flex bg-slate-100 p-1.5 rounded-2xl text-xs border border-slate-200">
                     <button onclick="appState.authTab='login'; render();" class="flex-1 py-3 rounded-xl font-bold transition ${appState.authTab==='login'?'bg-red-600 text-white font-black shadow':'text-slate-500 hover:text-slate-900'}">تسجيل دخول</button>
@@ -301,11 +312,11 @@
             if(!phone || !pass) { alert('يرجى إدخال رقم الموبايل وكلمة السر'); return; }
 
             if(cloudDB) {
-                cloudDB.ref('tablia_multitenant_enterprise_2030_v25').once('value').then(snap => {
+                cloudDB.ref('tablia_multitenant_enterprise_2030_v27').once('value').then(snap => {
                     const data = snap.val();
                     if(data && data.restaurants) {
                         globalDB = data;
-                        localStorage.setItem('tablia_multitenant_2030_v25', JSON.stringify(globalDB));
+                        localStorage.setItem('tablia_multitenant_2030_v27', JSON.stringify(globalDB));
                     }
                     verifyLoginData(phone, pass);
                 }).catch(() => { verifyLoginData(phone, pass); });
@@ -340,12 +351,11 @@
             if(!owner || !name || !phone || !pass){ alert('يرجى استكمال البيانات'); return; }
             const restId = 'rest_' + Date.now();
             if(!globalDB.restaurants) globalDB.restaurants = {};
-            // الحساب يبدأ غير مفعل تلقائياً بانتظار تفعيل الأدمن
             globalDB.restaurants[restId] = { 
                 id: restId, ownerName: owner, name: name, phone: phone, pass: pass, 
-                template_id: 'tahey-red', theme: TEMPLATES_CATALOG[0].theme, tablesCount: 20, 
+                template_id: 'tahey-red', theme: TEMPLATES_CATALOG[0].theme, tablesCount: 20, deliveryFee: 25,
                 address: 'الإسكندرية، ميامي', wifiName: name + '_Free', wifiPass: '357159357',
-                subscription: { isActive: false }, 
+                subscription: { isActive: false, expiresAt: null }, 
                 categories: [
                     { id: 'cat_1', name: 'الرئيسية', icon: '🍔' },
                     { id: 'cat_2', name: 'المشويات', icon: '🥩' }
@@ -366,9 +376,9 @@
                 ${renderNav()}
                 <div class="max-w-3xl mx-auto px-4 py-6 space-y-5">
                     <div class="flex gap-1.5 bg-white p-1.5 rounded-2xl text-xs border border-slate-200 shadow-sm">
-                        <button onclick="appState.builderStep=1; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===1?'bg-red-600 text-white font-black shadow':'text-slate-600 hover:text-slate-900'}">1. اختيار القالب الفاخر</button>
+                        <button onclick="appState.builderStep=1; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===1?'bg-red-600 text-white font-black shadow':'text-slate-600 hover:text-slate-900'}">1. القالب والإعدادات</button>
                         <button onclick="appState.builderStep=2; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===2?'bg-red-600 text-white font-black shadow':'text-slate-600 hover:text-slate-900'}">2. الأقسام والوجبات</button>
-                        <button onclick="appState.builderStep=4; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===4?'bg-red-600 text-white font-black shadow':'text-slate-600 hover:text-slate-900'}">3. المعاينة ونشر اللينك</button>
+                        <button onclick="appState.builderStep=4; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===4?'bg-red-600 text-white font-black shadow':'text-slate-600 hover:text-slate-900'}">3. نشر اللينك</button>
                     </div>
                     ${appState.builderStep===1 ? renderStep1(rest) : (appState.builderStep===2 ? renderStep2(rest) : renderStep4(rest))}
                 </div>
@@ -378,38 +388,38 @@
         function renderStep1(rest){
             return `
                 <div class="bg-white p-6 rounded-3xl space-y-5 text-xs border border-slate-200 shadow-xl">
-                    <h2 class="font-black text-slate-900 text-sm">🎨 اختر قالبك الفاخر - شاهد المعاينة الحية قبل التفعيل</h2>
-                    <div>
-                        <label class="block text-slate-600 font-bold mb-1.5">اسم المطعم</label>
-                        <input id="r_name" value="${rest.name || ''}" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-slate-900 font-bold outline-none focus:border-red-600">
-                    </div>
+                    <h2 class="font-black text-slate-900 text-sm">🎨 إعدادات المطعم وقيمة سعر التوصيل (الدليفري)</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        ${TEMPLATES_CATALOG.map(t => `
-                            <div class="border-2 rounded-3xl overflow-hidden shadow-sm transition ${rest.template_id === t.id ? 'border-red-600 ring-2 ring-red-100' : 'border-slate-200'}">
-                                <div class="relative h-48">
-                                    <img src="${t.preview}" class="w-full h-full object-cover">
-                                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                                    <div class="absolute top-3 right-3 bg-white px-2.5 py-1 rounded-full text-[10px] font-black text-slate-900 shadow">${t.badge}</div>
-                                    ${rest.template_id === t.id ? '<div class="absolute top-3 left-3 bg-red-600 text-white px-2.5 py-1 rounded-full text-[10px] font-black shadow">مفعل ✓</div>' : ''}
-                                    <div class="absolute bottom-0 p-3 text-white">
-                                        <div class="font-black text-sm">${t.name}</div>
-                                        <div class="text-[10px] text-slate-300 mt-0.5">${t.desc}</div>
-                                    </div>
-                                    <div class="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 flex items-center justify-center gap-2 transition">
-                                        <button onclick="openPreview('${t.id}')" class="bg-white text-slate-900 px-4 py-2 rounded-xl text-xs font-black shadow">معاينة 👁️</button>
-                                        <button onclick="selectTemplate('${t.id}')" class="bg-red-600 text-white px-4 py-2 rounded-xl text-xs font-black shadow">اختيار ✓</button>
+                        <div>
+                            <label class="block text-slate-600 font-bold mb-1.5">اسم المطعم</label>
+                            <input id="r_name" value="${rest.name || ''}" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-slate-900 font-bold outline-none focus:border-red-600">
+                        </div>
+                        <div>
+                            <label class="block text-slate-600 font-bold mb-1.5">سعر الدليفري (ج.م) يحدده المطعم</label>
+                            <input id="r_delivery" type="number" value="${rest.deliveryFee || 25}" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-slate-900 font-bold outline-none focus:border-red-600">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-slate-600 font-bold mb-2">اختر القالب الفاخر:</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            ${TEMPLATES_CATALOG.map(t => `
+                                <div class="border-2 rounded-3xl overflow-hidden shadow-sm transition ${rest.template_id === t.id ? 'border-red-600 ring-2 ring-red-100' : 'border-slate-200'}">
+                                    <div class="relative h-44">
+                                        <img src="${t.preview}" class="w-full h-full object-cover">
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                                        <div class="absolute top-3 right-3 bg-white px-2.5 py-1 rounded-full text-[10px] font-black text-slate-900 shadow">${t.badge}</div>
+                                        ${rest.template_id === t.id ? '<div class="absolute top-3 left-3 bg-red-600 text-white px-2.5 py-1 rounded-full text-[10px] font-black shadow">مفعل ✓</div>' : ''}
+                                        <div class="absolute bottom-0 p-3 text-white">
+                                            <div class="font-black text-sm">${t.name}</div>
+                                        </div>
+                                        <div class="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 flex items-center justify-center gap-2 transition">
+                                            <button onclick="openPreview('${t.id}')" class="bg-white text-slate-900 px-3 py-2 rounded-xl text-xs font-black shadow">معاينة 👁️</button>
+                                            <button onclick="selectTemplate('${t.id}')" class="bg-red-600 text-white px-3 py-2 rounded-xl text-xs font-black shadow">اختيار ✓</button>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="p-3 bg-slate-50 flex justify-between items-center border-t border-slate-100">
-                                    <div class="flex gap-1.5">
-                                        <div class="w-5 h-5 rounded-full border shadow-sm" style="background:${t.theme.primary}"></div>
-                                        <div class="w-5 h-5 rounded-full border shadow-sm" style="background:${t.theme.bg}"></div>
-                                        <div class="w-5 h-5 rounded-full border shadow-sm" style="background:${t.theme.accent}"></div>
-                                    </div>
-                                    <button onclick="openPreview('${t.id}')" class="text-red-600 text-xs font-bold hover:underline">معاينة القالب ←</button>
-                                </div>
-                            </div>
-                        `).join('')}
+                            `).join('')}
+                        </div>
                     </div>
                     <button onclick="saveStep1()" class="bg-red-600 text-white font-black px-5 py-3.5 rounded-xl w-full text-xs shadow-lg hover:bg-red-700 transition">حفظ والانتقال لإدارة المنيو ➔</button>
                 </div>
@@ -440,25 +450,31 @@
 
         function renderPreviewModal(){
             const t = appState.previewTpl;
-            const r = globalDB.restaurants[currentRestId];
+            const r = globalDB.restaurants[currentRestId] || { name: 'مطعم تجريبي' };
             return `
-                <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 text-xs">
-                    <div class="bg-white rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl space-y-3 pb-4">
-                        <div class="relative h-64">
-                            <img src="${t.preview}" class="w-full h-full object-cover">
-                            <button onclick="closePreview()" class="absolute top-3 left-3 bg-black/70 text-white w-8 h-8 rounded-full flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-                            <div class="absolute bottom-0 p-4 text-white bg-gradient-to-t from-black w-full">
-                                <span class="bg-white/20 text-white px-2 py-0.5 rounded-full text-[10px] font-bold">${t.badge}</span>
-                                <h3 class="font-black text-base mt-1">${t.name}</h3>
-                                <p class="text-[11px] text-slate-200">${t.desc}</p>
+                <div class="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 text-xs">
+                    <div class="bg-slate-900 text-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+                        <div class="p-4 bg-slate-950 flex justify-between items-center border-b border-slate-800">
+                            <div>
+                                <span class="bg-red-600 text-white px-2 py-0.5 rounded-full text-[10px] font-black">${t.badge}</span>
+                                <h3 class="font-black text-sm mt-1">معاينة قالب: ${t.name}</h3>
+                            </div>
+                            <button onclick="closePreview()" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="p-5 overflow-y-auto space-y-4" style="background:${t.theme.bg}; color:${t.theme.bg==='#ffffff'||t.theme.bg==='#fefce8'?'#0f172a':'#ffffff'};">
+                            <div class="relative h-36 rounded-2xl overflow-hidden shadow-lg" style="background:${t.theme.primary}">
+                                <img src="${t.preview}" class="w-full h-full object-cover opacity-50">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-3">
+                                    <div>
+                                        <h4 class="font-black text-base text-white">${r.name}</h4>
+                                        <p class="text-[10px] text-slate-200">الإسكندرية • خدمة التوصيل السريع</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="px-4 space-y-3">
-                            <div class="bg-slate-50 border border-slate-200 p-3 rounded-2xl text-center text-slate-700">
-                                عند اختيار هذا القالب سيظهر مطعمك <b>${r.name}</b> بنفس الألوان المذهلة والفخامة المعروضة.
-                            </div>
-                            <button onclick="selectTemplate('${t.id}')" class="w-full bg-red-600 text-white font-black py-3 rounded-xl shadow-lg hover:bg-red-700 transition">اختيار هذا القالب ✓</button>
-                            <button onclick="closePreview()" class="w-full bg-slate-100 text-slate-700 font-bold py-2.5 rounded-xl">إغلاق</button>
+                        <div class="p-4 bg-slate-950 flex gap-2 border-t border-slate-800">
+                            <button onclick="selectTemplate('${t.id}')" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-black py-3 rounded-xl shadow transition">تفعيل هذا القالب ✓</button>
+                            <button onclick="closePreview()" class="px-5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-xl transition">إغلاق</button>
                         </div>
                     </div>
                 </div>
@@ -467,8 +483,10 @@
 
         function saveStep1(){ 
             const nameInput = document.getElementById('r_name');
+            const deliveryInput = document.getElementById('r_delivery');
             const r = globalDB.restaurants[currentRestId];
             if(nameInput) r.name = nameInput.value.trim();
+            if(deliveryInput) r.deliveryFee = Number(deliveryInput.value) || 25;
             syncCloud(); 
             appState.builderStep = 2; 
             render(); 
@@ -483,7 +501,7 @@
                     <div class="space-y-3">
                         <div class="flex justify-between items-center">
                             <h3 class="font-black text-slate-900 text-sm">إدارة الأقسام والوجبات</h3>
-                            <button onclick="addCategoryPrompt()" class="bg-red-50 text-red-600 font-black px-3 py-1.5 rounded-xl hover:bg-red-100 transition">+ إضافة قسم جديد</button>
+                            <button onclick="addCategoryPrompt()" class="bg-red-50 text-red-600 font-black px-3 py-1.5 rounded-xl hover:bg-red-100 transition">+ إضافة قسم</button>
                         </div>
                         <div class="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
                             ${rest.categories.map(c=>`
@@ -497,7 +515,7 @@
                     </div>
 
                     <div class="bg-red-50 border border-red-200 p-4 rounded-2xl space-y-3">
-                        <label class="block text-red-700 font-black">أضف أصناف وأسعار بسرعة (الصندوق السحري):</label>
+                        <label class="block text-red-700 font-black">الصندوق السحري لإضافة الأصناف:</label>
                         <textarea id="magic_box" placeholder="طبق فول 45, سندوتش برجر 120, شوربة عدس 35" class="w-full bg-white border border-slate-200 p-3 rounded-xl text-slate-900 outline-none focus:border-red-600" rows="3"></textarea>
                         <button onclick="parseMagicText()" class="w-full bg-red-600 text-white font-black py-3 rounded-xl shadow hover:bg-red-700 transition">توليد وإضافة الأصناف تلقائياً</button>
                     </div>
@@ -521,13 +539,13 @@
                         </div>
                     </div>
 
-                    <button onclick="appState.builderStep=4; render();" class="bg-red-600 text-white font-black px-4 py-3.5 rounded-xl w-full shadow-lg hover:bg-red-700 transition">التالي: معاينة ونشر اللينك ➔</button>
+                    <button onclick="appState.builderStep=4; render();" class="bg-red-600 text-white font-black px-4 py-3.5 rounded-xl w-full shadow-lg hover:bg-red-700 transition">التالي: نشر اللينك ➔</button>
                 </div>
             `;
         }
 
         function addCategoryPrompt(){
-            const name = prompt('أدخل اسم القسم الجديد (مثال: المقبلات، المشروبات):');
+            const name = prompt('أدخل اسم القسم الجديد:');
             if(!name) return;
             const rest = globalDB.restaurants[currentRestId];
             if(!rest.categories) rest.categories = [];
@@ -577,7 +595,7 @@
         function renderStep4(rest){
             const url = location.origin + location.pathname + `?view=menu&rest=${rest.id}`;
             const tpl = TEMPLATES_CATALOG.find(x => x.id === rest.template_id) || TEMPLATES_CATALOG[0];
-            const isSub = rest.subscription?.isActive;
+            const isSub = checkSubscription(rest);
 
             return `
                 <div class="bg-white p-6 rounded-3xl space-y-5 text-xs border border-slate-200 shadow-xl">
@@ -588,8 +606,8 @@
 
                     ${!isSub ? `
                         <div class="bg-amber-50 border border-amber-200 p-4 rounded-2xl text-center space-y-2">
-                            <p class="text-amber-800 font-bold">⚠️ حسابك غير مفعل حالياً (في وضع المعاينة فقط)</p>
-                            <p class="text-slate-600 text-[11px]">المنيو يظهر للعملاء للمعاينة، ولكن استقبال الطلبات والكاشير سيعمل فور تفعيل الحساب من الإدارة.</p>
+                            <p class="text-amber-800 font-bold">⚠️ حسابك غير مفعل حالياً أو انتهت مدة الشهر (في وضع المعاينة فقط)</p>
+                            <p class="text-slate-600 text-[11px]">المنيو يظهر للعملاء للمعاينة، واستقبال الطلبات سيعمل فور تفعيل حسابك لمدة 30 يوماً من الإدارة.</p>
                         </div>
                     ` : `
                         <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-2xl text-center text-emerald-700 font-bold">
@@ -625,9 +643,13 @@
             if(!rest.menu_items) rest.menu_items = [];
             if(!rest.categories) rest.categories = [];
 
-            const isSub = rest.subscription?.isActive;
+            const isSub = checkSubscription(rest);
             const theme = rest.theme || TEMPLATES_CATALOG[0].theme;
             const tpl = TEMPLATES_CATALOG.find(x => x.id === rest.template_id) || TEMPLATES_CATALOG[0];
+
+            if(appState.checkoutView) {
+                return renderCheckoutPage(rest, theme);
+            }
 
             const filtered = rest.menu_items.filter(i => {
                 if (!i.is_available) return false;
@@ -637,7 +659,9 @@
             });
 
             const cartCount = appState.cart.reduce((s,i)=>s+i.qty,0); 
-            const cartTotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
+            const itemsTotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
+            const deliveryFee = rest.deliveryFee || 25;
+            const grandTotal = itemsTotal + (cartCount > 0 ? deliveryFee : 0);
 
             return `
                 <div style="background-color: ${theme.bg}; color: ${theme.bg === '#ffffff' || theme.bg === '#fefce8' ? '#0f172a' : '#ffffff'};" class="min-h-screen pb-32 relative">
@@ -710,7 +734,7 @@
                     <div class="max-w-3xl mx-auto px-4 pt-4 space-y-4">
                         ${!isSub ? `
                             <div class="bg-amber-500 text-slate-950 p-3.5 rounded-2xl font-black text-center text-xs shadow">
-                                ⚠️ هذا المطعم في وضع "المعاينـة فقط" حالياً ولم يتم تفعيل حسابه من الإدارة لاستقبال الطلبات أونلاين.
+                                ⚠️ هذا المطعم في وضع "المعاينـة فقط" ولم يتم تفعيل اشتراكه الشهري من الإدارة.
                             </div>
                         ` : ''}
 
@@ -753,32 +777,112 @@
 
                     ${cartCount > 0 && isSub ? `
                         <div class="fixed bottom-5 left-4 right-4 max-w-md mx-auto z-40">
-                            <button onclick="appState.cartOpen=true; render();" class="w-full py-3.5 px-5 rounded-2xl bg-slate-900 text-white font-black flex justify-between text-xs shadow-2xl items-center">
+                            <button onclick="appState.checkoutView=true; render(); autoCaptureGPS();" class="w-full py-3.5 px-5 rounded-2xl bg-slate-900 text-white font-black flex justify-between text-xs shadow-2xl items-center">
                                 <span>🛒 إتمام الطلب (${cartCount} وجبات)</span>
-                                <span class="text-sm font-black text-amber-400">${cartTotal} ج.م</span>
+                                <span class="text-sm font-black text-amber-400">${grandTotal} ج.م</span>
                             </button>
                         </div>
                     ` : ''}
 
                     ${cartCount > 0 && !isSub ? `
                         <div class="fixed bottom-5 left-4 right-4 max-w-md mx-auto z-40">
-                            <button onclick="alert('عذراً، هذا المطعم غير مفعل حالياً من الإدارة ولا يمكن إتمام الطلبات أونلاين.');" class="w-full py-3.5 px-5 rounded-2xl bg-slate-400 text-white font-black flex justify-between text-xs shadow-2xl items-center cursor-not-allowed">
+                            <button onclick="alert('عذراً، هذا المطعم غير مفعل حالياً من الإدارة أو انتهت مدة الشهر، ولا يمكن إتمام الطلبات أونلاين.');" class="w-full py-3.5 px-5 rounded-2xl bg-slate-400 text-white font-black flex justify-between text-xs shadow-2xl items-center cursor-not-allowed">
                                 <span>🔒 الطلب غير متاح (الحساب غير مفعل)</span>
                             </button>
                         </div>
                     ` : ''}
 
-                    ${appState.cartOpen && isSub ? renderCheckoutModal(rest) : ''}
                     ${appState.trackerOpen ? renderLiveOrderTracker(rest) : ''}
                 </div>
             `;
+        }
+
+        // صفحة إتمام الطلب المستقلة بالاسم، التليفون، والـ GPS التلقائي مع سعر الدليفري المحدد من المطعم
+        function renderCheckoutPage(rest, theme) {
+            const deliveryFee = rest.deliveryFee || 25;
+            const itemsTotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
+            const grandTotal = itemsTotal + deliveryFee;
+
+            return `
+                <div class="min-h-screen bg-slate-50 text-slate-900 pb-20">
+                    <div class="bg-white p-4 shadow-sm border-b flex items-center justify-between">
+                        <button onclick="appState.checkoutView=false; render();" class="text-xs font-bold text-slate-600 flex items-center gap-1"><i class="fa-solid fa-arrow-right"></i> العودة للمنيو</button>
+                        <h1 class="font-black text-sm">صفحة إتمام الطلب</h1>
+                        <div class="w-10"></div>
+                    </div>
+                    
+                    <div class="max-w-md mx-auto p-4 space-y-4 text-xs">
+                        <!-- ملخص السلة -->
+                        <div class="bg-white p-4 rounded-3xl border shadow-sm space-y-2">
+                            <h3 class="font-black text-xs text-slate-700 border-b pb-2">ملخص الوجبات (${appState.cart.reduce((s,i)=>s+i.qty,0)})</h3>
+                            <div class="space-y-1.5 max-h-40 overflow-y-auto">
+                                ${appState.cart.map(item => `
+                                    <div class="flex justify-between items-center text-[11px]">
+                                        <span>${item.qty}x ${item.name}</span>
+                                        <span class="font-bold">${item.price * item.qty} ج.م</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="pt-2 border-t space-y-1 font-bold">
+                                <div class="flex justify-between text-slate-600"><span>سعر الوجبات:</span><span>${itemsTotal} ج.م</span></div>
+                                <div class="flex justify-between text-slate-600"><span>رسوم التوصيل (يحددها المطعم):</span><span>${deliveryFee} ج.م</span></div>
+                                <div class="flex justify-between text-slate-900 text-sm font-black pt-1 border-t"><span>الإجمالي النهائي:</span><span style="color:${theme.primary}">${grandTotal} ج.م</span></div>
+                            </div>
+                        </div>
+
+                        <!-- بيانات العميل والـ GPS التلقائي -->
+                        <div class="bg-white p-5 rounded-3xl border shadow-xl space-y-3">
+                            <h3 class="font-black text-sm text-slate-900">بيانات التوصيل والـ GPS</h3>
+                            <div>
+                                <label class="block font-bold text-slate-600 mb-1">اسمك الكريم</label>
+                                <input id="co_name" placeholder="مثال: أحمد محمد" class="w-full bg-slate-50 border p-3.5 rounded-xl font-bold outline-none focus:border-red-600">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-600 mb-1">رقم الموبايل</label>
+                                <input id="co_phone" placeholder="010xxxxxxxx" class="w-full bg-slate-50 border p-3.5 rounded-xl font-bold outline-none focus:border-red-600">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-600 mb-1">العنوان بالتفصيل</label>
+                                <input id="co_addr" placeholder="الشارع، رقم العمارة، الدور" class="w-full bg-slate-50 border p-3.5 rounded-xl font-bold outline-none focus:border-red-600">
+                            </div>
+                            
+                            <!-- حالة الـ GPS التلقائي -->
+                            <div class="bg-sky-50 border border-sky-200 p-3.5 rounded-2xl text-center space-y-1">
+                                <p class="font-bold text-sky-900" id="gps_status_txt">${appState.gpsStatus}</p>
+                                ${appState.gpsLocation ? '<span class="text-emerald-600 font-bold text-[10px]">✓ تم التقاط موقعك بدقة عالية</span>' : '<button onclick="autoCaptureGPS()" class="mt-1 bg-sky-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold">إعادة محاولة التقاط الـ GPS</button>'}
+                            </div>
+
+                            <button onclick="submitOrderFromPage('${rest.id}', ${deliveryFee})" class="w-full bg-red-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-red-700 transition text-sm">تأكيد وإرسال الطلب للمطعم 🚀</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // التقاط الـ GPS تلقائياً فور فتح صفحة إتمام الطلب
+        function autoCaptureGPS(){
+            appState.gpsStatus = 'جاري التقاط موقع الـ GPS تلقائياً...';
+            render();
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    appState.gpsLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    appState.gpsStatus = `تم تحديد الإحداثيات بنجاح (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`;
+                    render();
+                }, (err) => {
+                    appState.gpsStatus = 'تعذر الالتقاط التلقائي، يمكنك الاستمرار بالعنوان التفصيلي.';
+                    render();
+                }, { timeout: 10000 });
+            } else {
+                appState.gpsStatus = 'المتصفح لا يدعم الـ GPS.';
+                render();
+            }
         }
 
         function addToCart(id){
             const restId = targetRestSlug || currentRestId || (globalDB && globalDB.restaurants ? Object.keys(globalDB.restaurants)[0] : null);
             const rest = (globalDB && globalDB.restaurants) ? globalDB.restaurants[restId] : null;
             if(!rest || !rest.menu_items) return;
-            const isSub = rest.subscription?.isActive;
+            const isSub = checkSubscription(rest);
             if(!isSub) {
                 alert('عذراً، المطعم غير مفعل حالياً من الإدارة (معاينة فقط).');
                 return;
@@ -790,58 +894,27 @@
             render();
         }
 
-        function getGPSLocation(){
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((pos) => {
-                    appState.gpsLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                    alert('تم تحديد موقعك بدقة عبر الـ GPS بنجاح! 📍');
-                    render();
-                }, () => {
-                    alert('تعذر تحديد الموقع. يجدر السماح بالوصول للموقع.');
-                });
-            } else {
-                alert('متصفحك لا يدعم الـ GPS.');
-            }
-        }
-
-        function renderCheckoutModal(rest){
-            return `
-                <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 text-xs text-slate-900">
-                    <div class="bg-white p-6 rounded-3xl max-w-sm w-full space-y-4 shadow-2xl">
-                        <h3 class="font-black text-sm text-center">تأكيد الطلب وتتبع الـ GPS</h3>
-                        <div class="space-y-3">
-                            <input id="c_name" placeholder="اسمك الكريم" class="w-full bg-slate-50 border p-3 rounded-xl font-bold">
-                            <input id="c_phone" placeholder="رقم الموبايل" class="w-full bg-slate-50 border p-3 rounded-xl font-bold">
-                            <input id="c_addr" placeholder="العنوان التفصيلي (الشارع، رقم العمارة)" class="w-full bg-slate-50 border p-3 rounded-xl font-bold">
-                            <button onclick="getGPSLocation()" class="w-full bg-sky-600 text-white font-black py-2.5 rounded-xl shadow">حدد موقعي الحالي بالـ GPS 📍</button>
-                            ${appState.gpsLocation ? '<p class="text-[10px] text-emerald-600 font-bold text-center">✓ تم التقاط إحداثيات الـ GPS</p>' : ''}
-                        </div>
-                        <button onclick="submitOrder()" class="w-full bg-red-600 text-white font-black py-3.5 rounded-xl shadow-lg">إرسال الطلب الآن ➔</button>
-                        <button onclick="appState.cartOpen=false; render();" class="w-full bg-slate-100 text-slate-700 py-2.5 rounded-xl">إلغاء</button>
-                    </div>
-                </div>
-            `;
-        }
-
-        function submitOrder(){
-            const restId = targetRestSlug || currentRestId || (globalDB && globalDB.restaurants ? Object.keys(globalDB.restaurants)[0] : null);
+        function submitOrderFromPage(restId, deliveryFee){
             const rest = (globalDB && globalDB.restaurants) ? globalDB.restaurants[restId] : null;
             if(!rest) return;
-            const name = document.getElementById('c_name').value.trim();
-            const phone = document.getElementById('c_phone').value.trim();
-            const address = document.getElementById('c_addr').value.trim();
-            if(!name || !phone) { alert('أدخل الاسم ورقم الهاتف!'); return; }
+            const name = document.getElementById('co_name').value.trim();
+            const phone = document.getElementById('co_phone').value.trim();
+            const address = document.getElementById('co_addr').value.trim();
+            if(!name || !phone) { alert('يرجى كتابة الاسم ورقم الموبايل!'); return; }
 
             if(!rest.orders) rest.orders = [];
-            const total = appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
+            const itemsTotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
+            const total = itemsTotal + deliveryFee;
             
             rest.orders.unshift({
                 id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
                 customer_name: name,
                 phone,
-                address: address || 'دليفري عادي',
+                address: address || 'عنوان دليفري',
                 gps: appState.gpsLocation ? `https://maps.google.com/?q=${appState.gpsLocation.lat},${appState.gpsLocation.lng}` : null,
                 items_json: JSON.parse(JSON.stringify(appState.cart)),
+                items_total: itemsTotal,
+                delivery_fee: deliveryFee,
                 total,
                 status: 'new',
                 table_number: appState.tableNumber || 'دليفري',
@@ -851,7 +924,7 @@
             appState.activeOrderId = rest.orders[0].id;
             localStorage.setItem('tablia_active_order_id', appState.activeOrderId);
             appState.cart = [];
-            appState.cartOpen = false;
+            appState.checkoutView = false;
             appState.gpsLocation = null;
             appState.trackerOpen = true;
             syncCloud();
@@ -875,7 +948,7 @@
                             <p class="text-red-600 font-bold text-center">${st}</p>
                             <p class="text-[11px]">📍 العنوان: ${ord.address}</p>
                             ${ord.gps ? `<a href="${ord.gps}" target="_blank" class="block text-sky-600 font-bold underline text-center">عرض موقع الـ GPS على الخريطة 🗺️</a>` : ''}
-                            <p class="font-black text-sm text-center pt-1">${ord.total} ج.م</p>
+                            <p class="font-black text-sm text-center pt-1">${ord.total} ج.م (شامل التوصيل ${ord.delivery_fee}ج)</p>
                         </div>
                         <button onclick="appState.trackerOpen=false; render();" class="w-full bg-slate-100 font-bold py-3 rounded-xl">إغلاق وتصفح المنيو</button>
                     </div>
@@ -904,7 +977,7 @@
                                         <span class="font-black text-slate-900 text-sm">${ord.customer_name}</span>
                                         <span class="text-slate-500 text-[10px] block">${ord.phone} | ${ord.table_number}</span>
                                     </div>
-                                    <span class="text-red-600 font-black text-sm">${ord.total} ج.م</span>
+                                    <span class="text-red-600 font-black text-sm">${ord.total} ج.م <span class="text-[10px] text-slate-500">(توصيل ${ord.delivery_fee}ج)</span></span>
                                 </div>
                                 <div class="text-slate-700 text-[11px] bg-slate-50 p-2.5 rounded-xl border space-y-1">
                                     <p class="font-bold text-red-600">📍 العنوان: ${ord.address}</p>
@@ -945,6 +1018,8 @@
         function renderDashboard(){
             const rest = (globalDB && globalDB.restaurants) ? globalDB.restaurants[currentRestId] : null; 
             if(!rest){ setPage('auth'); return ''; }
+            const active = checkSubscription(rest);
+            const daysLeft = rest.subscription?.expiresAt ? Math.max(0, Math.ceil((rest.subscription.expiresAt - Date.now()) / (1000*60*60*24))) : 0;
             
             return `
                 ${renderNav()}
@@ -952,8 +1027,8 @@
                     <div class="bg-white p-6 rounded-3xl border shadow-xl space-y-3">
                         <div class="w-12 h-12 rounded-full bg-red-50 text-red-600 mx-auto flex items-center justify-center text-lg"><i class="fa-solid fa-store"></i></div>
                         <h2 class="font-black text-slate-900 text-sm">حالة اشتراك مطعمك (${rest.name})</h2>
-                        <p class="text-slate-600 font-bold">${rest.subscription?.isActive ? 'حسابك مفعل ونشط بالكامل واستقبال الطلبات يعمل بكفاءة ✅' : 'حسابك غير مفعل حالياً (معاينة فقط).. تواصل مع إدارة المنصة لتفعيل حسابك.'}</p>
-                        <a href="https://wa.me/2${PLATFORM_OWNER.walletNumber}?text=${encodeURIComponent('تفعيل مطعم '+rest.name)}" target="_blank" class="block w-full bg-emerald-600 text-white font-black py-3 rounded-xl shadow">تفعيل الحساب عبر واتساب الإدارة</a>
+                        <p class="text-slate-600 font-bold">${active ? `حسابك مفعل ونشط بالكامل واستقبال الطلبات يعمل بكفاءة ✅ (متبقي ${daysLeft} يوم)` : 'حسابك غير مفعل حالياً أو انتهت مدة الشهر.. تواصل مع إدارة المنصة لتجديد الاشتراك.'}</p>
+                        <a href="https://wa.me/2${PLATFORM_OWNER.walletNumber}?text=${encodeURIComponent('تجديد وتفعيل مطعم '+rest.name+' لمدة شهر')}" target="_blank" class="block w-full bg-emerald-600 text-white font-black py-3 rounded-xl shadow">تفعيل أو تجديد الاشتراك عبر واتساب الإدارة</a>
                     </div>
                 </div>
             `;
