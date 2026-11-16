@@ -3,912 +3,285 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tablia OS | طبلية - منشئ مواقع المطاعم بالذكاء الاصطناعي</title>
+    <title>Tablia OS | المنصة السحابية المتكاملة للمطاعم والكاشير</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Tajawal:wght@400;500;700;900&family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <!-- مكتبة Firebase السحابية للربط الحقيقي عبر الإنترنت -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script>
         tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        cairo: ['Cairo', 'sans-serif'],
-                        tajawal: ['Tajawal', 'sans-serif'],
-                        ibm: ['IBM Plex Sans Arabic', 'sans-serif']
-                    }
-                }
-            }
+            theme: { extend: { fontFamily: { cairo: ['Cairo', 'sans-serif'] } } }
         }
     </script>
     <style>
-        body { font-family: 'Cairo', sans-serif; }
+        body { font-family: 'Cairo', sans-serif; background-color: #090d16; color: #f8fafc; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .glass { background: rgba(15, 23, 42, 0.72); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .glass-light { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(0, 0, 0, 0.06); }
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(12px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-up { animation: fadeUp 0.35s ease-out forwards; }
+        .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .gold-gradient { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 antialiased selection:bg-amber-500 selection:text-slate-950">
+<body class="antialiased min-h-screen selection:bg-amber-500 selection:text-slate-950">
+
+    <!-- جرس التنبيه السحابي للطلبات -->
+    <audio id="cloud-bell" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
     <div id="app"></div>
 
     <script>
-        // ================= 1. DATABASE & MOCK SCHEMA (SUPABASE STRUCTURE) =================
-        const TEMPLATES_CATALOG = [
-            { id: 'tablia-classic', name: 'Tablia Classic', category: 'classic', layout: 'classic', desc: 'قوائم سريعة وأنيقة تناسب المطاعم الشعبية والكشري والمشويات', color: '#f59e0b', bg: '#090d16', preview: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500&q=60' },
-            { id: 'foodera-modern', name: 'Foodera Modern', category: 'modern', layout: 'foodera', desc: 'بطاقات عصرية بصور كبيرة وتجربة طلب شبيهة بتطبيقات التوصيل', color: '#ea580c', bg: '#fafaf9', preview: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&q=60' },
-            { id: 'dark-grill', name: 'Dark Grill VIP', category: 'dark', layout: 'dark_grill', desc: 'تصميم ليلي فاخر مخصص لمطاعم الستيك والمشويات والبرجر', color: '#dc2626', bg: '#0a0a0a', preview: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&q=60' },
-            { id: 'sultan-luxury', name: 'السلطان الملكي', category: 'luxury', layout: 'dark_grill', desc: 'لمسات ذهبية فاخرة للمطاعم الشرقية والولائم', color: '#eab308', bg: '#0c0a09', preview: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500&q=60' },
-            { id: 'fresh-green', name: 'فريش آند هيلثي', category: 'modern', layout: 'foodera', desc: 'ألوان طبيعية مشرقة للسلطات والعصائر والأكل الصحي', color: '#16a34a', bg: '#f0fdf4', preview: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&q=60' },
-            { id: 'shawarma-street', name: 'شاورما ستريت', category: 'classic', layout: 'classic', desc: 'تصفح سريع للسندوتشات والوجبات السريعة', color: '#e11d48', bg: '#111827', preview: 'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=500&q=60' },
-            { id: 'seafood-blue', name: 'بحري إكسبريس', category: 'modern', layout: 'foodera', desc: 'تصميم مستوحى من البحر لمطاعم الأسماك والجمبري', color: '#0284c7', bg: '#f0f9ff', preview: 'https://images.unsplash.com/photo-1559737558-2f5a35f4523b?w=500&q=60' },
-            { id: 'pizza-napoli', name: 'نابولي بيتزا', category: 'dark', layout: 'dark_grill', desc: 'واجهة داكنة تبرز تفاصيل الجبن والبيتزا الإيطالية', color: '#f97316', bg: '#18181b', preview: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500&q=60' },
-            { id: 'cafe-velvet', name: 'فيلفيت كافيه', category: 'luxury', layout: 'foodera', desc: 'مثالي للكافيهات والحلويات والمخبوزات', color: '#9333ea', bg: '#faf5ff', preview: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=500&q=60' },
-            { id: 'burger-lab', name: 'برجر لاب', category: 'dark', layout: 'dark_grill', desc: 'تصميم جريء وعصري لسلاسل البرجر', color: '#f59e0b', bg: '#09090b', preview: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=500&q=60' },
-            { id: 'koshary-masr', name: 'كشري الأصيل', category: 'classic', layout: 'classic', desc: 'بساطة وسرعة في اختيار الإضافات والأحجام', color: '#d97706', bg: '#0f172a', preview: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=500&q=60' },
-            { id: 'sushi-zen', name: 'سوشي زين', category: 'luxury', layout: 'dark_grill', desc: 'أناقة يابانية هادئة لعشاق السوشي والآسيوي', color: '#ef4444', bg: '#090d16', preview: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=500&q=60' }
-        ];
-
-        const DEFAULT_DB = {
-            openai_key: '',
-            restaurant: {
-                id: 'rest_01',
-                name: 'مشويات الحاتي الأصلي',
-                slug: 'elhaty-grill',
-                phone: '201015861991',
-                logo: '🔥',
-                template_id: 'foodera-modern',
-                layout: 'foodera',
-                theme: {
-                    primary: '#ea580c',
-                    bg: '#fafaf9',
-                    font: 'Cairo',
-                    buttonStyle: 'rounded-2xl'
-                },
-                openHour: 10,
-                closeHour: 2, // 2 AM
-                views: 1420
-            },
-            categories: [
-                { id: 'cat_1', name: 'المشويات', order: 1 },
-                { id: 'cat_2', name: 'طواجن وسندوتشات', order: 2 },
-                { id: 'cat_3', name: 'المقبلات والمشروبات', order: 3 }
-            ],
-            menu_items: [
-                { id: 'itm_1', category_id: 'cat_1', name: 'كيلو كباب وكفتة مشكل', description: 'لحم ضاني بلدي مشوي على الفحم مع أرز بسمتي وسلطات', price: 680, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500&q=60', is_available: true, tags: ['الأكثر مبيعاً'] },
-                { id: 'itm_2', category_id: 'cat_1', name: 'نصف فرخة شيش طاووق', description: 'متبلة بالخلطة السرية مشوية على الفحم', price: 195, image: 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=500&q=60', is_available: true, tags: ['مميز'] },
-                { id: 'itm_3', category_id: 'cat_2', name: 'سندوتش كبدة إسكندراني', description: 'كبدة بلدي طازجة بالفلفل الحار والطحينة', price: 50, image: 'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=500&q=60', is_available: true, tags: [] },
-                { id: 'itm_4', category_id: 'cat_2', name: 'سجق بلدي مشوي', description: 'سجق بلدي متبل مع صوص دبس الرمان', price: 65, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&q=60', is_available: true, tags: ['حار'] },
-                { id: 'itm_5', category_id: 'cat_3', name: 'سلطة طحينة بلدي', description: 'طحينة سمسم صافي بالليمون والثوم', price: 25, image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&q=60', is_available: true, tags: [] }
-            ],
-            orders: [
-                { id: 'ORD-8492', customer_name: 'أحمد محمود', phone: '01099887766', items_json: [{ name: 'كيلو كباب وكفتة مشكل', qty: 1, price: 680 }], total: 680, status: 'preparing', created_at: 'منذ 10 دقائق' }
-            ]
+        // ================= 1. اتصال السحاب الحقيقي (Cloud Database) =================
+        const firebaseConfig = {
+            apiKey: "AIzaSyCVofMvvbyMBGM1pQNeoG-gMT48Ll5IL4I",
+            authDomain: "sofratech-2e033.firebaseapp.com",
+            databaseURL: "https://sofratech-2e033-default-rtdb.firebaseio.com",
+            projectId: "sofratech-2e033",
+            storageBucket: "sofratech-2e033.firebasestorage.app",
+            messagingSenderId: "742714705801",
+            appId: "1:742714705801:web:ddd019d66fa7435f6f8358"
         };
 
-        let db = JSON.parse(localStorage.getItem('tablia_os_v1')) || DEFAULT_DB;
-        function saveDB() {
-            localStorage.setItem('tablia_os_v1', JSON.stringify(db));
+        let cloudDB = null;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            cloudDB = firebase.database();
+        } catch (e) {
+            console.error("Cloud connection error:", e);
         }
 
-        // ================= 2. APP STATE & ROUTER =================
-        const state = {
-            page: 'builder', // 'landing' | 'builder' | 'storefront' | 'dashboard' (Started on builder as requested)
-            builderStep: 1,  // 1 | 2 | 3 | 4
-            magicTab: 'vision', // 'vision' | 'paste' | 'manual'
-            extractedStaging: [], // For editable AI extraction table
-            isExtracting: false,
-            uploadedPreviews: [],
-            // Storefront state
+        const CLOUD_SCHEMA = {
+            restaurant: {
+                name: 'إمبر آند جريل السحابي',
+                slug: 'ember-grill',
+                phone: '201015861991',
+                logo: '🔥',
+                layout: 'foodera',
+                theme: { primary: '#f59e0b', bg: '#090d16' },
+                tablesCount: 20,
+                pin: '1234'
+            },
+            categories: [
+                { id: 'cat_1', name: 'البرجر الفاخر' },
+                { id: 'cat_2', name: 'المشويات' },
+                { id: 'cat_3', name: 'مشروبات' }
+            ],
+            menu_items: [
+                { id: 'itm_1', category_id: 'cat_1', name: 'ترافل أنجوس برجر', description: 'لحم أنجوس مع صوص الترافل وجبنة سويسرية', price: 180, image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&q=60', is_available: true, tags: ['الأكثر مبيعاً'] },
+                { id: 'itm_2', category_id: 'cat_2', name: 'ريب آي ستيك مشوي', description: 'قطعة ريب آي مع الزبدة والأعشاب', price: 350, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500&q=60', is_available: true, tags: ['اختيار الشيف'] },
+                { id: 'itm_3', category_id: 'cat_3', name: 'عصير مانجو فريش', description: 'عصير مانجو طبيعي مثلج', price: 45, image: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=500&q=60', is_available: true, tags: ['طازج'] }
+            ],
+            orders: []
+        };
+
+        let store = JSON.parse(localStorage.getItem('tablia_cloud_cache')) || CLOUD_SCHEMA;
+
+        function saveToCloud() {
+            localStorage.setItem('tablia_cloud_cache', JSON.stringify(store));
+            if (cloudDB) {
+                cloudDB.ref('tablia_enterprise_db').set(store);
+            }
+        }
+
+        // الاستماع الفوري للتحديثات السحابية (Realtime Cloud Listener)
+        if (cloudDB) {
+            cloudDB.ref('tablia_enterprise_db').on('value', (snapshot) => {
+                const remoteData = snapshot.val();
+                if (remoteData) {
+                    // التحقق مما إذا كان هناك طلب جديد وصل عبر السحاب لتنبيه الكاشير
+                    if (remoteData.orders && store.orders) {
+                        if (remoteData.orders.length > store.orders.length) {
+                            playCloudAlert();
+                        }
+                    }
+                    store = remoteData;
+                    if (!store.orders) store.orders = [];
+                    render();
+                } else {
+                    // إذا كانت القاعدة فارغة، قم برفع البيانات الافتراضية
+                    saveToCloud();
+                }
+            });
+        }
+
+        function playCloudAlert() {
+            const audio = document.getElementById('cloud-bell');
+            if (audio) { audio.currentTime = 0; audio.play().catch(e => {}); }
+            if ('vibrate' in navigator) navigator.vibrate([400, 200, 400]);
+        }
+
+        // ================= 2. التطبيق والراوتر =================
+        const appState = {
+            page: 'landing', // 'landing' | 'menu' | 'cashier' | 'admin'
             activeCat: 'all',
-            searchQuery: '',
+            search: '',
             cart: [],
             cartOpen: false,
+            tableNumber: new URLSearchParams(window.location.search).get('t') || null,
             customerName: '',
             customerPhone: '',
-            customerAddress: '',
-            orderType: 'delivery'
+            cashierUnlocked: false
         };
 
         function setPage(p) {
-            state.page = p;
-            if (p === 'storefront') {
-                db.restaurant.views = (db.restaurant.views || 0) + 1;
-                saveDB();
-            }
+            appState.page = p;
             render();
             window.scrollTo(0, 0);
         }
 
-        // ================= 3. AI EXTRACTION & PARSER LOGIC =================
-        function normalizeArabicNumbers(str) {
-            const arabicNums = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
-            return str.replace(/[٠-٩]/g, d => arabicNums.indexOf(d));
+        function render() {
+            const root = document.getElementById('app');
+            if (appState.page === 'menu') root.innerHTML = renderCustomerMenu();
+            else if (appState.page === 'cashier') root.innerHTML = renderCashierDashboard();
+            else if (appState.page === 'admin') root.innerHTML = renderAdminPanel();
+            else root.innerHTML = renderLandingPage();
         }
 
-        function handleImageUpload(event) {
-            const files = Array.from(event.target.files).slice(0, 10);
-            if (!files.length) return;
-            state.uploadedPreviews = files.map(f => ({ name: f.name, url: URL.createObjectURL(f) }));
-            render();
-        }
-
-        function runVisionAIExtraction() {
-            if (state.uploadedPreviews.length === 0) {
-                alert('⚠️ يرجى رفع صورة واحدة على الأقل للمنيو أولاً.');
-                return;
-            }
-            state.isExtracting = true;
-            render();
-
-            // Simulating OpenAI GPT-4o Vision OCR API call
-            setTimeout(() => {
-                state.isExtracting = false;
-                state.extractedStaging = [
-                    { category: 'المشويات', name: 'طرب ضاني مشوي على الفحم', price: 320, description: 'قطع طرب بلدي متبلة مشوية بعناية' },
-                    { category: 'المشويات', name: 'ريش ضاني بتلو', price: 410, description: 'ريش مشوية تقدم مع أرز بالخلطة' },
-                    { category: 'طواجن وسندوتشات', name: 'حواوشي إسكندراني بالجبنة', price: 85, description: 'لحم مفروم بلدي مع موتزاريلا وفلفل' },
-                    { category: 'المقبلات والمشروبات', name: 'بابا غنوج مشوي', price: 30, description: 'باذنجان مشوي بالطحينة وزيت الزيتون' }
-                ];
-                render();
-            }, 1600);
-        }
-
-        function parsePastedMenuText() {
-            const rawEl = document.getElementById('paste_textarea');
-            if (!rawEl || !rawEl.value.trim()) {
-                alert('⚠️ الصق نص المنيو في المربع أولاً.');
-                return;
-            }
-            const normalized = normalizeArabicNumbers(rawEl.value);
-            // Split by newlines or commas
-            const lines = normalized.split(/\n|,|،/).map(l => l.trim()).filter(Boolean);
-            const parsed = [];
-            // Prompt Regex: /(.*?)\s+(\d+)\s*(جنيه|EGP|ج)?$/
-            const regex = /(.*?)\s*[-:–]?\s*(\d+)\s*(جنيه|جنيهاً|جـ|EGP|ج)?$/i;
-
-            lines.forEach(line => {
-                const match = line.match(regex);
-                if (match) {
-                    const name = match[1].replace(/[-:–]+$/, '').trim();
-                    const price = parseInt(match[2], 10);
-                    let autoCat = 'طواجن وسندوتشات';
-                    if (/كباب|كفتة|فراخ|شيش|مشوي|لحم|ستيك|طرب|ريش/.test(name)) autoCat = 'المشويات';
-                    else if (/بيبسي|كولا|عصير|سلطة|طحينة|مياه|شاي/.test(name)) autoCat = 'المقبلات والمشروبات';
-
-                    if (name && !isNaN(price)) {
-                        parsed.push({ category: autoCat, name, price, description: 'مستخرج تلقائياً' });
-                    }
-                }
-            });
-
-            if (parsed.length === 0) {
-                alert('⚠️ لم يتم التعرف على أسعار. تأكد أن كل سطر ينتهي بالسعر مثل: كبدة 50');
-                return;
-            }
-            state.extractedStaging = parsed;
-            render();
-        }
-
-        function updateStagingRow(idx, field, val) {
-            if (field === 'price') val = Number(val) || 0;
-            state.extractedStaging[idx][field] = val;
-        }
-
-        function removeStagingRow(idx) {
-            state.extractedStaging.splice(idx, 1);
-            render();
-        }
-
-        function confirmAndImportStaging() {
-            if (!state.extractedStaging.length) return;
-            state.extractedStaging.forEach(item => {
-                let cat = db.categories.find(c => c.name === item.category);
-                if (!cat) {
-                    cat = { id: 'cat_' + Date.now() + Math.random().toString(36).substr(2, 4), name: item.category, order: db.categories.length + 1 };
-                    db.categories.push(cat);
-                }
-                db.menu_items.push({
-                    id: 'itm_' + Date.now() + Math.random().toString(36).substr(2, 4),
-                    category_id: cat.id,
-                    name: item.name,
-                    description: item.description || '',
-                    price: item.price,
-                    image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500&q=60',
-                    is_available: true,
-                    tags: ['جديد AI']
-                });
-            });
-            state.extractedStaging = [];
-            state.uploadedPreviews = [];
-            saveDB();
-            alert('✅ تم اعتماد الأصناف وإضافتها لمنيو مطعمك بنجاح!');
-            render();
-        }
-
-        function addManualItem() {
-            const name = document.getElementById('man_name').value.trim();
-            const price = Number(document.getElementById('man_price').value);
-            const catId = document.getElementById('man_cat').value;
-            const desc = document.getElementById('man_desc').value.trim();
-            const img = document.getElementById('man_img').value.trim() || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&q=60';
-
-            if (!name || !price) {
-                alert('⚠️ أدخل اسم الصنف والسعر.');
-                return;
-            }
-            db.menu_items.push({
-                id: 'itm_' + Date.now(),
-                category_id: catId,
-                name,
-                description: desc,
-                price,
-                image: img,
-                is_available: true,
-                tags: []
-            });
-            saveDB();
-            alert('✅ تم إضافة الصنف للمنيو!');
-            render();
-        }
-
-        // ================= 4. TOP NAVIGATION BAR =================
-        function renderGlobalNav() {
+        // ================= 3. شاشة البداية (Landing Page) =================
+        function renderLandingPage() {
+            const currentUrl = window.location.origin + window.location.pathname;
             return `
-                <nav class="sticky top-0 z-50 glass border-b border-white/10 px-4 py-3">
-                    <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-3">
-                        <div class="flex items-center gap-3 cursor-pointer" onclick="setPage('landing')">
-                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 text-slate-950 flex items-center justify-center font-black text-xl shadow-lg">ط</div>
-                            <div>
-                                <span class="font-black text-lg tracking-tight text-white">Tablia <span class="text-amber-400">OS</span></span>
-                                <span class="block text-[10px] text-slate-400 -mt-1">منشئ مواقع المطاعم الذكي</span>
-                            </div>
+                <div class="min-h-screen bg-[#090d16] flex flex-col justify-between">
+                    <header class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b border-white/10">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl gold-gradient text-slate-950 flex items-center justify-center text-xl font-black shadow-lg">⚡</div>
+                            <span class="text-xl font-black tracking-wider">Tablia <span class="text-amber-500">OS (Cloud)</span></span>
                         </div>
-
-                        <div class="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-2xl border border-white/10 text-xs">
-                            <button onclick="setPage('landing')" class="px-3 py-2 rounded-xl font-bold transition ${state.page==='landing'?'bg-amber-500 text-slate-950':'text-slate-300 hover:text-white'}">الرئيسية</button>
-                            <button onclick="setPage('builder')" class="px-3 py-2 rounded-xl font-bold transition ${state.page==='builder'?'bg-amber-500 text-slate-950':'text-slate-300 hover:text-white'}">🛠️ المنشئ (Builder)</button>
-                            <button onclick="setPage('storefront')" class="px-3 py-2 rounded-xl font-bold transition ${state.page==='storefront'?'bg-amber-500 text-slate-950':'text-slate-300 hover:text-white'}">📱 موقع المطعم (/r/${db.restaurant.slug})</button>
-                            <button onclick="setPage('dashboard')" class="px-3 py-2 rounded-xl font-bold transition ${state.page==='dashboard'?'bg-amber-500 text-slate-950':'text-slate-300 hover:text-white'}">📊 لوحة التحكم</button>
+                        <div class="flex gap-2">
+                            <button onclick="setPage('admin')" class="glass px-4 py-2 rounded-xl text-xs font-bold text-amber-400">⚙️ الإدارة</button>
+                            <button onclick="setPage('cashier')" class="bg-red-500 text-slate-950 px-4 py-2 rounded-xl text-xs font-black shadow-lg">🖥️ شاشة الكاشير السحابية</button>
                         </div>
-                    </div>
-                </nav>
-            `;
-        }
+                    </header>
 
-        // ================= 5. BUILDER PAGE (/builder) =================
-        function renderBuilder() {
-            const steps = [
-                { num: 1, title: 'بيانات المطعم والقالب', icon: 'fa-store' },
-                { num: 2, title: 'سحر المنيو (AI Magic)', icon: 'fa-wand-magic-sparkles' },
-                { num: 3, title: 'محرر الهوية والألوان', icon: 'fa-palette' },
-                { num: 4, title: 'النشر و QR Code', icon: 'fa-rocket' }
-            ];
-
-            return `
-                ${renderGlobalNav()}
-                <div class="max-w-7xl mx-auto px-4 py-8 animate-fade-up">
-                    <!-- Stepper Header -->
-                    <div class="glass rounded-3xl p-4 mb-8 border border-white/10">
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            ${steps.map(s => {
-                                const active = state.builderStep === s.num;
-                                const done = state.builderStep > s.num;
-                                return `
-                                    <button onclick="state.builderStep=${s.num}; render();" class="flex items-center gap-3 p-3 rounded-2xl border text-right transition ${active ? 'bg-amber-500/15 border-amber-500 text-amber-400' : (done ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-slate-900/60 border-white/5 text-slate-400')}">
-                                        <div class="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${active ? 'bg-amber-500 text-slate-950' : (done ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800')}">
-                                            ${done ? '<i class="fa-solid fa-check"></i>' : s.num}
-                                        </div>
-                                        <div>
-                                            <div class="text-[10px] opacity-75">خطوة ${s.num}</div>
-                                            <div class="text-xs font-black">${s.title}</div>
-                                        </div>
-                                    </button>
-                                `;
-                            }).join('')}
+                    <main class="container mx-auto px-6 py-16 text-center max-w-4xl my-auto space-y-8">
+                        <div class="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 px-4 py-2 rounded-full text-amber-400 text-xs font-bold">
+                            <i class="fa-solid fa-cloud"></i> متصل بالسحاب 100% عبر Realtime Database
                         </div>
-                    </div>
+                        <h1 class="text-4xl md:text-6xl font-black leading-tight">منصة <span class="text-amber-500">${store.restaurant.name}</span> السحابية المباشرة</h1>
+                        <p class="text-slate-400 text-base max-w-xl mx-auto">الطلب من منيو الزبون يصل فوراً لشاشة الكاشير والمطبخ عبر الإنترنت وبدون تأخير.</p>
 
-                    ${state.builderStep === 1 ? renderBuilderStep1() : ''}
-                    ${state.builderStep === 2 ? renderBuilderStep2() : ''}
-                    ${state.builderStep === 3 ? renderBuilderStep3() : ''}
-                    ${state.builderStep === 4 ? renderBuilderStep4() : ''}
-                </div>
-            `;
-        }
-
-        function renderBuilderStep1() {
-            return `
-                <div class="space-y-8">
-                    <div class="glass rounded-3xl p-6 border border-white/10 space-y-5">
-                        <h2 class="text-xl font-black text-white flex items-center gap-2"><i class="fa-solid fa-store text-amber-400"></i> 1. البيانات الأساسية ورابط المطعم</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                            <div>
-                                <label class="block text-slate-400 font-bold mb-1.5">اسم المطعم *</label>
-                                <input type="text" value="${db.restaurant.name}" oninput="db.restaurant.name=this.value; saveDB();" class="w-full bg-slate-900 border border-white/10 rounded-xl p-3.5 text-white font-bold outline-none focus:border-amber-500">
-                            </div>
-                            <div>
-                                <label class="block text-slate-400 font-bold mb-1.5">رابط المطعم الفرعي (Subdomain / Slug)</label>
-                                <div class="flex items-center bg-slate-900 border border-white/10 rounded-xl overflow-hidden" dir="ltr">
-                                    <input type="text" value="${db.restaurant.slug}" oninput="db.restaurant.slug=this.value.toLowerCase().replace(/[^a-z0-9-]/g,''); saveDB();" class="w-full bg-transparent p-3.5 text-amber-400 font-bold outline-none">
-                                    <span class="px-3 text-slate-500 font-mono text-xs">.tablia.app</span>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-slate-400 font-bold mb-1.5">رقم واتساب استقبال الطلبات *</label>
-                                <input type="text" value="${db.restaurant.phone}" oninput="db.restaurant.phone=this.value; saveDB();" placeholder="2010xxxxxxxx" class="w-full bg-slate-900 border border-white/10 rounded-xl p-3.5 text-white font-bold outline-none focus:border-amber-500" dir="ltr">
-                            </div>
-                            <div>
-                                <label class="block text-slate-400 font-bold mb-1.5">أيقونة / لوجو المطعم</label>
-                                <div class="flex gap-2">
-                                    ${['🔥','🍔','🥩','🍗','🍕','🥙','🦐','☕'].map(ic => `
-                                        <button type="button" onclick="db.restaurant.logo='${ic}'; saveDB(); render();" class="w-11 h-11 rounded-xl border text-xl flex items-center justify-center transition ${db.restaurant.logo===ic?'bg-amber-500/20 border-amber-500 scale-105':'bg-slate-900 border-white/10'}">${ic}</button>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 12 Templates Gallery -->
-                    <div class="glass rounded-3xl p-6 border border-white/10 space-y-5">
-                        <div class="flex flex-wrap justify-between items-center gap-2">
-                            <div>
-                                <h2 class="text-xl font-black text-white">اختر قالب التصميم (12 قالب احترافي)</h2>
-                                <p class="text-xs text-slate-400">كل قالب يضبط التخطيط والألوان تلقائياً ويمكنك تعديله لاحقاً</p>
-                            </div>
-                            <span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-bold">المختار: ${TEMPLATES_CATALOG.find(t=>t.id===db.restaurant.template_id)?.name}</span>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            ${TEMPLATES_CATALOG.map(tpl => {
-                                const selected = db.restaurant.template_id === tpl.id;
-                                return `
-                                    <div onclick="selectTemplate('${tpl.id}')" class="cursor-pointer rounded-2xl overflow-hidden border-2 transition group ${selected ? 'border-amber-500 bg-amber-500/10 shadow-xl shadow-amber-500/10' : 'border-white/10 bg-slate-900/70 hover:border-white/30'}">
-                                        <div class="h-32 overflow-hidden relative">
-                                            <img src="${tpl.preview}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                                            <span class="absolute top-2 right-2 bg-slate-950/80 backdrop-blur text-[10px] font-bold px-2.5 py-0.5 rounded-full text-white uppercase">${tpl.category}</span>
-                                            ${selected ? `<span class="absolute top-2 left-2 w-6 h-6 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center text-xs font-black"><i class="fa-solid fa-check"></i></span>` : ''}
-                                        </div>
-                                        <div class="p-3.5 space-y-1">
-                                            <div class="flex items-center justify-between">
-                                                <h3 class="font-black text-sm text-white">${tpl.name}</h3>
-                                                <span class="w-3.5 h-3.5 rounded-full border border-white/20" style="background:${tpl.color}"></span>
-                                            </div>
-                                            <p class="text-[11px] text-slate-400 line-clamp-2">${tpl.desc}</p>
-                                        </div>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-
-                        <div class="flex justify-end pt-4">
-                            <button onclick="state.builderStep=2; render();" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-8 py-3.5 rounded-2xl text-sm shadow-lg transition flex items-center gap-2">
-                                التالي: سحر المنيو (AI Magic) <i class="fa-solid fa-arrow-left"></i>
+                        <div class="flex flex-wrap justify-center gap-4 pt-4">
+                            <button onclick="setPage('menu')" class="gold-gradient hover:opacity-95 text-slate-950 font-black px-8 py-4 rounded-2xl text-sm shadow-xl transition">
+                                📱 فتح رابط منيو الزبون
                             </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function selectTemplate(tplId) {
-            const tpl = TEMPLATES_CATALOG.find(t => t.id === tplId);
-            if (!tpl) return;
-            db.restaurant.template_id = tpl.id;
-            db.restaurant.layout = tpl.layout;
-            db.restaurant.theme.primary = tpl.color;
-            db.restaurant.theme.bg = tpl.bg;
-            saveDB();
-            render();
-        }
-
-        function renderBuilderStep2() {
-            return `
-                <div class="space-y-6">
-                    <div class="glass rounded-3xl p-6 border border-white/10 space-y-6">
-                        <div class="flex flex-wrap justify-between items-center gap-4">
-                            <div>
-                                <h2 class="text-xl font-black text-white flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> 2. سحر استخراج المنيو (Menu Magic)</h2>
-                                <p class="text-xs text-slate-400">حوّل منيو مطعمك الورقي أو النصي إلى منيو رقمي تفاعلي في ثوانٍ</p>
-                            </div>
-                            <div class="flex items-center gap-2 text-xs">
-                                <input type="password" value="${db.openai_key}" oninput="db.openai_key=this.value; saveDB();" placeholder="OpenAI API Key (اختياري)" class="bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-500" dir="ltr">
-                            </div>
-                        </div>
-
-                        <!-- Tabs -->
-                        <div class="grid grid-cols-3 gap-2 bg-slate-900 p-1.5 rounded-2xl border border-white/10 text-xs">
-                            <button onclick="state.magicTab='vision'; render();" class="py-3 rounded-xl font-black transition flex items-center justify-center gap-2 ${state.magicTab==='vision'?'bg-amber-500 text-slate-950 shadow':'text-slate-400 hover:text-white'}">
-                                <i class="fa-solid fa-camera"></i> <span>1. رفع صور المنيو (AI OCR)</span>
-                            </button>
-                            <button onclick="state.magicTab='paste'; render();" class="py-3 rounded-xl font-black transition flex items-center justify-center gap-2 ${state.magicTab==='paste'?'bg-amber-500 text-slate-950 shadow':'text-slate-400 hover:text-white'}">
-                                <i class="fa-solid fa-paste"></i> <span>2. لصق نص المنيو</span>
-                            </button>
-                            <button onclick="state.magicTab='manual'; render();" class="py-3 rounded-xl font-black transition flex items-center justify-center gap-2 ${state.magicTab==='manual'?'bg-amber-500 text-slate-950 shadow':'text-slate-400 hover:text-white'}">
-                                <i class="fa-solid fa-plus-circle"></i> <span>3. إضافة يدوية</span>
+                            <button onclick="setPage('cashier')" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-8 py-4 rounded-2xl text-sm border border-white/10 transition">
+                                🖥️ فتح شاشة الكاشير والمطبخ
                             </button>
                         </div>
 
-                        <!-- TAB 1: Vision API -->
-                        ${state.magicTab === 'vision' ? `
-                            <div class="bg-slate-900/70 border-2 border-dashed border-amber-500/40 rounded-3xl p-8 text-center space-y-4">
-                                <div class="w-16 h-16 rounded-2xl bg-amber-500/15 text-amber-400 flex items-center justify-center text-3xl mx-auto">
-                                    <i class="fa-solid fa-cloud-arrow-up"></i>
-                                </div>
-                                <div>
-                                    <h3 class="font-black text-base text-white">ارفع صور المنيو الورقي (حتى 10 صور)</h3>
-                                    <p class="text-xs text-slate-400 mt-1">سيقوم محرك OpenAI Vision OCR بقراءة الأصناف والأسعار العربية والإنجليزية وتصنيفها تلقائياً</p>
-                                </div>
-                                <input type="file" id="vision_input" multiple accept="image/*" onchange="handleImageUpload(event)" class="hidden">
-                                <div class="flex flex-wrap justify-center gap-3">
-                                    <button onclick="document.getElementById('vision_input').click()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-5 py-3 rounded-xl text-xs border border-white/10">
-                                        <i class="fa-solid fa-images ml-1"></i> اختيار الصور من الجهاز
-                                    </button>
-                                    <button onclick="runVisionAIExtraction()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-6 py-3 rounded-xl text-xs shadow-lg">
-                                        ${state.isExtracting ? '<i class="fa-solid fa-spinner fa-spin ml-1"></i> جاري التحليل بالذكاء الاصطناعي...' : '✨ استخراج الأصناف بالـ AI'}
-                                    </button>
-                                </div>
-
-                                ${state.uploadedPreviews.length > 0 ? `
-                                    <div class="flex flex-wrap justify-center gap-3 pt-4">
-                                        ${state.uploadedPreviews.map(img => `
-                                            <div class="w-20 h-20 rounded-xl overflow-hidden border border-white/20 relative">
-                                                <img src="${img.url}" class="w-full h-full object-cover">
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                ` : ''}
-                            </div>
-                        ` : ''}
-
-                        <!-- TAB 2: Paste Menu Text -->
-                        ${state.magicTab === 'paste' ? `
-                            <div class="bg-slate-900/70 border border-white/10 rounded-3xl p-6 space-y-4">
-                                <div>
-                                    <h3 class="font-black text-base text-white">الصق قائمة الطعام النصية</h3>
-                                    <p class="text-xs text-slate-400">يدعم الأرقام العربية (٥٠) والإنجليزية (50) ويقوم بتصنيف الفئات تلقائياً</p>
-                                </div>
-                                <textarea id="paste_textarea" rows="5" placeholder="مثال:\nكبدة إسكندراني ٥٠\nسجق بلدي 65 جنيه\nكيلو كباب مشوي 680 EGP\nبيبسي كانز 25" class="w-full bg-slate-950 border border-white/10 rounded-2xl p-4 text-xs text-white leading-relaxed outline-none focus:border-amber-500"></textarea>
-                                <button onclick="parsePastedMenuText()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-6 py-3 rounded-xl text-xs shadow-lg">
-                                    ⚡ تحليل النص واستخراج الجدول
-                                </button>
-                            </div>
-                        ` : ''}
-
-                        <!-- TAB 3: Manual Add -->
-                        ${state.magicTab === 'manual' ? `
-                            <div class="bg-slate-900/70 border border-white/10 rounded-3xl p-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                                <div>
-                                    <label class="block text-slate-400 font-bold mb-1">اسم الصنف *</label>
-                                    <input type="text" id="man_name" placeholder="مثال: طاجن مكرونة باللحمة" class="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white font-bold">
-                                </div>
-                                <div>
-                                    <label class="block text-slate-400 font-bold mb-1">السعر (ج.م) *</label>
-                                    <input type="number" id="man_price" placeholder="75" class="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white font-bold">
-                                </div>
-                                <div>
-                                    <label class="block text-slate-400 font-bold mb-1">القسم</label>
-                                    <select id="man_cat" class="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white font-bold">
-                                        ${db.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-slate-400 font-bold mb-1">رابط الصورة (اختياري)</label>
-                                    <input type="text" id="man_img" placeholder="https://..." class="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white" dir="ltr">
-                                </div>
-                                <div class="md:col-span-2">
-                                    <label class="block text-slate-400 font-bold mb-1">الوصف والمكونات</label>
-                                    <input type="text" id="man_desc" placeholder="وصف مختصر يفتح شهية العميل..." class="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white">
-                                </div>
-                                <div class="md:col-span-2">
-                                    <button onclick="addManualItem()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-6 py-3 rounded-xl text-xs">
-                                        + إضافة الصنف للمنيو
-                                    </button>
-                                </div>
-                            </div>
-                        ` : ''}
-
-                        <!-- Editable AI Confirmation Table -->
-                        ${state.extractedStaging.length > 0 ? `
-                            <div class="bg-emerald-950/30 border border-emerald-500/40 rounded-3xl p-5 space-y-4 animate-fade-up">
-                                <div class="flex flex-wrap justify-between items-center gap-2">
-                                    <h4 class="font-black text-sm text-emerald-400"><i class="fa-solid fa-table-list ml-1"></i> مراجعة وتعديل الأصناف المستخرجة (${state.extractedStaging.length})</h4>
-                                    <button onclick="confirmAndImportStaging()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-5 py-2.5 rounded-xl text-xs shadow-lg">
-                                        ✅ اعتماد وإضافة الكل للمنيو
-                                    </button>
-                                </div>
-                                <div class="overflow-x-auto">
-                                    <table class="w-full text-right text-xs">
-                                        <thead>
-                                            <tr class="text-slate-400 border-b border-white/10">
-                                                <th class="pb-2">القسم</th>
-                                                <th class="pb-2">اسم الصنف</th>
-                                                <th class="pb-2">السعر</th>
-                                                <th class="pb-2">الوصف</th>
-                                                <th class="pb-2"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-white/5">
-                                            ${state.extractedStaging.map((row, idx) => `
-                                                <tr>
-                                                    <td class="py-2 pl-2"><input type="text" value="${row.category}" onchange="updateStagingRow(${idx},'category',this.value)" class="bg-slate-900 border border-white/10 rounded-lg p-2 text-white w-28"></td>
-                                                    <td class="py-2 pl-2"><input type="text" value="${row.name}" onchange="updateStagingRow(${idx},'name',this.value)" class="bg-slate-900 border border-white/10 rounded-lg p-2 text-white font-bold w-40"></td>
-                                                    <td class="py-2 pl-2"><input type="number" value="${row.price}" onchange="updateStagingRow(${idx},'price',this.value)" class="bg-slate-900 border border-white/10 rounded-lg p-2 text-amber-400 font-black w-20"></td>
-                                                    <td class="py-2 pl-2"><input type="text" value="${row.description}" onchange="updateStagingRow(${idx},'description',this.value)" class="bg-slate-900 border border-white/10 rounded-lg p-2 text-slate-300 w-48"></td>
-                                                    <td class="py-2"><button onclick="removeStagingRow(${idx})" class="text-red-400 hover:text-red-300 px-2"><i class="fa-solid fa-trash"></i></button></td>
-                                                </tr>
-                                            `).join('')}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        ` : ''}
-
-                        <!-- Current Menu Summary -->
-                        <div class="border-t border-white/10 pt-5 flex flex-wrap justify-between items-center gap-4">
-                            <div class="text-xs text-slate-400">إجمالي الأصناف الجاهزة في منيو مطعمك الآن: <strong class="text-amber-400 text-sm">${db.menu_items.length} صنف</strong></div>
-                            <div class="flex gap-3">
-                                <button onclick="state.builderStep=1; render();" class="bg-slate-800 text-white font-bold px-5 py-3 rounded-xl text-xs">السابق</button>
-                                <button onclick="state.builderStep=3; render();" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-7 py-3 rounded-xl text-xs shadow-lg">
-                                    التالي: محرر الألوان والخطوط <i class="fa-solid fa-arrow-left mr-1"></i>
-                                </button>
+                        <div class="glass p-5 rounded-3xl text-right max-w-xl mx-auto space-y-2 border border-white/10 text-xs">
+                            <span class="text-slate-400 font-bold block">🔗 رابط المنيو المباشر (انسخه وافتحه من أي هاتف):</span>
+                            <div class="bg-slate-950 p-3 rounded-xl border border-white/5 flex justify-between items-center" dir="ltr">
+                                <code class="text-amber-400 font-bold">${currentUrl}?view=menu</code>
+                                <button onclick="navigator.clipboard.writeText('${currentUrl}?view=menu'); alert('✅ تم النسخ!');" class="bg-white/10 px-3 py-1 rounded font-bold">نسخ</button>
                             </div>
                         </div>
-                    </div>
+                    </main>
+
+                    <footer class="text-center py-6 text-slate-500 text-xs border-t border-white/5">
+                        جميع الحقوق محفوظة © Tablia OS 2026
+                    </footer>
                 </div>
             `;
         }
 
-        function renderBuilderStep3() {
-            const th = db.restaurant.theme;
-            const isLight = th.bg.startsWith('#f');
-            return `
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <!-- Controls -->
-                    <div class="lg:col-span-5 glass rounded-3xl p-6 border border-white/10 space-y-5 text-xs">
-                        <h2 class="text-lg font-black text-white flex items-center gap-2"><i class="fa-solid fa-palette text-amber-400"></i> 3. محرر الهوية البصرية</h2>
-                        
-                        <div>
-                            <label class="block text-slate-400 font-bold mb-2">تخطيط الواجهة (Layout)</label>
-                            <div class="grid grid-cols-3 gap-2">
-                                ${[
-                                    { id: 'classic', label: 'Tablia Classic' },
-                                    { id: 'foodera', label: 'Foodera Cards' },
-                                    { id: 'dark_grill', label: 'Dark Grill' }
-                                ].map(l => `
-                                    <button onclick="db.restaurant.layout='${l.id}'; saveDB(); render();" class="py-2.5 px-2 rounded-xl border font-bold transition ${db.restaurant.layout===l.id?'bg-amber-500 text-slate-950 border-amber-500':'bg-slate-900 border-white/10 text-slate-300'}">${l.label}</button>
-                                `).join('')}
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-slate-400 font-bold mb-2">اللون الرئيسي للعلامة (Brand Color)</label>
-                            <div class="flex items-center gap-3">
-                                <input type="color" value="${th.primary}" oninput="db.restaurant.theme.primary=this.value; saveDB(); render();" class="w-12 h-10 rounded-xl bg-transparent cursor-pointer">
-                                <div class="flex gap-2">
-                                    ${['#f59e0b','#ea580c','#dc2626','#16a34a','#0284c7','#9333ea'].map(c => `
-                                        <button onclick="db.restaurant.theme.primary='${c}'; saveDB(); render();" class="w-7 h-7 rounded-full border border-white/20" style="background:${c}"></button>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-slate-400 font-bold mb-2">نمط الخلفية</label>
-                            <div class="grid grid-cols-2 gap-2">
-                                <button onclick="db.restaurant.theme.bg='#090d16'; saveDB(); render();" class="py-2.5 rounded-xl border font-bold ${!isLight?'border-amber-500 bg-slate-900 text-white':'border-white/10 bg-slate-950 text-slate-400'}">داكن فاخر (Dark)</button>
-                                <button onclick="db.restaurant.theme.bg='#fafaf9'; saveDB(); render();" class="py-2.5 rounded-xl border font-bold ${isLight?'border-amber-500 bg-white text-slate-900':'border-white/10 bg-slate-950 text-slate-400'}">فاتح عصري (Light)</button>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-slate-400 font-bold mb-2">الخط العربي (Font Family)</label>
-                            <select onchange="db.restaurant.theme.font=this.value; saveDB(); render();" class="w-full bg-slate-900 border border-white/10 rounded-xl p-3 text-white font-bold">
-                                <option value="Cairo" ${th.font==='Cairo'?'selected':''}>خط القاهرة (Cairo - عصري)</option>
-                                <option value="Tajawal" ${th.font==='Tajawal'?'selected':''}>خط تجوال (Tajawal - ناعم)</option>
-                                <option value="IBM Plex Sans Arabic" ${th.font==='IBM Plex Sans Arabic'?'selected':''}>IBM Plex Arabic (هندسي)</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-slate-400 font-bold mb-2">شكل الأزرار</label>
-                            <div class="grid grid-cols-3 gap-2">
-                                ${[
-                                    { id: 'rounded-none', label: 'حاد' },
-                                    { id: 'rounded-xl', label: 'ناعم' },
-                                    { id: 'rounded-full', label: 'دائري' }
-                                ].map(b => `
-                                    <button onclick="db.restaurant.theme.buttonStyle='${b.id}'; saveDB(); render();" class="py-2 rounded-xl border font-bold ${th.buttonStyle===b.id?'border-amber-500 text-amber-400 bg-amber-500/10':'border-white/10 text-slate-400'}">${b.label}</button>
-                                `).join('')}
-                            </div>
-                        </div>
-
-                        <div class="flex justify-between pt-4 border-t border-white/10">
-                            <button onclick="state.builderStep=2; render();" class="bg-slate-800 text-white font-bold px-4 py-3 rounded-xl">السابق</button>
-                            <button onclick="state.builderStep=4; render();" class="bg-amber-500 text-slate-950 font-black px-6 py-3 rounded-xl shadow-lg">التالي: النشر والرابط <i class="fa-solid fa-arrow-left mr-1"></i></button>
-                        </div>
-                    </div>
-
-                    <!-- Live Mobile Preview -->
-                    <div class="lg:col-span-7 flex flex-col items-center">
-                        <div class="text-xs text-slate-400 mb-3 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> معاينة حية لهاتف العميل</div>
-                        <div class="w-full max-w-[380px] h-[620px] rounded-[2.8rem] border-[8px] border-slate-800 overflow-hidden shadow-2xl relative" style="background:${th.bg}; font-family:'${th.font}', sans-serif; color:${isLight?'#0f172a':'#f8fafc'}">
-                            <div class="h-full overflow-y-auto hide-scrollbar p-4 space-y-4">
-                                <div class="flex justify-between items-center pb-3 border-b ${isLight?'border-stone-200':'border-white/10'}">
-                                    <div class="flex items-center gap-2.5">
-                                        <span class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl text-white shadow" style="background:${th.primary}">${db.restaurant.logo}</span>
-                                        <div>
-                                            <div class="font-black text-sm">${db.restaurant.name}</div>
-                                            <div class="text-[10px] text-emerald-500 font-bold">● مفتوح الآن</div>
-                                        </div>
-                                    </div>
-                                    <span class="px-3 py-1 text-[10px] font-black text-white ${th.buttonStyle}" style="background:${th.primary}">اطلب الآن</span>
-                                </div>
-
-                                <div class="space-y-3">
-                                    ${db.menu_items.slice(0, 4).map(m => `
-                                        <div class="p-3 rounded-2xl border flex gap-3 items-center ${isLight?'bg-white border-stone-200 shadow-sm':'bg-white/5 border-white/10'}">
-                                            <img src="${m.image}" class="w-16 h-16 rounded-xl object-cover shrink-0">
-                                            <div class="flex-1 min-w-0">
-                                                <div class="font-black text-xs truncate">${m.name}</div>
-                                                <div class="text-[10px] opacity-70 truncate">${m.description}</div>
-                                                <div class="flex justify-between items-center mt-2">
-                                                    <span class="font-black text-xs" style="color:${th.primary}">${m.price} ج.م</span>
-                                                    <span class="px-2.5 py-1 text-[10px] font-black text-white ${th.buttonStyle}" style="background:${th.primary}">+ أضف</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderBuilderStep4() {
-            const subdomainUrl = `https://${db.restaurant.slug}.tablia.app`;
-            const pathUrl = `https://tablia.app/r/${db.restaurant.slug}`;
-            const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(pathUrl)}`;
-
-            return `
-                <div class="max-w-2xl mx-auto glass rounded-3xl p-8 border border-emerald-500/30 text-center space-y-6 animate-fade-up">
-                    <div class="w-20 h-20 rounded-3xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-4xl mx-auto shadow-xl">
-                        <i class="fa-solid fa-check-double"></i>
-                    </div>
-                    <div>
-                        <span class="bg-emerald-500/15 text-emerald-400 px-3 py-1 rounded-full text-xs font-bold">تم النشر بنجاح على السحابة</span>
-                        <h2 class="text-2xl md:text-3xl font-black text-white mt-2">موقع "${db.restaurant.name}" جاهز لاستقبال الطلبات!</h2>
-                    </div>
-
-                    <div class="bg-slate-900/90 border border-white/10 rounded-2xl p-4 space-y-3 text-right text-xs">
-                        <div>
-                            <span class="text-slate-400 block mb-1">الرابط المباشر (Path URL):</span>
-                            <div class="flex justify-between items-center bg-slate-950 p-3 rounded-xl border border-white/5" dir="ltr">
-                                <code class="text-amber-400 font-bold">${pathUrl}</code>
-                                <button onclick="navigator.clipboard.writeText('${pathUrl}'); alert('✅ تم نسخ الرابط!');" class="bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded-lg font-cairo">نسخ</button>
-                            </div>
-                        </div>
-                        <div>
-                            <span class="text-slate-400 block mb-1">النطاق الفرعي (Subdomain):</span>
-                            <div class="flex justify-between items-center bg-slate-950 p-3 rounded-xl border border-white/5" dir="ltr">
-                                <code class="text-emerald-400 font-bold">${subdomainUrl}</code>
-                                <button onclick="navigator.clipboard.writeText('${subdomainUrl}'); alert('✅ تم نسخ الدومين!');" class="bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded-lg font-cairo">نسخ</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-4 rounded-3xl inline-block shadow-2xl">
-                        <img src="${qrApi}" alt="Restaurant QR Code" class="w-44 h-44 mx-auto">
-                        <div class="text-slate-950 font-black text-xs mt-2">امسح الكود لفتح المنيو</div>
-                    </div>
-
-                    <div class="flex flex-wrap justify-center gap-3 pt-2">
-                        <button onclick="setPage('storefront')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-7 py-3.5 rounded-2xl text-xs shadow-xl transition">
-                            📱 فتح موقع المطعم الآن
-                        </button>
-                        <button onclick="setPage('dashboard')" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-7 py-3.5 rounded-2xl text-xs border border-white/10 transition">
-                            📊 الذهاب للوحة التحكم
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-
-        // ================= 6. RESTAURANT STOREFRONT (/r/[slug] - 3 LAYOUTS) =================
-        function isRestaurantOpen() {
-            const h = new Date().getHours();
-            const { openHour, closeHour } = db.restaurant;
-            if (closeHour < openHour) return h >= openHour || h < closeHour;
-            return h >= openHour && h < closeHour;
-        }
-
-        function renderStorefront() {
-            const th = db.restaurant.theme;
-            const layout = db.restaurant.layout; // 'classic' | 'foodera' | 'dark_grill'
-            const isLight = th.bg.startsWith('#f') && layout !== 'dark_grill';
-            const bgColor = layout === 'dark_grill' ? '#09090b' : th.bg;
-            const openNow = isRestaurantOpen();
-
-            const filteredItems = db.menu_items.filter(item => {
+        // ================= 4. منيو الزبون السحابي (/r/[slug]?t=5) =================
+        function renderCustomerMenu() {
+            const filtered = store.menu_items.filter(item => {
                 if (!item.is_available) return false;
-                const matchCat = state.activeCat === 'all' || item.category_id === state.activeCat;
-                const matchQ = item.name.toLowerCase().includes(state.searchQuery.toLowerCase()) || (item.description && item.description.toLowerCase().includes(state.searchQuery.toLowerCase()));
+                const matchCat = appState.activeCat === 'all' || item.category_id === appState.activeCat;
+                const matchQ = item.name.toLowerCase().includes(appState.search.toLowerCase());
                 return matchCat && matchQ;
             });
 
-            const cartCount = state.cart.reduce((s, i) => s + i.qty, 0);
-            const cartTotal = state.cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            const cartCount = appState.cart.reduce((s, i) => s + i.qty, 0);
+            const cartTotal = appState.cart.reduce((s, i) => s + (i.price * i.qty), 0);
 
             return `
-                ${renderGlobalNav()}
-                <div class="min-h-screen pb-32 transition-colors" style="background:${bgColor}; font-family:'${th.font}', sans-serif; color:${isLight?'#0f172a':'#f8fafc'}">
-                    
-                    <!-- Layout Switcher Bar (For Quick Testing of the 3 Layouts) -->
-                    <div class="bg-slate-900/90 text-white px-4 py-2 text-[11px] border-b border-white/10">
-                        <div class="max-w-4xl mx-auto flex flex-wrap justify-between items-center gap-2">
-                            <span class="text-slate-400">معاينة تخطيطات القالب (/r/${db.restaurant.slug}):</span>
-                            <div class="flex gap-1.5">
-                                <button onclick="db.restaurant.layout='classic'; saveDB(); render();" class="px-2.5 py-1 rounded-lg font-bold ${layout==='classic'?'bg-amber-500 text-slate-950':'bg-white/10'}">1. Tablia Classic</button>
-                                <button onclick="db.restaurant.layout='foodera'; saveDB(); render();" class="px-2.5 py-1 rounded-lg font-bold ${layout==='foodera'?'bg-amber-500 text-slate-950':'bg-white/10'}">2. Foodera Modern</button>
-                                <button onclick="db.restaurant.layout='dark_grill'; saveDB(); render();" class="px-2.5 py-1 rounded-lg font-bold ${layout==='dark_grill'?'bg-amber-500 text-slate-950':'bg-white/10'}">3. Dark Grill</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Restaurant Hero Header -->
-                    <div class="max-w-4xl mx-auto px-4 pt-6 space-y-6">
-                        <div class="p-6 rounded-3xl border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${isLight?'bg-white border-stone-200 shadow-sm':'bg-white/5 border-white/10'}">
-                            <div class="flex items-center gap-4">
-                                <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl text-white shadow-lg shrink-0" style="background:${th.primary}">${db.restaurant.logo}</div>
+                <div class="min-h-screen bg-[#090d16] text-white pb-32">
+                    <header class="glass sticky top-0 z-40 px-4 py-3 border-b border-white/10">
+                        <div class="max-w-2xl mx-auto flex justify-between items-center">
+                            <div class="flex items-center gap-3">
+                                <span class="w-10 h-10 rounded-2xl gold-gradient text-slate-950 flex items-center justify-center text-xl font-black">${store.restaurant.logo}</span>
                                 <div>
-                                    <div class="flex items-center gap-2 flex-wrap">
-                                        <h1 class="text-xl md:text-2xl font-black">${db.restaurant.name}</h1>
-                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black ${openNow ? 'bg-emerald-500/20 text-emerald-500' : 'bg-red-500/20 text-red-500'}">
-                                            ${openNow ? '● مفتوح الآن' : '● مغلق حالياً'}
-                                        </span>
-                                    </div>
-                                    <p class="text-xs opacity-70 mt-1">اطلب مباشرة بدون عمولات • توصيل سريع لباب البيت</p>
+                                    <h1 class="font-black text-sm">${store.restaurant.name}</h1>
+                                    <p class="text-[10px] text-emerald-400 font-bold">● متصل بالسحاب ومفتوح</p>
                                 </div>
                             </div>
-                            <div class="text-xs opacity-75 font-mono" dir="ltr">tablia.app/r/${db.restaurant.slug}</div>
+                            <button onclick="setPage('landing')" class="glass px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300">الرئيسية</button>
+                        </div>
+                    </header>
+
+                    ${appState.tableNumber ? `
+                        <div class="bg-amber-500 text-slate-950 px-4 py-2 font-black text-xs text-center">
+                            📍 أنت تطلب الآن على <span class="underline">طاولة رقم ${appState.tableNumber}</span>
+                        </div>
+                    ` : ''}
+
+                    <div class="max-w-2xl mx-auto px-4 pt-4 space-y-5">
+                        <div class="relative">
+                            <input type="text" value="${appState.search}" oninput="appState.search=this.value; render();" placeholder="ابحث في الأطباق والأسعار..." class="w-full bg-slate-900 border border-white/10 rounded-2xl py-3.5 pr-11 pl-4 text-xs text-white outline-none focus:border-amber-500">
+                            <i class="fa-solid fa-magnifying-glass absolute right-4 top-4 text-slate-400 text-xs"></i>
                         </div>
 
-                        <!-- Search & Categories -->
-                        <div class="space-y-3">
-                            <div class="relative">
-                                <input type="text" value="${state.searchQuery}" oninput="state.searchQuery=this.value; render();" placeholder="ابحث عن وجبتك المفضلة..." class="w-full py-3.5 pr-11 pl-4 rounded-2xl border text-xs outline-none ${isLight?'bg-white border-stone-200 text-slate-900':'bg-white/5 border-white/10 text-white'}">
-                                <i class="fa-solid fa-magnifying-glass absolute right-4 top-4 opacity-50 text-xs"></i>
-                            </div>
-
-                            <div class="flex gap-2 overflow-x-auto hide-scrollbar py-1">
-                                <button onclick="state.activeCat='all'; render();" class="px-4 py-2 text-xs font-black whitespace-nowrap transition ${th.buttonStyle}" style="${state.activeCat==='all'?`background:${th.primary};color:#fff`:(isLight?'background:#fff;border:1px solid #e7e5e4':'background:rgba(255,255,255,0.06)')}">الكل</button>
-                                ${db.categories.map(c => `
-                                    <button onclick="state.activeCat='${c.id}'; render();" class="px-4 py-2 text-xs font-black whitespace-nowrap transition ${th.buttonStyle}" style="${state.activeCat===c.id?`background:${th.primary};color:#fff`:(isLight?'background:#fff;border:1px solid #e7e5e4':'background:rgba(255,255,255,0.06)')}">${c.name}</button>
-                                `).join('')}
-                            </div>
+                        <!-- الأقسام -->
+                        <div class="flex gap-2 overflow-x-auto hide-scrollbar py-1">
+                            <button onclick="appState.activeCat='all'; render();" class="px-4 py-2 rounded-2xl text-xs font-black transition ${appState.activeCat==='all'?'gold-gradient text-slate-950':'glass text-slate-300'}">الكل</button>
+                            ${store.categories.map(c => `
+                                <button onclick="appState.activeCat='${c.id}'; render();" class="px-4 py-2 rounded-2xl text-xs font-black whitespace-nowrap transition ${appState.activeCat===c.id?'gold-gradient text-slate-950':'glass text-slate-300'}">${c.name}</button>
+                            `).join('')}
                         </div>
 
-                        <!-- MENU ITEMS RENDERED BY SELECTED LAYOUT -->
-                        ${layout === 'classic' ? `
-                            <!-- Layout 1: Tablia Classic (Compact Rows) -->
-                            <div class="space-y-3">
-                                ${filteredItems.map(item => `
-                                    <div class="p-4 rounded-2xl border flex justify-between items-center gap-4 ${isLight?'bg-white border-stone-200':'bg-white/5 border-white/10'}">
-                                        <div class="space-y-1">
-                                            <div class="flex items-center gap-2">
-                                                <h3 class="font-black text-sm">${item.name}</h3>
-                                                ${item.tags.map(t=>`<span class="text-[9px] px-2 py-0.5 rounded-full font-bold text-white" style="background:${th.primary}">${t}</span>`).join('')}
-                                            </div>
-                                            <p class="text-xs opacity-70">${item.description}</p>
-                                            <div class="font-black text-sm pt-1" style="color:${th.primary}">${item.price} ج.م</div>
-                                        </div>
-                                        <button onclick="addCart('${item.id}')" class="px-4 py-2.5 text-xs font-black text-white shrink-0 shadow transition active:scale-95 ${th.buttonStyle}" style="background:${th.primary}">+ أضف</button>
+                        <!-- شبكة الأصناف -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            ${filtered.map(item => `
+                                <div class="glass border border-white/10 p-4 rounded-3xl flex flex-col justify-between shadow-xl">
+                                    <div class="w-full h-36 rounded-2xl overflow-hidden mb-3 relative bg-slate-950">
+                                        <img src="${item.image}" class="w-full h-full object-cover">
+                                        ${item.tags && item.tags[0] ? `<span class="absolute top-2 right-2 gold-gradient text-slate-950 text-[9px] font-black px-2.5 py-0.5 rounded-full">${item.tags[0]}</span>` : ''}
                                     </div>
-                                `).join('')}
-                            </div>
-                        ` : ''}
-
-                        ${layout === 'foodera' ? `
-                            <!-- Layout 2: Foodera Modern Cards -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                ${filteredItems.map(item => `
-                                    <div class="rounded-3xl border overflow-hidden flex flex-col justify-between transition hover:-translate-y-1 ${isLight?'bg-white border-stone-200 shadow-sm':'bg-white/5 border-white/10'}">
-                                        <div class="h-40 relative overflow-hidden">
-                                            <img src="${item.image}" class="w-full h-full object-cover">
-                                            ${item.tags.map(t=>`<span class="absolute top-3 right-3 text-[10px] px-2.5 py-0.5 rounded-full font-black text-white shadow" style="background:${th.primary}">${t}</span>`).join('')}
-                                        </div>
-                                        <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
-                                            <div>
-                                                <h3 class="font-black text-base">${item.name}</h3>
-                                                <p class="text-xs opacity-70 line-clamp-2 mt-1">${item.description}</p>
-                                            </div>
-                                            <div class="flex justify-between items-center pt-3 border-t ${isLight?'border-stone-100':'border-white/10'}">
-                                                <span class="font-black text-base" style="color:${th.primary}">${item.price} ج.م</span>
-                                                <button onclick="addCart('${item.id}')" class="px-4 py-2 text-xs font-black text-white shadow transition active:scale-95 ${th.buttonStyle}" style="background:${th.primary}">أضف للسلة +</button>
-                                            </div>
-                                        </div>
+                                    <div>
+                                        <h3 class="font-black text-base text-white">${item.name}</h3>
+                                        <p class="text-xs text-slate-400 line-clamp-1 mt-0.5">${item.description}</p>
                                     </div>
-                                `).join('')}
-                            </div>
-                        ` : ''}
-
-                        ${layout === 'dark_grill' ? `
-                            <!-- Layout 3: Dark Grill VIP -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                ${filteredItems.map(item => `
-                                    <div class="p-4 rounded-3xl border border-white/10 bg-gradient-to-br from-zinc-900 to-black flex gap-4 items-center shadow-xl">
-                                        <img src="${item.image}" class="w-24 h-24 rounded-2xl object-cover border border-white/10 shrink-0">
-                                        <div class="flex-1 space-y-1.5">
-                                            <h3 class="font-black text-base text-white">${item.name}</h3>
-                                            <p class="text-xs text-zinc-400 line-clamp-2">${item.description}</p>
-                                            <div class="flex justify-between items-center pt-2">
-                                                <span class="font-black text-sm" style="color:${th.primary}">${item.price} ج.م</span>
-                                                <button onclick="addCart('${item.id}')" class="px-4 py-1.5 text-xs font-black text-white ${th.buttonStyle}" style="background:${th.primary}">طلب +</button>
-                                            </div>
-                                        </div>
+                                    <div class="flex justify-between items-center mt-4 pt-3 border-t border-white/5">
+                                        <span class="font-black text-amber-400 text-sm">${item.price} ج.م</span>
+                                        <button onclick="addToCart('${item.id}')" class="w-9 h-9 rounded-xl gold-gradient text-slate-950 font-black flex items-center justify-center text-sm shadow hover:scale-105 transition">+</button>
                                     </div>
-                                `).join('')}
-                            </div>
-                        ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
 
-                    <!-- Sticky Cart Bar -->
                     ${cartCount > 0 ? `
-                        <div class="fixed bottom-5 left-4 right-4 max-w-xl mx-auto z-40">
-                            <button onclick="state.cartOpen=true; render();" class="w-full py-4 px-6 rounded-2xl text-white font-black shadow-2xl flex justify-between items-center text-sm transition hover:scale-[1.01]" style="background:${th.primary}">
-                                <div class="flex items-center gap-3">
-                                    <span class="bg-black/25 px-2.5 py-0.5 rounded-full text-xs">${cartCount}</span>
-                                    <span>عرض السلة وإرسال الطلب واتساب</span>
-                                </div>
-                                <span>${cartTotal} ج.م <i class="fa-brands fa-whatsapp mr-1"></i></span>
+                        <div class="fixed bottom-6 left-4 right-4 max-w-lg mx-auto z-50">
+                            <button onclick="appState.cartOpen=true; render();" class="w-full py-4 px-6 rounded-2xl gold-gradient text-slate-950 font-black shadow-2xl flex justify-between items-center text-sm border border-white/20">
+                                <span>عرض السلة وإرسال الطلب للسحاب (${cartCount})</span>
+                                <span>${cartTotal} ج.م 🚀</span>
                             </button>
                         </div>
                     ` : ''}
 
-                    <!-- WhatsApp Checkout Modal -->
-                    ${state.cartOpen ? `
-                        <div class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-                            <div class="bg-slate-900 border border-white/15 text-white w-full max-w-md rounded-3xl p-6 space-y-4 animate-fade-up max-h-[90vh] overflow-y-auto">
+                    <!-- مودال تأكيد الطلب -->
+                    ${appState.cartOpen ? `
+                        <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+                            <div class="bg-slate-900 border border-white/15 text-white w-full max-w-md rounded-3xl p-6 space-y-4 animate-fade-up">
                                 <div class="flex justify-between items-center pb-3 border-b border-white/10">
-                                    <h3 class="font-black text-base">إتمام الطلب عبر واتساب</h3>
-                                    <button onclick="state.cartOpen=false; render();" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs"><i class="fa-solid fa-xmark"></i></button>
-                                </div>
-
-                                <div class="space-y-2 max-h-40 overflow-y-auto text-xs">
-                                    ${state.cart.map((c, idx) => `
-                                        <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl">
-                                            <div>
-                                                <span class="font-bold">${c.name}</span>
-                                                <span class="text-amber-400 block">${c.price} × ${c.qty}</span>
-                                            </div>
-                                            <div class="flex items-center gap-2">
-                                                <button onclick="updateCartQty(${idx}, -1)" class="w-6 h-6 rounded bg-white/10">-</button>
-                                                <span class="font-black">${c.qty}</span>
-                                                <button onclick="updateCartQty(${idx}, 1)" class="w-6 h-6 rounded bg-white/10">+</button>
-                                            </div>
-                                        </div>
-                                    `).join('')}
+                                    <h3 class="font-black text-base">تأكيد إرسال الطلب ${appState.tableNumber ? '(طاولة رقم '+appState.tableNumber+')' : ''}</h3>
+                                    <button onclick="appState.cartOpen=false; render();" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs"><i class="fa-solid fa-xmark"></i></button>
                                 </div>
 
                                 <div class="space-y-3 text-xs">
-                                    <input type="text" value="${state.customerName}" oninput="state.customerName=this.value" placeholder="الاسم بالكامل *" class="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white font-bold">
-                                    <input type="tel" value="${state.customerPhone}" oninput="state.customerPhone=this.value" placeholder="رقم الموبايل *" class="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white font-bold">
-                                    <textarea rows="2" oninput="state.customerAddress=this.value" placeholder="العنوان بالتفصيل (أو اكتب استلام من الفرع)..." class="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white">${state.customerAddress}</textarea>
+                                    <input type="text" value="${appState.customerName}" oninput="appState.customerName=this.value" placeholder="اسمك الكريم *" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white font-bold outline-none">
+                                    <input type="tel" value="${appState.customerPhone}" oninput="appState.customerPhone=this.value" placeholder="رقم الهاتف *" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white font-bold outline-none">
                                 </div>
 
                                 <div class="flex justify-between items-center pt-2 border-t border-white/10 font-black text-sm">
-                                    <span>الإجمالي النهائي</span>
+                                    <span>الإجمالي</span>
                                     <span class="text-amber-400">${cartTotal} ج.م</span>
                                 </div>
 
-                                <button onclick="checkoutViaWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3.5 rounded-2xl text-xs shadow-lg flex items-center justify-center gap-2">
-                                    <i class="fa-brands fa-whatsapp text-base"></i> تأكيد وإرسال الطلب الآن
+                                <button onclick="submitCloudOrder()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3.5 rounded-2xl text-xs shadow-xl flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-cloud-arrow-up text-base"></i> إرسال الطلب سحابياً للكاشير والمطبخ
                                 </button>
                             </div>
                         </div>
@@ -917,211 +290,165 @@
             `;
         }
 
-        function addCart(itemId) {
-            const item = db.menu_items.find(i => i.id === itemId);
-            if (!item) return;
-            const existing = state.cart.find(c => c.id === itemId);
-            if (existing) existing.qty++;
-            else state.cart.push({ ...item, qty: 1 });
+        function addToCart(id) {
+            const item = store.menu_items.find(m => m.id === id);
+            const found = appState.cart.find(c => c.id === id);
+            if (found) found.qty++;
+            else appState.cart.push({ ...item, qty: 1 });
             render();
         }
 
-        function updateCartQty(idx, delta) {
-            state.cart[idx].qty += delta;
-            if (state.cart[idx].qty <= 0) state.cart.splice(idx, 1);
-            if (state.cart.length === 0) state.cartOpen = false;
-            render();
-        }
-
-        function checkoutViaWhatsApp() {
-            if (!state.customerName.trim() || !state.customerPhone.trim()) {
-                alert('⚠️ يرجى كتابة الاسم ورقم الهاتف.');
+        function submitCloudOrder() {
+            if (!appState.customerName.trim() || !appState.customerPhone.trim()) {
+                alert('⚠️ يرجى إدخال الاسم ورقم الهاتف.');
                 return;
             }
-            const total = state.cart.reduce((s, i) => s + (i.price * i.qty), 0);
-            const orderId = 'ORD-' + Math.floor(1000 + Math.random() * 9000);
-            const newOrder = {
-                id: orderId,
-                customer_name: state.customerName.trim(),
-                phone: state.customerPhone.trim(),
-                items_json: JSON.parse(JSON.stringify(state.cart)),
-                total,
+            const total = appState.cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            const orderObj = {
+                id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
+                table_number: appState.tableNumber ? Number(appState.tableNumber) : null,
+                customer_name: appState.customerName.trim(),
+                phone: appState.customerPhone.trim(),
+                items_json: JSON.parse(JSON.stringify(appState.cart)),
+                total: total,
                 status: 'new',
                 created_at: 'الآن'
             };
-            db.orders.unshift(newOrder);
-            saveDB();
 
-            const lines = state.cart.map(i => `• ${i.qty}x ${i.name} (${i.price * i.qty} ج.م)`).join('%0A');
-            const msg = `*طلب جديد - ${db.restaurant.name}*%0Aرقم الطلب: ${orderId}%0Aالاسم: ${newOrder.customer_name}%0Aالهاتف: ${newOrder.phone}%0Aالعنوان: ${state.customerAddress || 'استلام فرع'}%0A%0A*الطلبات:*%0A${lines}%0A%0A*الإجمالي: ${total} ج.م*`;
-            
-            state.cart = [];
-            state.cartOpen = false;
+            if (!store.orders) store.orders = [];
+            store.orders.unshift(orderObj);
+            saveToCloud(); // رفع الطلب فوراً للسحاب ليظهر عند الكاشير
+
+            appState.cart = [];
+            appState.cartOpen = false;
             render();
-            window.open(`https://wa.me/${db.restaurant.phone}?text=${msg}`, '_blank');
+            alert(`✅ تم إرسال طلبك سحابياً بنجاح! ${appState.tableNumber ? '(طاولة رقم ' + appState.tableNumber + ')' : ''}`);
         }
 
-        // ================= 7. DASHBOARD (/dashboard/[restaurant_id]) =================
-        function renderDashboard() {
-            const totalRevenue = db.orders.reduce((s, o) => s + o.total, 0);
+        // ================= 5. شاشة الكاشير السحابية الحية (POS & KDS) =================
+        function renderCashierDashboard() {
+            if (!appState.cashierUnlocked) {
+                return `
+                    <div class="min-h-screen bg-[#090d16] text-white p-6 flex items-center justify-center">
+                        <div class="glass p-6 rounded-3xl max-w-xs w-full text-center space-y-4 border border-white/10 shadow-2xl">
+                            <h2 class="font-black text-sm text-amber-400">شاشة الكاشير السحابية</h2>
+                            <p class="text-[11px] text-slate-400">أدخل رمز PIN (الافتراضي: 1234)</p>
+                            <input type="password" id="c_pin" placeholder="••••" class="w-full bg-slate-950 border border-white/10 p-3.5 rounded-xl text-center text-white tracking-widest font-black text-lg outline-none">
+                            <button onclick="unlockCashier()" class="w-full gold-gradient text-slate-950 font-black py-3 rounded-xl text-xs">دخول الكاشير</button>
+                            <button onclick="setPage('landing')" class="text-xs text-slate-500 underline block mx-auto">الرئيسية</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const orders = store.orders || [];
+
             return `
-                ${renderGlobalNav()}
-                <div class="max-w-6xl mx-auto px-4 py-8 space-y-6 animate-fade-up">
-                    <div class="flex flex-wrap justify-between items-center gap-4">
-                        <div>
-                            <h1 class="text-2xl font-black text-white">لوحة تحكم ${db.restaurant.name}</h1>
-                            <p class="text-xs text-slate-400">متابعة الطلبات المباشرة، الإحصائيات، وإدارة الأصناف</p>
+                <div class="min-h-screen bg-[#090d16] text-white p-4 max-w-6xl mx-auto space-y-6 pb-32">
+                    <div class="flex justify-between items-center bg-slate-900 p-4 rounded-3xl border border-white/10">
+                        <div class="flex items-center gap-3">
+                            <span class="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></span>
+                            <h1 class="font-black text-base text-white">🖥️ شاشة المطبخ والكاشير السحابية (Realtime Cloud POS)</h1>
                         </div>
-                        <button onclick="setPage('builder')" class="bg-amber-500 text-slate-950 font-black px-5 py-2.5 rounded-xl text-xs">+ إضافة أصناف بالـ AI</button>
-                    </div>
-
-                    <!-- Analytics Cards -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="glass p-5 rounded-3xl border border-white/10">
-                            <div class="text-xs text-slate-400">مشاهدات المنيو</div>
-                            <div class="text-2xl font-black text-white mt-1">${db.restaurant.views}</div>
-                        </div>
-                        <div class="glass p-5 rounded-3xl border border-white/10">
-                            <div class="text-xs text-slate-400">إجمالي الطلبات</div>
-                            <div class="text-2xl font-black text-amber-400 mt-1">${db.orders.length}</div>
-                        </div>
-                        <div class="glass p-5 rounded-3xl border border-white/10">
-                            <div class="text-xs text-slate-400">إجمالي المبيعات</div>
-                            <div class="text-2xl font-black text-emerald-400 mt-1">${totalRevenue} ج.م</div>
-                        </div>
-                        <div class="glass p-5 rounded-3xl border border-white/10">
-                            <div class="text-xs text-slate-400">أصناف المنيو</div>
-                            <div class="text-2xl font-black text-sky-400 mt-1">${db.menu_items.length}</div>
+                        <div class="flex gap-2">
+                            <button onclick="setPage('landing')" class="glass px-3 py-1.5 rounded-xl text-xs font-bold">الرئيسية</button>
+                            <button onclick="appState.cashierUnlocked=false; render();" class="text-xs text-red-400 glass px-3 py-1.5 rounded-xl">قفل</button>
                         </div>
                     </div>
 
-                    <!-- Live Orders -->
-                    <div class="glass p-6 rounded-3xl border border-white/10 space-y-4">
-                        <h2 class="font-black text-base text-white">📦 الطلبات الواردة مباشرة</h2>
-                        <div class="space-y-3">
-                            ${db.orders.map((o, idx) => `
-                                <div class="bg-slate-900/90 border border-white/10 p-4 rounded-2xl flex flex-col md:flex-row justify-between gap-4 text-xs">
-                                    <div class="space-y-1">
-                                        <div class="flex items-center gap-2">
-                                            <span class="font-black text-amber-400">${o.id}</span>
-                                            <span class="text-slate-500">${o.created_at}</span>
-                                        </div>
-                                        <div class="font-bold text-white">👤 ${o.customer_name} — 📞 ${o.phone}</div>
-                                        <div class="text-slate-300">${o.items_json.map(i=>`${i.qty}x ${i.name}`).join(' ، ')}</div>
-                                    </div>
-                                    <div class="flex items-center gap-3 self-end md:self-center">
-                                        <span class="font-black text-emerald-400 text-sm">${o.total} ج.م</span>
-                                        <select onchange="db.orders[${idx}].status=this.value; saveDB(); render();" class="bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-white font-bold">
-                                            <option value="new" ${o.status==='new'?'selected':''}>جديد 🆕</option>
-                                            <option value="preparing" ${o.status==='preparing'?'selected':''}>قيد التحضير 👨‍🍳</option>
-                                            <option value="delivered" ${o.status==='delivered'?'selected':''}>تم التسليم ✅</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-
-                    <!-- Menu Items Quick Manager -->
-                    <div class="glass p-6 rounded-3xl border border-white/10 space-y-4">
-                        <h2 class="font-black text-base text-white">🍽️ إدارة الأصناف وتوفرها</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                            ${db.menu_items.map((item, idx) => `
-                                <div class="bg-slate-900/80 border border-white/10 p-3 rounded-2xl flex justify-between items-center">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        ${orders.length === 0 ? `<div class="col-span-3 glass p-16 rounded-3xl text-center text-slate-400 text-xs">لا توجد طلبات واردة حالياً. ستظهر فوراً عند إرسالها من أي هاتف عبر السحاب!</div>` : ''}
+                        ${orders.map((ord, idx) => `
+                            <div class="glass p-5 rounded-3xl space-y-4 border ${ord.status==='new'?'border-amber-500 shadow-xl shadow-amber-500/10':(ord.status==='preparing'?'border-sky-500':'border-white/10')}">
+                                <div class="flex justify-between items-start">
                                     <div>
-                                        <div class="font-bold text-white">${item.name}</div>
-                                        <div class="text-amber-400">${item.price} ج.م</div>
+                                        <span class="bg-amber-500 text-slate-950 font-black text-xs px-2.5 py-0.5 rounded-full">طاولة رقم ${ord.table_number || 'دليفري'}</span>
+                                        <h3 class="font-black text-base text-white mt-2">${ord.customer_name}</h3>
+                                        <p class="text-xs text-slate-400">📞 ${ord.phone}</p>
                                     </div>
-                                    <div class="flex items-center gap-2">
-                                        <button onclick="db.menu_items[${idx}].is_available=!db.menu_items[${idx}].is_available; saveDB(); render();" class="px-2.5 py-1 rounded-lg font-bold ${item.is_available?'bg-emerald-500/20 text-emerald-400':'bg-slate-800 text-slate-400'}">${item.is_available?'متاح':'نفذ'}</button>
-                                        <button onclick="db.menu_items.splice(${idx},1); saveDB(); render();" class="text-red-400 bg-red-500/10 px-2.5 py-1 rounded-lg"><i class="fa-solid fa-trash"></i></button>
+                                    <div class="text-right">
+                                        <span class="font-black text-amber-400 text-sm">${ord.total} ج.م</span>
+                                        <span class="block text-[10px] text-slate-400 uppercase mt-0.5">${ord.status}</span>
                                     </div>
                                 </div>
-                            `).join('')}
-                        </div>
+
+                                <div class="bg-slate-950 p-3 rounded-2xl space-y-1 text-xs">
+                                    ${ord.items_json.map(i => `
+                                        <div class="flex justify-between items-center text-slate-300">
+                                            <span>• ${i.qty}x ${i.name}</span>
+                                            <span class="font-bold text-amber-400">${i.price * i.qty} ج</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+
+                                <div class="grid grid-cols-3 gap-1.5 pt-2 border-t border-white/10 text-[11px]">
+                                    <button onclick="updateOrderStatus(${idx}, 'preparing')" class="py-2 rounded-xl font-bold ${ord.status==='preparing'?'bg-sky-600 text-white':'bg-slate-800 text-slate-300'}">تحضير 👨‍🍳</button>
+                                    <button onclick="updateOrderStatus(${idx}, 'ready')" class="py-2 rounded-xl font-bold ${ord.status==='ready'?'bg-emerald-600 text-white':'bg-slate-800 text-slate-300'}">جاهز ✅</button>
+                                    <button onclick="updateOrderStatus(${idx}, 'done')" class="py-2 rounded-xl font-bold ${ord.status==='done'?'bg-indigo-600 text-white':'bg-slate-800 text-slate-300'}">تسليم ✨</button>
+                                </div>
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
             `;
         }
 
-        // ================= 8. LANDING PAGE (tablia.app) =================
-        function renderLanding() {
+        function unlockCashier() {
+            const pin = document.getElementById('c_pin').value.trim();
+            if (pin === store.restaurant.pin) {
+                appState.cashierUnlocked = true;
+                render();
+            } else {
+                alert('❌ الرمز غير صحيح! (الافتراضي: 1234)');
+            }
+        }
+
+        function updateOrderStatus(idx, newStatus) {
+            store.orders[idx].status = newStatus;
+            saveToCloud();
+            render();
+        }
+
+        // ================= 6. لوحة الإدارة (Admin Panel) =================
+        function renderAdminPanel() {
             return `
-                ${renderGlobalNav()}
-                <div class="max-w-6xl mx-auto px-4 py-16 space-y-20 animate-fade-up">
-                    <!-- Hero -->
-                    <section class="text-center max-w-3xl mx-auto space-y-6">
-                        <span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-4 py-1.5 rounded-full text-xs font-bold inline-block">منصة SaaS متكاملة للمطاعم والكافيهات</span>
-                        <h1 class="text-4xl md:text-6xl font-black text-white leading-tight">اعمل موقع لمطعمك في <span class="text-amber-400">دقيقتين</span></h1>
-                        <p class="text-slate-400 text-base md:text-lg">ارفع صورة المنيو الورقي ودع الذكاء الاصطناعي يبني موقعك بالكامل مع رابط خاص، QR Code، واستقبال طلبات واتساب بدون عمولات.</p>
-                        <div class="flex flex-wrap justify-center gap-4 pt-2">
-                            <button onclick="setPage('builder')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-8 py-4 rounded-2xl text-sm shadow-xl transition">ابدأ مجاناً الآن <i class="fa-solid fa-arrow-left mr-1"></i></button>
-                            <button onclick="setPage('storefront')" class="glass hover:bg-white/10 text-white font-bold px-8 py-4 rounded-2xl text-sm border border-white/10">معاينة مثال حي</button>
-                        </div>
-                    </section>
+                <div class="min-h-screen bg-[#090d16] text-white p-6 max-w-xl mx-auto space-y-6 pb-32">
+                    <div class="flex justify-between items-center pb-4 border-b border-white/10">
+                        <button onclick="setPage('landing')" class="glass px-3 py-1.5 rounded-xl text-xs font-bold">الرئيسية</button>
+                        <h1 class="font-black text-sm text-amber-400">⚙️ إعدادات المطعم السحابي</h1>
+                        <button onclick="setPage('menu')" class="glass px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-400">المنيو</button>
+                    </div>
 
-                    <!-- Templates Showcase -->
-                    <section class="space-y-6">
-                        <h2 class="text-2xl font-black text-center text-white">معرض القوالب الجاهزة (12 قالب)</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            ${TEMPLATES_CATALOG.slice(0, 3).map(t => `
-                                <div class="glass rounded-3xl overflow-hidden border border-white/10">
-                                    <img src="${t.preview}" class="w-full h-44 object-cover">
-                                    <div class="p-5 space-y-2">
-                                        <h3 class="font-black text-base text-white">${t.name}</h3>
-                                        <p class="text-xs text-slate-400">${t.desc}</p>
-                                        <button onclick="selectTemplate('${t.id}'); setPage('builder');" class="w-full mt-2 bg-white/10 hover:bg-amber-500 hover:text-slate-950 text-white font-bold py-2.5 rounded-xl text-xs transition">استخدم هذا القالب</button>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </section>
+                    <div class="glass p-5 rounded-3xl space-y-3 text-xs border border-white/10">
+                        <h3 class="font-black text-amber-400 text-sm">بيانات المطعم السحابي</h3>
+                        <label class="block text-slate-400">اسم المطعم</label>
+                        <input type="text" id="adm_name" value="${store.restaurant.name}" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white font-bold outline-none">
 
-                    <!-- Pricing -->
-                    <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="glass p-6 rounded-3xl border border-white/10 space-y-4">
-                            <div class="text-sm font-bold text-slate-400">البداية (مجاني)</div>
-                            <div class="text-3xl font-black text-white">0 ج.م <span class="text-xs font-normal text-slate-400">/ شهرياً</span></div>
-                            <ul class="text-xs text-slate-300 space-y-2">
-                                <li>✓ رابط فرعي tablia.app/r/slug</li>
-                                <li>✓ طلبات واتساب غير محدودة</li>
-                                <li>✓ حتى 25 صنف في المنيو</li>
-                            </ul>
-                            <button onclick="setPage('builder')" class="w-full bg-white/10 py-3 rounded-xl text-xs font-bold">ابدأ مجاناً</button>
-                        </div>
-                        <div class="glass p-6 rounded-3xl border-2 border-amber-500 space-y-4 relative">
-                            <span class="absolute -top-3 left-6 bg-amber-500 text-slate-950 text-[10px] font-black px-3 py-0.5 rounded-full">الأكثر طلباً</span>
-                            <div class="text-sm font-bold text-amber-400">الاحترافية (Pro)</div>
-                            <div class="text-3xl font-black text-white">299 ج.م <span class="text-xs font-normal text-slate-400">/ شهرياً</span></div>
-                            <ul class="text-xs text-slate-300 space-y-2">
-                                <li>✓ استخراج المنيو بالذكاء الاصطناعي AI OCR</li>
-                                <li>✓ جميع القوالب الـ 12 + محرر الألوان</li>
-                                <li>✓ أصناف وطلبات غير محدودة</li>
-                            </ul>
-                            <button onclick="setPage('builder')" class="w-full bg-amber-500 text-slate-950 py-3 rounded-xl text-xs font-black">اشترك الآن</button>
-                        </div>
-                        <div class="glass p-6 rounded-3xl border border-white/10 space-y-4">
-                            <div class="text-sm font-bold text-slate-400">السلاسل (Enterprise)</div>
-                            <div class="text-3xl font-black text-white">699 ج.م <span class="text-xs font-normal text-slate-400">/ شهرياً</span></div>
-                            <ul class="text-xs text-slate-300 space-y-2">
-                                <li>✓ ربط دومين خاص (Custom Domain)</li>
-                                <li>✓ إدارة فروع متعددة</li>
-                                <li>✓ دعم فني مخصص 24/7</li>
-                            </ul>
-                            <button onclick="setPage('builder')" class="w-full bg-white/10 py-3 rounded-xl text-xs font-bold">تواصل معنا</button>
-                        </div>
-                    </section>
+                        <label class="block text-slate-400">رقم واتساب الطلبات</label>
+                        <input type="text" id="adm_wa" value="${store.restaurant.phone}" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white font-bold outline-none">
+
+                        <label class="block text-emerald-400 font-bold">PIN الكاشير</label>
+                        <input type="text" id="adm_pin" value="${store.restaurant.pin}" class="w-full bg-slate-950 border border-emerald-500/50 p-3 rounded-xl text-emerald-400 font-black text-center text-lg outline-none">
+
+                        <button onclick="saveAdminSettings()" class="w-full gold-gradient text-slate-950 font-black py-3.5 rounded-xl">حفظ التعديلات سحابياً 🚀</button>
+                    </div>
                 </div>
             `;
         }
 
-        // ================= 9. MAIN RENDER LOOP =================
-        function render() {
-            const app = document.getElementById('app');
-            if (state.page === 'builder') app.innerHTML = renderBuilder();
-            else if (state.page === 'storefront') app.innerHTML = renderStorefront();
-            else if (state.page === 'dashboard') app.innerHTML = renderDashboard();
-            else app.innerHTML = renderLanding();
+        function saveAdminSettings() {
+            store.restaurant.name = document.getElementById('adm_name').value.trim();
+            store.restaurant.phone = document.getElementById('adm_wa').value.trim();
+            store.restaurant.pin = document.getElementById('adm_pin').value.trim() || '1234';
+            saveToCloud();
+            alert('✅ تم حفظ البيانات وربطها سحابياً بنجاح!');
+            setPage('landing');
+        }
+
+        // فحص الروابط والـ Query Params عند التحميل
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('view') === 'menu') {
+            appState.page = 'menu';
         }
 
         render();
