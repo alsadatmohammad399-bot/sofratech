@@ -25,7 +25,7 @@
     <script>
         const PLATFORM_OWNER = { walletNumber: '01015861991', monthlyPrice: 600, adminPass: '2030' };
 
-        let globalDB = JSON.parse(localStorage.getItem('tablia_multitenant_2030_v11')) || {
+        let globalDB = JSON.parse(localStorage.getItem('tablia_multitenant_2030_v13')) || {
             restaurants: {
                 "rest_demo": {
                     id: "rest_demo", ownerName: "محمد الحاتي", name: "مشويات الحاتي الفاخرة", phone: "01015861991", pass: "1234",
@@ -50,13 +50,12 @@
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_multitenant_2030_v11', JSON.stringify(globalDB));
+                localStorage.setItem('tablia_multitenant_2030_v13', JSON.stringify(globalDB));
             } catch (e) {}
         }
 
-        // استقبال التحديثات الفورية بين التبويبات (الكاشير والمنيو) في أقل من ثانية
         window.addEventListener('storage', (e) => {
-            if (e.key === 'tablia_multitenant_2030_v11') {
+            if (e.key === 'tablia_multitenant_2030_v13') {
                 try {
                     globalDB = JSON.parse(e.newValue);
                     playBell();
@@ -174,7 +173,7 @@
                     <div class="flex gap-1 bg-slate-900 p-1 rounded-xl text-[11px]">
                         <button onclick="appState.builderStep=1; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===1?'bg-amber-500 text-slate-950 font-black':'text-slate-400'}">1. القالب والحساب</button>
                         <button onclick="appState.builderStep=2; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===2?'bg-amber-500 text-slate-950 font-black':'text-slate-400'}">2. المنيو والأصناف</button>
-                        <button onclick="appState.builderStep=4; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===4?'bg-amber-500 text-slate-950 font-black':'text-slate-400'}">3. النشر</button>
+                        <button onclick="appState.builderStep=4; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===4?'bg-amber-500 text-slate-950 font-black':'text-slate-400'}">3. معاينة ومشاركة المنيو</button>
                     </div>
                     ${appState.builderStep===1 ? renderStep1(rest, selectedTpl) : (appState.builderStep===2 ? renderStep2(rest) : renderStep4(rest))}
                 </div>
@@ -208,22 +207,6 @@
                                     ${rest.template_id===t.id?`<span class="block mt-1 text-[9px] text-amber-400 font-black">● القالب المحدد حالياً</span>`:''}
                                 </div>
                             `).join('')}
-                        </div>
-                    </div>
-
-                    <div class="bg-slate-950 p-4 rounded-2xl border-2 border-amber-500/40 space-y-3">
-                        <div class="flex justify-between items-center border-b border-white/10 pb-2">
-                            <span class="font-black text-amber-400 text-xs">👁️ معاينة شكل القالب المختار الآن:</span>
-                            <span class="bg-emerald-500/20 text-emerald-400 text-[10px] px-2.5 py-0.5 rounded-full font-bold">${selectedTpl.name}</span>
-                        </div>
-                        <div class="p-4 rounded-xl border border-white/10 space-y-3" style="background:${selectedTpl.themeBg}">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg text-white shadow" style="background:${selectedTpl.primary}">🔥</div>
-                                <div>
-                                    <h3 class="font-black text-white text-xs">${rest.name || 'اسم المطعم'}</h3>
-                                    <p class="text-[9px] text-emerald-400">● معاينة حية لشكل العرض</p>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
@@ -285,7 +268,7 @@
                         `).join('')}
                     </div>
 
-                    <button onclick="appState.builderStep=4; render();" class="gold-gradient text-slate-950 font-black px-4 py-3 rounded-xl w-full">التالي: النشر ورابط المنيو ➔</button>
+                    <button onclick="appState.builderStep=4; render();" class="gold-gradient text-slate-950 font-black px-4 py-3 rounded-xl w-full">التالي: معاينة المنيو ومشاركته ➔</button>
                 </div>
             `;
         }
@@ -313,10 +296,93 @@
             }); syncCloud(); render();
         }
 
+        // الخطوة الأخيرة: معاينة المنيو بالكامل مع مربعات المشاركة الفورية السريعة
         function renderStep4(rest){
-            const isSub=rest.subscription?.isActive; const url=location.origin+location.pathname+`?view=menu&rest=${rest.id}`;
-            if(!isSub) return `<div class="glass p-6 rounded-3xl space-y-4 text-xs border-2 border-amber-500/50"><h2 class="font-black text-white text-center">تفعيل المنيو - ${PLATFORM_OWNER.monthlyPrice} جنيه شهرياً</h2><div class="bg-slate-950 p-3 rounded-xl flex justify-between items-center"><span dir="ltr" class="text-white font-black">${PLATFORM_OWNER.walletNumber}</span><button onclick="navigator.clipboard.writeText('${PLATFORM_OWNER.walletNumber}')" class="bg-amber-500 text-slate-950 px-3 py-1 rounded-lg">نسخ</button></div><a href="https://wa.me/2${PLATFORM_OWNER.walletNumber}?text=${encodeURIComponent('تفعيل مطعم '+rest.name+' بمبلغ '+PLATFORM_OWNER.monthlyPrice+' جنيه')}" target="_blank" class="block w-full bg-emerald-600 text-white text-center font-black py-3 rounded-xl">ارسل إيصال التحويل واتساب</a></div>`;
-            return `<div class="glass p-5 rounded-3xl space-y-4 text-xs border border-emerald-500/30"><div class="bg-emerald-500/20 text-emerald-400 p-2 rounded-xl text-center font-black">✅ مفعل ونشط</div><div class="flex gap-2"><input readonly value="${url}" class="flex-1 bg-slate-900 border border-white/10 p-2.5 rounded-xl text-xs"><button onclick="navigator.clipboard.writeText('${url}')" class="bg-amber-500 text-slate-950 px-4 rounded-xl">نسخ الرابط</button></div></div>`;
+            const isSub=rest.subscription?.isActive; 
+            const url=location.origin+location.pathname+`?view=menu&rest=${rest.id}`;
+            const selectedTpl = TEMPLATES_CATALOG.find(t => t.id === rest.template_id) || TEMPLATES_CATALOG[0];
+
+            return `
+                <div class="glass p-5 rounded-3xl space-y-4 text-xs">
+                    <div class="text-center space-y-1">
+                        <h2 class="font-black text-white text-sm">🎉 مبروك! المنيو جاهز بالكامل ومعاينة الشاشة أدناه</h2>
+                        <p class="text-slate-400 text-[10px]">هذا هو الشكل النهائي الذي سيراه عملاؤك تماماً</p>
+                    </div>
+
+                    <!-- معاينة كاملة للمنيو داخل الخطوة الأخيرة -->
+                    <div class="p-4 rounded-2xl border-2 border-amber-500/40 space-y-3" style="background:${selectedTpl.themeBg}">
+                        <div class="flex items-center gap-3 bg-slate-900/80 p-3 rounded-xl border border-white/10">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg text-white shadow" style="background:${selectedTpl.primary}">🔥</div>
+                            <div>
+                                <h3 class="font-black text-white text-xs">${rest.name}</h3>
+                                <p class="text-[9px] text-emerald-400">● المنيو أونلاين وجاهز للطلبات</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <span class="text-[10px] text-amber-400 font-bold">الأصناف المضافة (${rest.menu_items.length}):</span>
+                            ${rest.menu_items.length === 0 ? '<p class="text-[10px] text-slate-400">لم تقم بإضافة أصناف بعد، عُد للخطوة 2 لإضافتها.</p>' : ''}
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto hide-scrollbar">
+                                ${rest.menu_items.map(item => `
+                                    <div class="glass p-2.5 rounded-xl flex items-center justify-between border border-white/10">
+                                        <div class="flex items-center gap-2">
+                                            <img src="${item.image}" class="w-10 h-10 object-cover rounded-lg">
+                                            <div>
+                                                <h4 class="font-black text-white text-[11px]">${item.name}</h4>
+                                                <span class="font-bold text-[10px]" style="color:${selectedTpl.primary}">${item.price} ج.م</span>
+                                            </div>
+                                        </div>
+                                        <span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-bold">متاح</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- مربع المشاركة السريعة وزر الـ WhatsApp -->
+                    <div class="bg-slate-900 p-4 rounded-2xl border border-white/10 space-y-3">
+                        <label class="block text-amber-400 font-bold text-xs">🔗 رابط المنيو المباشر (جاهز للإرسال):</label>
+                        <div class="flex gap-2">
+                            <input readonly value="${url}" class="flex-1 bg-slate-950 border border-white/10 p-2.5 rounded-xl text-white text-[11px] select-all">
+                            <button onclick="navigator.clipboard.writeText('${url}'); alert('تم نسخ رابط المنيو بنجاح!');" class="bg-amber-500 text-slate-950 px-4 py-2.5 rounded-xl font-black text-xs">نسخ الرابط</button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                            <button onclick="shareViaWhatsApp('${url}', '${rest.name}')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl flex items-center justify-center gap-2 text-xs shadow-lg transition">
+                                <i class="fa-brands fa-whatsapp text-sm"></i> إرسال المنيو عبر واتساب
+                            </button>
+                            <button onclick="nativeShare('${url}', '${rest.name}')" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-black py-3 rounded-xl flex items-center justify-center gap-2 text-xs shadow-lg transition">
+                                <i class="fa-solid fa-share-nodes text-sm"></i> مشاركة عامة (تطبيقات أخرى)
+                            </button>
+                        </div>
+                    </div>
+
+                    ${!isSub ? `
+                        <div class="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl text-center space-y-2">
+                            <p class="text-[10px] text-amber-300">ملاحظة: المنيو يعمل بالرابط أعلاه، ولتفعيل استقبال الطلبات وربطه بالكاشير شهرياً (${PLATFORM_OWNER.monthlyPrice} جنيه)، تواصل مع الإدارة:</p>
+                            <a href="https://wa.me/2${PLATFORM_OWNER.walletNumber}?text=${encodeURIComponent('تفعيل مطعم '+rest.name+' بمبلغ '+PLATFORM_OWNER.monthlyPrice+' جنيه')}" target="_blank" class="inline-block bg-emerald-600 text-white font-black px-4 py-2 rounded-xl text-xs">تفعيل الحساب (600 جنيه)</a>
+                        </div>
+                    ` : '<div class="bg-emerald-500/20 text-emerald-400 p-2 rounded-xl text-center font-black">✅ حسابك مفعل ونشط بالكامل</div>'}
+                </div>
+            `;
+        }
+
+        function shareViaWhatsApp(url, restName) {
+            const text = encodeURIComponent(`🍽️ تفضل بزيارة منيو مطعم ${restName} واطلب وجبتك المفضلة أونلاين:\n${url}`);
+            window.open(`https://wa.me/?text=${text}`, '_blank');
+        }
+
+        function nativeShare(url, restName) {
+            if (navigator.share) {
+                navigator.share({
+                    title: restName,
+                    text: `اطلب الآن من منيو مطعم ${restName}`,
+                    url: url
+                }).catch(() => {});
+            } else {
+                navigator.clipboard.writeText(url);
+                alert('تم نسخ الرابط إلى الحافظة!');
+            }
         }
 
         function renderStorefront(){
@@ -362,7 +428,7 @@
         function renderDashboard(){
             const rest=globalDB.restaurants[currentRestId]; if(!rest){ setPage('auth'); return ''; }
             if(!appState.adminUnlocked) return `${renderNav()}<div class="max-w-md mx-auto py-12 px-4 text-center space-y-4 text-xs"><div class="glass p-6 rounded-3xl space-y-3 border border-amber-500/30"><h2 class="font-black text-amber-400">لوحة الإدمن (تفعيل الباقات - 600 ج)</h2><input id="admin_pin" type="password" placeholder="الرمز السري 2030" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-center text-white"><button onclick="if(document.getElementById('admin_pin').value==='${PLATFORM_OWNER.adminPass}'){appState.adminUnlocked=true;render();}else{alert('الرمز غلط')}" class="w-full gold-gradient text-slate-950 font-black py-3 rounded-xl">دخول الإدارة</button></div></div>`;
-            return `${renderNav()}<div class="max-w-4xl mx-auto px-4 py-6 space-y-4 text-xs"><div class="flex justify-between items-center bg-slate-900 p-3 rounded-xl"><h1 class="font-black text-white">إدارة جميع المطاعم (اشتراك 600 ج)</h1><button onclick="appState.adminUnlocked=false; render();" class="text-red-400">قفل</button></div><div class="space-y-3">${Object.values(globalDB.restaurants).map(r=>`<div class="glass p-4 rounded-2xl flex justify-between items-center border ${r.subscription?.isActive?'border-emerald-500/40':'border-amber-500/40'}"><div><h3 class="font-black text-white">${r.name}</h3><p class="text-slate-400 text-[11px]">صاحب المطعم: ${r.ownerName} (${r.phone}) - ${r.subscription?.isActive?'نشط ✅':'متوقف ⏸️'}</p></div><div class="flex gap-2"><button onclick="globalDB.restaurants['${r.id}'].subscription={isActive:true, expiresAt:Date.Now+2592000000}; syncCloud(); render();" class="bg-emerald-600 text-white px-3 py-2 rounded-xl font-bold">تفعيل شهر</button><button onclick="globalDB.restaurants['${r.id}'].subscription={isActive:false}; syncCloud(); render();" class="bg-red-500/20 text-red-400 px-3 py-2 rounded-xl">إيقاف</button></div></div>`).join('')}</div></div>`;
+            return `${renderNav()}<div class="max-w-4xl mx-auto px-4 py-6 space-y-4 text-xs"><div class="flex justify-between items-center bg-slate-900 p-3 rounded-xl"><h1 class="font-black text-white">إدارة جميع المطاعم (اشتراك 600 ج)</h1><button onclick="appState.adminUnlocked=false; render();" class="text-red-400">قفل</button></div><div class="space-y-3">${Object.values(globalDB.restaurants).map(r=>`<div class="glass p-4 rounded-2xl flex justify-between items-center border ${r.subscription?.isActive?'border-emerald-500/40':'border-amber-500/40'}"><div><h3 class="font-black text-white">${r.name}</h3><p class="text-slate-400 text-[11px]">صاحب المطعم: ${r.ownerName} (${r.phone}) - ${r.subscription?.isActive?'نشط ✅':'متوقف ⏸️'}</p></div><div class="flex gap-2"><button onclick="globalDB.restaurants['${r.id}'].subscription={isActive:true, expiresAt:Date.now()+2592000000}; syncCloud(); render();" class="bg-emerald-600 text-white px-3 py-2 rounded-xl font-bold">تفعيل شهر</button><button onclick="globalDB.restaurants['${r.id}'].subscription={isActive:false}; syncCloud(); render();" class="bg-red-500/20 text-red-400 px-3 py-2 rounded-xl">إيقاف</button></div></div>`).join('')}</div></div>`;
         }
         function renderQRPrint(){
             const rest=globalDB.restaurants[currentRestId]; if(!rest){ setPage('auth'); return ''; }
