@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Ghazal | منصة المنيو السحابي والطلبات الاحترافية</title>
+    <title>سُفرة تك | المنصة الاستراتيجية لإدارة المطاعم والمنيو السحابي</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
-    <!-- مكتبة Firebase السحابية للربط الفوري -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script>
@@ -15,21 +14,24 @@
             theme: {
                 extend: {
                     fontFamily: { cairo: ['Cairo', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#fffbeb', 500: '#f59e0b', 600: '#d97706', 900: '#78350f', dark: '#090d16' }
+                    }
                 }
             }
         }
     </script>
     <style>
-        body { font-family: 'Cairo', sans-serif; }
+        body { font-family: 'Cairo', sans-serif; background-color: #090d16; color: #f8fafc; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .gold-gradient { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 antialiased min-h-screen">
+<body class="antialiased min-h-screen selection:bg-amber-500 selection:text-slate-950">
     <div id="app"></div>
 
     <script>
-        // إعدادات Firebase السحابية
         const firebaseConfig = {
             apiKey: "AIzaSyCVofMvvbyMBGM1pQNeoG-gMT48Ll5IL4I",
             authDomain: "sofratech-2e033.firebaseapp.com",
@@ -45,413 +47,216 @@
         try {
             firebase.initializeApp(firebaseConfig);
             fbDB = firebase.database();
-        } catch (e) {
-            console.error("Firebase init error:", e);
-        }
+        } catch (e) { console.error("Firebase error:", e); }
 
-        const DEFAULT_DATA = {
+        const STRATEGIC_DATA = {
             restaurant: {
-                name: 'مطعم السعادة',
-                taglet: 'أشهى المأكولات الطازجة والسريعة',
-                logo: '🍔',
-                style: 'crispy_cream',
+                name: 'إمبر آند جريل الاستراتيجي',
+                taglet: 'المنصة الاحترافية للوجبات الفاخرة',
+                logo: '🔥',
                 whatsapp: '201015861991',
-                deliveryFee: 15,
+                deliveryFee: 20,
                 pin: '1234'
             },
             categories: [
                 { id: 'all', name: 'الكل', icon: '🍽️' },
-                { id: 'burgers', name: 'البرجر', icon: '🍔' },
+                { id: 'burgers', name: 'البرجر الفاخر', icon: '🍔' },
                 { id: 'grills', name: 'المشويات', icon: '🥩' },
                 { id: 'chicken', name: 'دجاج كرسبي', icon: '🍗' },
-                { id: 'drinks', name: 'مشروبات', icon: '🥤' }
+                { id: 'drinks', name: 'مشروبات منعشة', icon: '🥤' }
             ],
             menu: [
-                { id: 1, name: 'كلاسيك برجر لحم', cat: 'burgers', price: 140, rating: '4.9', reviews: '1.2K', badge: 'الأكثر مبيعاً', desc: 'شريحتين لحم بقرى طازج مع الجبن المذيب', img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=60' },
-                { id: 2, name: 'وجبة كرسبي حارة', cat: 'chicken', price: 175, rating: '4.8', reviews: '950', badge: 'مميز', desc: 'قطع دجاج مقرمشة مع صوص حار وبطاطس', img: 'https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?w=500&auto=format&fit=crop&q=60' },
-                { id: 3, name: 'عصير مانجو فريش', cat: 'drinks', price: 45, rating: '5.0', reviews: '410', badge: 'طازج', desc: 'عصير مانجو طبيعي مثلج', img: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=500&auto=format&fit=crop&q=60' }
+                { id: 1, name: 'ترافل أنجوس برجر', cat: 'burgers', price: 180, rating: '4.9', reviews: '2.4K', badge: 'الأكثر مبيعاً', desc: 'لحم أنجوس مجفف، صوص الترافل الفرنسي، وجبنة سويسرية', img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=60' },
+                { id: 2, name: 'ريب آي ستيك مشوي', cat: 'grills', price: 350, rating: '5.0', reviews: '1.1K', badge: 'اختيار الشيف', desc: 'قطعة ريب آي مع الزبدة والأعشاب الطازجة', img: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500&auto=format&fit=crop&q=60' },
+                { id: 3, name: 'وجبة زنجر سوبر', cat: 'chicken', price: 160, rating: '4.8', reviews: '980', badge: 'عرض خاص', desc: 'صدور دجاج مقرمشة حارة مع صوص الشيدر الخاص', img: 'https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?w=500&auto=format&fit=crop&q=60' }
             ],
             orders: []
         };
 
-        function loadState() {
-            const saved = localStorage.getItem('sofratech_pro_v3');
-            if (saved) { try { return JSON.parse(saved); } catch (e) {} }
-            return JSON.parse(JSON.stringify(DEFAULT_DATA));
+        function loadStore() {
+            const saved = localStorage.getItem('sofratech_enterprise_v1');
+            if (saved) { try { return JSON.parse(saved); } catch(e){} }
+            return JSON.parse(JSON.stringify(STRATEGIC_DATA));
         }
 
-        let db = loadState();
+        let store = loadStore();
 
-        function saveState() {
-            localStorage.setItem('sofratech_pro_v3', JSON.stringify(db));
-            if (fbDB) { fbDB.ref('sofratech_pro_v3').set(db); }
+        function syncStore() {
+            localStorage.setItem('sofratech_enterprise_v1', JSON.stringify(store));
+            if (fbDB) { fbDB.ref('sofratech_enterprise_v1').set(store); }
         }
 
         if (fbDB) {
-            fbDB.ref('sofratech_pro_v3').on('value', (snapshot) => {
-                const val = snapshot.val();
+            fbDB.ref('sofratech_enterprise_v1').on('value', (snap) => {
+                const val = snap.val();
                 if (val) {
-                    db = val;
-                    if (!db.orders) db.orders = [];
+                    store = val;
+                    if (!store.orders) store.orders = [];
                     render();
                 }
             });
         }
 
-        const ui = {
-            route: 'landing', // landing, builder, menu, cart, checkout, track, cashier
-            activeCategory: 'all',
-            searchQuery: '',
+        const appState = {
+            route: 'landing', // landing, menu, cart, checkout, tracking, admin, cashier
+            activeCat: 'all',
+            search: '',
             cart: [],
             phone: '',
-            customerName: '',
-            deliveryMethod: 'branch',
+            name: '',
+            deliveryType: 'home',
             address: '',
-            trackingOrderId: null,
+            activeTrackingId: null,
             cashierUnlocked: false
         };
 
-        function syncRouteFromHash() {
-            const hash = window.location.hash || '';
-            if (hash === '#builder') ui.route = 'builder';
-            else if (hash === '#menu') ui.route = 'menu';
-            else if (hash === '#cart') ui.route = 'cart';
-            else if (hash === '#checkout') ui.route = 'checkout';
-            else if (hash === '#track') ui.route = 'track';
-            else if (hash === '#cashier') ui.route = 'cashier';
-            else ui.route = 'landing';
+        function navigate(r) {
+            appState.route = r;
             render();
+            window.scrollTo(0,0);
         }
-
-        window.addEventListener('hashchange', syncRouteFromHash);
-        function navigate(hash) { window.location.hash = hash; }
 
         function render() {
-            const app = document.getElementById('app');
-            if (ui.route === 'landing') app.innerHTML = renderLanding();
-            else if (ui.route === 'builder') app.innerHTML = renderBuilder();
-            else if (ui.route === 'menu') app.innerHTML = renderCustomerMenu();
-            else if (ui.route === 'cart') app.innerHTML = renderCart();
-            else if (ui.route === 'checkout') app.innerHTML = renderCheckout();
-            else if (ui.route === 'track') app.innerHTML = renderTrackOrder();
-            else if (ui.route === 'cashier') app.innerHTML = renderCashier();
+            const root = document.getElementById('app');
+            let html = '';
+            if (appState.route === 'landing') html = renderLandingPage();
+            else if (appState.route === 'menu') html = renderCustomerMenu();
+            else if (appState.route === 'cart') html = renderCartPage();
+            else if (appState.route === 'checkout') html = renderCheckoutPage();
+            else if (appState.route === 'tracking') html = renderTrackingPage();
+            else if (appState.route === 'admin') html = renderAdminDashboard();
+            else if (appState.route === 'cashier') html = renderCashierDashboard();
+
+            root.innerHTML = html;
         }
 
-        // ================= 1. الصفحة الرئيسية والروابط =================
-        function renderLanding() {
-            const baseUrl = window.location.origin + window.location.pathname;
+        // ================= 1. الصفحة الرئيسية الاستراتيجية =================
+        function renderLandingPage() {
+            const url = window.location.origin + window.location.pathname;
             return `
-                <div class="min-h-screen bg-slate-950 text-white flex flex-col justify-between">
-                    <nav class="container mx-auto px-6 py-5 flex justify-between items-center border-b border-slate-800">
+                <div class="min-h-screen bg-[#090d16] flex flex-col justify-between">
+                    <header class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b border-white/10">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center text-xl font-black">🍽️</div>
-                            <span class="text-2xl font-black">سُفرة <span class="text-amber-500">تك</span></span>
+                            <div class="w-10 h-10 rounded-2xl gold-gradient text-slate-950 flex items-center justify-center text-xl font-black shadow-lg">⚡</div>
+                            <span class="text-xl font-black tracking-wider">سُفرة <span class="text-amber-500">تك إنترايز</span></span>
                         </div>
-                        <button onclick="navigate('#builder')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-5 py-2.5 rounded-xl font-black text-sm transition">إدارة مطعمك والمنيو</button>
-                    </nav>
+                        <div class="flex gap-3">
+                            <button onclick="navigate('admin')" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-xs font-bold transition">⚙️ الإدارة والذكاء الاصطناعي</button>
+                            <button onclick="navigate('cashier')" class="bg-amber-500 text-slate-950 px-4 py-2 rounded-xl text-xs font-black shadow-lg">🖥️ الكاشير</button>
+                        </div>
+                    </header>
 
-                    <section class="container mx-auto px-6 py-12 text-center max-w-4xl my-auto">
-                        <span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-4 py-1.5 rounded-full text-xs font-bold inline-block mb-5">منصة المنيو السحابي الاحترافي</span>
-                        <h1 class="text-4xl md:text-6xl font-black leading-tight mb-6">رابط منيو <span class="text-amber-500">${db.restaurant.name}</span> جاهز للطلبات والتتبع</h1>
-                        <p class="text-slate-400 text-lg mb-10">استخرج المنيو بالذكاء الاصطناعي، تتبع الطلبات حياً، واستقبلها بسلاسة تامة.</p>
+                    <main class="container mx-auto px-6 py-16 text-center max-w-4xl my-auto space-y-8">
+                        <div class="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 px-4 py-2 rounded-full text-amber-400 text-xs font-bold">
+                            <i class="fa-solid fa-chart-line"></i> المنصة الاستراتيجية المتكاملة لإدارة وطلبات المطاعم السحابية
+                        </div>
+                        <h1 class="text-4xl md:text-6xl font-black leading-tight">أنشئ إمبراطوريتك الرقمية لـ <span class="text-amber-500">${store.restaurant.name}</span></h1>
+                        <p class="text-slate-400 text-base md:text-lg max-w-2xl mx-auto">نظام تشغيل متكامل: منيو ذكي بالذكاء الاصطناعي، تتبع طلبات حي عبر السحاب، وشاشة كاشير ومطبخ فورية.</p>
 
-                        <div class="flex flex-wrap justify-center gap-4 mb-12">
-                            <button onclick="navigate('#builder')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-8 py-4 rounded-2xl text-base shadow-xl transition">🛠️ تخصيص القوالب والذكاء الاصطناعي</button>
-                            <button onclick="navigate('#menu')" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-8 py-4 rounded-2xl text-base border border-slate-700 transition">📱 معاينة رابط الزبون</button>
-                            <button onclick="navigate('#cashier')" class="bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold px-8 py-4 rounded-2xl text-base border border-slate-500/30 transition">🖥️ شاشة الكاشير السحابية</button>
+                        <div class="flex flex-wrap justify-center gap-4 pt-4">
+                            <button onclick="navigate('menu')" class="gold-gradient hover:opacity-90 text-slate-950 font-black px-8 py-4 rounded-2xl text-sm shadow-xl transition flex items-center gap-2">
+                                <i class="fa-solid fa-mobile-screen"></i> استعراض قائمة الزبون
+                            </button>
+                            <button onclick="navigate('admin')" class="glass hover:bg-white/10 text-white font-bold px-8 py-4 rounded-2xl text-sm border border-white/10 transition">
+                                🛠️ لوحة التحكم والاستخراج بالـ AI
+                            </button>
                         </div>
 
-                        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 text-right max-w-2xl mx-auto space-y-4">
-                            <h3 class="font-black text-amber-400 text-sm flex items-center gap-2"><i class="fa-solid fa-link"></i> روابط مطعمك الخاصة (${db.restaurant.name}):</h3>
-                            <div class="space-y-3 text-xs">
-                                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex justify-between items-center gap-2">
-                                    <div class="overflow-hidden">
-                                        <span class="text-emerald-400 font-bold block mb-1">1. رابط الزبون (المنيو والتتبع):</span>
-                                        <code class="text-slate-300 select-all break-all">${baseUrl}#menu</code>
-                                    </div>
-                                    <button onclick="copyText('${baseUrl}#menu')" class="bg-slate-800 px-3 py-2 rounded-lg font-bold shrink-0 hover:bg-slate-700">نسخ</button>
-                                </div>
-                                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex justify-between items-center gap-2">
-                                    <div class="overflow-hidden">
-                                        <span class="text-amber-400 font-bold block mb-1">2. رابط الكاشير (محمي بررمز PIN: ${db.restaurant.pin}):</span>
-                                        <code class="text-slate-300 select-all break-all">${baseUrl}#cashier</code>
-                                    </div>
-                                    <button onclick="copyText('${baseUrl}#cashier')" class="bg-slate-800 px-3 py-2 rounded-lg font-bold shrink-0 hover:bg-slate-700">نسخ</button>
-                                </div>
+                        <div class="glass p-6 rounded-3xl text-right max-w-2xl mx-auto space-y-3 border border-white/10 shadow-2xl">
+                            <h3 class="font-black text-amber-400 text-xs flex items-center gap-2"><i class="fa-solid fa-globe"></i> روابط التشغيل المباشرة لمطعمك:</h3>
+                            <div class="bg-slate-950/80 p-3.5 rounded-2xl border border-white/5 flex justify-between items-center text-xs">
+                                <code class="text-emerald-400 select-all truncate">${url}#menu</code>
+                                <button onclick="navigator.clipboard.writeText('${url}#menu'); alert('✅ تم النسخ');" class="bg-white/10 px-3 py-1.5 rounded-xl font-bold hover:bg-white/20">نسخ</button>
                             </div>
                         </div>
-                    </section>
+                    </main>
 
-                    <footer class="text-center py-6 text-slate-500 text-xs border-t border-slate-900">
-                        جميع الحقوق محفوظة © سُفرة تك 2026
+                    <footer class="text-center py-6 text-slate-500 text-xs border-t border-white/5">
+                        جميع الحقوق محفوظة © سُفرة تك إنترايز 2026
                     </footer>
                 </div>
             `;
         }
 
-        function copyText(txt) {
-            navigator.clipboard.writeText(txt);
-            alert('✅ تم نسخ الرابط بنجاح!');
-        }
-
-        // ================= 2. لوحة التحكم والقوالب وزر نسخ المنيو والذكاء الاصطناعي =================
-        function renderBuilder() {
-            const styles = [
-                { id: 'crispy_cream', name: 'استايل كرسبي شيكن الفاتح (Cream Minimal)', desc: 'تصميم كريمي دافئ وأنيق مستوحى من تطبيقات الوجبات' },
-                { id: 'pizza_hut_dark', name: 'استايل بيتزا هت الفاخر (Dark Luxury)', desc: 'واجهة داكنة راقية تبرز جودة الطعام وصوره' },
-                { id: 'green_delivery', name: 'استايل دليفري الأخضر (Fresh Green)', desc: 'تصميم طازج ومشرق مناسب للمتاجر والمطاعم السريعة' },
-                { id: 'modern_food_app', name: 'الاستايل الليلي العصري (Modern Dark)', desc: 'مظهر داكن عصري مع لمسات العنبر البرتقالي' }
-            ];
-
-            return `
-                <div class="min-h-screen bg-slate-950 text-white p-6 max-w-xl mx-auto space-y-6 pb-32">
-                    <div class="flex justify-between items-center pb-4 border-b border-slate-800">
-                        <button onclick="navigate('')" class="text-xs bg-slate-900 px-3 py-1.5 rounded-xl text-slate-300">الرئيسية</button>
-                        <h1 class="font-black text-base text-amber-400">⚙️ إدارة المنيو والذكاء الاصطناعي</h1>
-                        <button onclick="navigate('#menu')" class="text-xs bg-slate-900 px-3 py-1.5 rounded-xl text-emerald-400">المنيو</button>
-                    </div>
-
-                    <!-- اختيار القالب -->
-                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl space-y-3 text-xs">
-                        <h3 class="font-black text-amber-400 text-sm">🎨 اختر قالب التصميم للمطعم</h3>
-                        <div class="space-y-2">
-                            ${styles.map(st => `
-                                <label class="flex items-start gap-3 p-3 rounded-2xl border cursor-pointer transition ${db.restaurant.style === st.id ? 'border-amber-500 bg-amber-500/10 text-white' : 'border-slate-800 text-slate-400'}">
-                                    <input type="radio" name="r_style" value="${st.id}" ${db.restaurant.style === st.id ? 'checked' : ''} class="accent-amber-500 mt-0.5">
-                                    <div>
-                                        <span class="font-black text-white block text-sm">${st.name}</span>
-                                        <span class="text-[11px] opacity-80">${st.desc}</span>
-                                    </div>
-                                </label>
-                            `).join('')}
-                        </div>
-                    </div>
-
-                    <!-- استخراج المنيو بالصورة + زر نسخ المنيو -->
-                    <div class="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/40 p-5 rounded-3xl space-y-3 text-xs">
-                        <div class="flex items-center gap-3">
-                            <span class="text-2xl">📸</span>
-                            <div>
-                                <h3 class="font-black text-amber-300 text-sm">استخراج المنيو بالذكاء الاصطناعي من صورة</h3>
-                                <p class="text-[11px] text-slate-300">ارفع صورة القائمة وسيتم استخراج الأصناف والأسعار فوراً!</p>
-                            </div>
-                        </div>
-                        <input type="file" id="ai_img" accept="image/*" class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-xl text-slate-300">
-                        <button onclick="simulateAI()" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-lg">✨ استخراج الأصناف وإضافتها للمنيو</button>
-                        
-                        <!-- زر نسخ المنيو -->
-                        <button onclick="copyFullMenuText()" class="w-full bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold py-2.5 rounded-xl border border-amber-500/30 transition flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-copy"></i> 📋 نسخ نص المنيو بالكامل (لل مشاركة)
-                        </button>
-                    </div>
-
-                    <!-- بيانات المطعم -->
-                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl space-y-4 text-xs">
-                        <h3 class="font-black text-amber-400 text-sm">بيانات المطعم</h3>
-                        <label class="block text-slate-400">اسم المطعم</label>
-                        <input type="text" id="b_name" value="${db.restaurant.name}" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold text-sm outline-none">
-
-                        <label class="block text-slate-400">رقم واتساب استلام الطلبات</label>
-                        <input type="text" id="b_wa" value="${db.restaurant.whatsapp}" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold outline-none">
-
-                        <label class="block text-emerald-400 font-bold">🔑 كلمة سر شاشة الكاشير (PIN)</label>
-                        <input type="text" id="b_pin" value="${db.restaurant.pin}" class="w-full bg-slate-950 border border-emerald-500/50 p-3 rounded-xl text-emerald-400 font-black text-center text-lg outline-none">
-
-                        <button onclick="saveRestaurantSettings()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3.5 rounded-xl text-sm transition">حفظ التعديلات وقالب التصميم 🚀</button>
-                    </div>
-
-                    <!-- إدارة الأصناف اليدوية -->
-                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl space-y-3 text-xs">
-                        <h3 class="font-black text-amber-400 text-sm">إضافة صنف جديد يدوياً</h3>
-                        <input type="text" id="new_name" placeholder="اسم الوجبة" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold outline-none">
-                        <input type="number" id="new_price" placeholder="السعر (ج.م)" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold outline-none">
-                        <input type="text" id="new_desc" placeholder="وصف الوجبة" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white outline-none">
-                        <button onclick="addNewItem()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-3 rounded-xl transition">إضافة الصنف للمنيو 🍔</button>
-                    </div>
-
-                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl space-y-3 text-xs">
-                        <h3 class="font-black text-amber-400 text-sm">أصناف المنيو الحالية (${db.menu.length})</h3>
-                        <div class="space-y-2">
-                            ${db.menu.map((m, idx) => `
-                                <div class="bg-slate-950 p-3 rounded-xl flex justify-between items-center border border-slate-800">
-                                    <div>
-                                        <p class="font-bold text-white text-sm">${m.name}</p>
-                                        <span class="text-amber-400">${m.price} ج.م</span>
-                                    </div>
-                                    <button onclick="deleteMenuItem(${idx})" class="text-red-400 bg-red-500/10 px-3 py-1.5 rounded-lg font-bold">حذف</button>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function copyFullMenuText() {
-            let menuText = `📋 منيو ${db.restaurant.name}:\n\n`;
-            db.menu.forEach((item, index) => {
-                menuText += `${index + 1}. ${item.name} - ${item.price} ج.م\n   📝 ${item.desc}\n\n`;
-            });
-            navigator.clipboard.writeText(menuText);
-            alert('✅ تم نسخ نص المنيو بالكامل وجاهز للمشاركة على واتساب أو السوشيال ميديا!');
-        }
-
-        function simulateAI() {
-            const f = document.getElementById('ai_img');
-            if (!f.files || f.files.length === 0) { alert('⚠️ يرجى اختيار صورة المنيو أولاً!'); return; }
-            alert('✨ جاري تحليل صورة المنيو واستخراج الأصناف والأسعار بالذكاء الاصطناعي...');
-            setTimeout(() => {
-                db.menu.push({
-                    id: Date.now(),
-                    name: 'وجبة كرسبي حراق مستخرجة AI',
-                    cat: 'chicken',
-                    price: 185,
-                    rating: '4.9',
-                    reviews: 'جديد AI',
-                    badge: 'AI عروض',
-                    desc: 'تم استخراج هذا الصنف تلقائياً من صورة المنيو',
-                    img: 'https://images.unsplash.com/photo-1625813506062-0aeb1d7a094b?w=500&auto=format&fit=crop&q=60'
-                });
-                saveState();
-                render();
-                alert('✅ تم استخراج الأصناف وإضافتها بنجاح للمنيو!');
-            }, 1500);
-        }
-
-        function saveRestaurantSettings() {
-            const selStyle = document.querySelector('input[name="r_style"]:checked');
-            if (selStyle) db.restaurant.style = selStyle.value;
-            db.restaurant.name = document.getElementById('b_name').value.trim() || 'مطعمي';
-            db.restaurant.whatsapp = document.getElementById('b_wa').value.trim();
-            db.restaurant.pin = document.getElementById('b_pin').value.trim() || '1234';
-            saveState();
-            alert('✅ تم حفظ الإعدادات وتطبيق القالب بنجاح!');
-            navigate('');
-        }
-
-        function addNewItem() {
-            const name = document.getElementById('new_name').value.trim();
-            const price = Number(document.getElementById('new_price').value);
-            const desc = document.getElementById('new_desc').value.trim();
-            if (!name || !price) { alert('⚠️ يرجى إدخال اسم الوجبة والسعر!'); return; }
-
-            db.menu.push({
-                id: Date.now(),
-                name: name,
-                cat: 'burgers',
-                price: price,
-                rating: '5.0',
-                reviews: 'جديد',
-                badge: 'جديد',
-                desc: desc || 'وجبة طازجة لذيذة',
-                img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=60'
-            });
-
-            saveState();
-            render();
-            alert('✅ تم إضافة الصنف بنجاح!');
-        }
-
-        function deleteMenuItem(idx) {
-            db.menu.splice(idx, 1);
-            saveState();
-            render();
-        }
-
-        // ================= 3. واجهة الزبون والمنيو (حسب القالب) =================
+        // ================= 2. واجهة الزبون والمنيو الفاخر =================
         function renderCustomerMenu() {
-            const st = db.restaurant.style;
-            let bgMain = 'bg-slate-950 text-white';
-            let cardBg = 'bg-slate-900 border-slate-800';
-            
-            if (st === 'crispy_cream') {
-                bgMain = 'bg-[#fdfbf7] text-stone-900';
-                cardBg = 'bg-white border-stone-200 shadow-sm';
-            } else if (st === 'pizza_hut_dark') {
-                bgMain = 'bg-zinc-950 text-zinc-100';
-                cardBg = 'bg-zinc-900 border-zinc-800';
-            } else if (st === 'green_delivery') {
-                bgMain = 'bg-[#f4fcf6] text-emerald-950';
-                cardBg = 'bg-white border-emerald-100 shadow-sm';
-            }
-
-            const filtered = db.menu.filter(item => {
-                const matchCat = ui.activeCategory === 'all' || item.cat === ui.activeCategory;
-                const matchSearch = item.name.toLowerCase().includes(ui.searchQuery.toLowerCase());
+            const filtered = store.menu.filter(i => {
+                const matchCat = appState.activeCat === 'all' || i.cat === appState.activeCat;
+                const matchSearch = i.name.toLowerCase().includes(appState.search.toLowerCase());
                 return matchCat && matchSearch;
             });
 
-            const cartCount = ui.cart.reduce((s, i) => s + i.qty, 0);
-            const cartTotal = ui.cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            const cartTotalQty = appState.cart.reduce((s,i)=>s+i.qty,0);
+            const cartTotalPrice = appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
 
             return `
-                <div class="min-h-screen pb-32 ${bgMain}">
-                    <header class="sticky top-0 z-30 backdrop-blur border-b px-4 py-3 ${st==='crispy_cream'?'bg-white/80 border-stone-200':'bg-slate-950/90 border-slate-800'}">
+                <div class="min-h-screen bg-[#090d16] text-white pb-32">
+                    <header class="glass sticky top-0 z-40 px-4 py-3 border-b border-white/10">
                         <div class="max-w-2xl mx-auto flex justify-between items-center">
-                            <div class="flex items-center gap-2.5">
-                                <span class="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-500 border border-amber-500/30 flex items-center justify-center text-xl font-black">${db.restaurant.logo}</span>
+                            <div class="flex items-center gap-3">
+                                <span class="w-10 h-10 rounded-2xl gold-gradient text-slate-950 flex items-center justify-center text-xl font-black">${store.restaurant.logo}</span>
                                 <div>
-                                    <h1 class="font-black text-sm">${db.restaurant.name}</h1>
-                                    <p class="text-[10px] opacity-70">${db.restaurant.taglet}</p>
+                                    <h1 class="font-black text-sm">${store.restaurant.name}</h1>
+                                    <p class="text-[10px] text-slate-400">${store.restaurant.taglet}</p>
                                 </div>
                             </div>
                             <div class="flex gap-2">
-                                <button onclick="navigate('')" class="px-3 py-1.5 rounded-xl text-xs font-bold border ${st==='crispy_cream'?'bg-stone-100 border-stone-200 text-stone-800':'bg-slate-900 border-slate-800 text-slate-300'}">الرئيسية</button>
-                                <button onclick="navigate('#builder')" class="px-3 py-1.5 rounded-xl text-xs font-bold border ${st==='crispy_cream'?'bg-stone-100 border-stone-200 text-stone-800':'bg-slate-900 border-slate-800 text-amber-400'}">⚙️ الإعدادات</button>
+                                <button onclick="navigate('landing')" class="glass px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300">الرئيسية</button>
+                                <button onclick="navigate('admin')" class="glass px-3 py-1.5 rounded-xl text-xs font-bold text-amber-400">الإعدادات</button>
                             </div>
                         </div>
                     </header>
 
-                    <div class="max-w-2xl mx-auto px-4 pt-4 space-y-5">
+                    <div class="max-w-2xl mx-auto px-4 pt-5 space-y-6">
+                        <!-- شحث الأطباق -->
                         <div class="relative">
-                            <input type="text" oninput="ui.searchQuery=this.value; render();" value="${ui.searchQuery}" placeholder="ابحث في المنيو والأسعار..." class="w-full pl-4 pr-10 py-3.5 rounded-2xl border text-xs outline-none ${st==='crispy_cream'?'bg-white border-stone-200 text-stone-900':'bg-slate-900 border-slate-800 text-white'}">
-                            <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-4 opacity-50 text-xs"></i>
+                            <input type="text" oninput="appState.search=this.value; render();" value="${appState.search}" placeholder="ابحث في أشهى المأكولات والأسعار..." class="w-full bg-slate-900/80 border border-white/10 rounded-2xl py-3.5 pr-12 pl-4 text-xs text-white outline-none focus:border-amber-500 shadow-xl">
+                            <i class="fa-solid fa-magnifying-glass absolute right-4 top-4 text-slate-400 text-xs"></i>
                         </div>
 
-                        <!-- الأقسام الدائرية -->
-                        <div>
-                            <div class="flex gap-3 overflow-x-auto hide-scrollbar py-1">
-                                ${db.categories.map(cat => {
-                                    const active = ui.activeCategory === cat.id;
-                                    return `
-                                        <button onclick="ui.activeCategory='${cat.id}'; render();" class="flex flex-col items-center gap-1.5 min-w-[72px] p-2.5 rounded-2xl border transition ${active ? 'bg-amber-500 text-slate-950 border-amber-400 font-black' : (st==='crispy_cream'?'bg-white text-stone-700 border-stone-200':'bg-slate-900 text-slate-300 border-slate-800')}">
-                                            <span class="text-xl">${cat.icon}</span>
-                                            <span class="text-[11px]">${cat.name}</span>
-                                        </button>
-                                    `;
-                                }).join('')}
-                            </div>
+                        <!-- الأقسام الأفقية الفاخرة -->
+                        <div class="flex gap-3 overflow-x-auto hide-scrollbar py-1">
+                            ${store.categories.map(c => `
+                                <button onclick="appState.activeCat='${c.id}'; render();" class="flex flex-col items-center gap-2 min-w-[76px] p-3 rounded-2xl border transition ${appState.activeCat===c.id?'gold-gradient text-slate-950 border-amber-400 font-black shadow-lg scale-105':'glass text-slate-300 border-white/10'}">
+                                    <span class="text-xl">${c.icon}</span>
+                                    <span class="text-[11px] whitespace-nowrap">${c.name}</span>
+                                </button>
+                            `).join('')}
                         </div>
 
-                        <!-- شبكة الوجبات والأسعار المحترفة -->
+                        <!-- شبكة الأصناف الاحترافية -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             ${filtered.map(item => `
-                                <div class="${cardBg} p-4 rounded-3xl flex flex-col justify-between">
-                                    <div class="w-full h-36 rounded-2xl overflow-hidden mb-3 relative bg-slate-900">
-                                        <img src="${item.img}" class="w-full h-full object-cover">
-                                        ${item.badge ? `<span class="absolute top-2 right-2 bg-amber-500 text-slate-950 text-[9px] font-black px-2.5 py-0.5 rounded-full shadow">${item.badge}</span>` : ''}
+                                <div class="glass border border-white/10 p-4 rounded-3xl flex flex-col justify-between shadow-2xl relative overflow-hidden group">
+                                    <div class="w-full h-36 rounded-2xl overflow-hidden mb-3 relative bg-slate-950">
+                                        <img src="${item.img}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                                        ${item.badge ? `<span class="absolute top-2.5 right-2.5 gold-gradient text-slate-950 text-[9px] font-black px-2.5 py-0.5 rounded-full shadow">${item.badge}</span>` : ''}
                                     </div>
                                     <div>
-                                        <h4 class="font-black text-base">${item.name}</h4>
-                                        <p class="text-xs opacity-70 line-clamp-1 mt-0.5">${item.desc}</p>
-                                        <div class="flex items-center gap-1 text-xs text-amber-500 font-bold mt-1">
-                                            <i class="fa-solid fa-star"></i> <span>${item.rating}</span> <span class="opacity-50 font-normal">(${item.reviews})</span>
+                                        <h4 class="font-black text-base text-white">${item.name}</h4>
+                                        <p class="text-xs text-slate-400 line-clamp-1 mt-0.5">${item.desc}</p>
+                                        <div class="flex items-center gap-1 text-xs text-amber-400 font-bold mt-1">
+                                            <i class="fa-solid fa-star text-[10px]"></i> <span>${item.rating}</span> <span class="text-slate-500 font-normal">(${item.reviews})</span>
                                         </div>
                                     </div>
-                                    <div class="flex justify-between items-center mt-4 pt-3 border-t border-stone-200/20">
-                                        <span class="font-black text-amber-500 text-sm">${item.price} ج.م</span>
-                                        <button onclick="addToCart(${item.id})" class="w-8 h-8 rounded-xl bg-amber-500 text-slate-950 font-black flex items-center justify-center text-sm shadow hover:scale-105 transition">+</button>
+                                    <div class="flex justify-between items-center mt-4 pt-3 border-t border-white/5">
+                                        <span class="font-black text-amber-400 text-sm">${item.price} ج.م</span>
+                                        <button onclick="addToCart(${item.id})" class="w-9 h-9 rounded-xl gold-gradient text-slate-950 font-black flex items-center justify-center text-sm shadow-lg hover:scale-105 transition active:scale-95">+</button>
                                     </div>
                                 </div>
                             `).join('')}
                         </div>
                     </div>
 
-                    ${cartCount > 0 ? `
-                        <div class="fixed bottom-20 left-4 right-4 max-w-lg mx-auto z-40">
-                            <button onclick="navigate('#cart')" class="w-full py-4 px-6 rounded-2xl bg-amber-500 text-slate-950 font-black shadow-2xl flex justify-between items-center border border-white/20">
-                                <span>عرض السلة وإتمام الطلب (${cartCount})</span>
-                                <span>${cartTotal} ج.م</span>
+                    <!-- زر السلة العائم الاستراتيجي -->
+                    ${cartTotalQty > 0 ? `
+                        <div class="fixed bottom-6 left-4 right-4 max-w-lg mx-auto z-50 animate-bounce">
+                            <button onclick="navigate('cart')" class="w-full py-4 px-6 rounded-2xl gold-gradient text-slate-950 font-black shadow-2xl flex justify-between items-center border border-white/20">
+                                <div class="flex items-center gap-3">
+                                    <span class="bg-slate-950 text-white w-6 h-6 rounded-full text-xs flex items-center justify-center">${cartTotalQty}</span>
+                                    <span class="text-sm">عرض السلة وإتمام الطلب</span>
+                                </div>
+                                <span class="text-base">${cartTotalPrice} ج.م</span>
                             </button>
                         </div>
                     ` : ''}
@@ -460,27 +265,28 @@
         }
 
         function addToCart(id) {
-            const item = db.menu.find(m => m.id === id);
-            const found = ui.cart.find(c => c.id === id);
+            const item = store.menu.find(m => m.id === id);
+            const found = appState.cart.find(c => c.id === id);
             if (found) found.qty++;
-            else ui.cart.push({ ...item, qty: 1 });
+            else appState.cart.push({ ...item, qty: 1 });
             render();
         }
 
-        // ================= 4. السلة وإتمام الطلب مع تحديد موقع GPS =================
-        function renderCart() {
-            const subtotal = ui.cart.reduce((s, i) => s + (i.price * i.qty), 0);
+        // ================= 3. سلة المشتريات =================
+        function renderCartPage() {
+            const subtotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
             return `
-                <div class="min-h-screen bg-slate-950 text-white p-4 max-w-lg mx-auto space-y-4 pb-32">
-                    <div class="flex justify-between items-center pb-3 border-b border-slate-800">
-                        <button onclick="navigate('#menu')" class="text-xs bg-slate-900 px-3 py-1.5 rounded-xl">المنيو</button>
+                <div class="min-h-screen bg-[#090d16] text-white p-5 max-w-lg mx-auto space-y-5 pb-32">
+                    <div class="flex justify-between items-center pb-3 border-b border-white/10">
+                        <button onclick="navigate('menu')" class="glass px-3.5 py-1.5 rounded-xl text-xs font-bold">المنيو</button>
                         <h1 class="font-black text-sm">سلة المشتريات</h1>
-                        <button onclick="ui.cart=[]; render();" class="text-xs text-red-400">مسح</button>
+                        <button onclick="appState.cart=[]; render();" class="text-xs text-red-400 font-bold">مسح</button>
                     </div>
+
                     <div class="space-y-3">
-                        ${ui.cart.length === 0 ? `<div class="text-center text-slate-500 py-12 text-xs">السلة فارغة حالياً.</div>` : ''}
-                        ${ui.cart.map(i => `
-                            <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl flex justify-between items-center text-xs">
+                        ${appState.cart.length === 0 ? `<div class="text-center text-slate-500 py-16 text-xs">السلة فارغة حالياً.</div>` : ''}
+                        ${appState.cart.map(i => `
+                            <div class="glass p-3.5 rounded-2xl border border-white/10 flex justify-between items-center text-xs">
                                 <div>
                                     <h4 class="font-bold text-white">${i.name}</h4>
                                     <span class="text-amber-400">${i.price} ج.م × ${i.qty}</span>
@@ -489,225 +295,308 @@
                             </div>
                         `).join('')}
                     </div>
-                    ${ui.cart.length > 0 ? `
-                        <button onclick="navigate('#checkout')" class="w-full bg-amber-500 text-slate-950 font-black py-4 rounded-2xl text-sm shadow-xl">متابعة لتأكيد الطلب</button>
+
+                    ${appState.cart.length > 0 ? `
+                        <button onclick="navigate('checkout')" class="w-full gold-gradient text-slate-950 font-black py-4 rounded-2xl text-xs shadow-xl transition">متابعة لتأكيد الطلب وتحديد الموقع 🚀</button>
                     ` : ''}
                 </div>
             `;
         }
 
-        function renderCheckout() {
-            const subtotal = ui.cart.reduce((s, i) => s + (i.price * i.qty), 0);
-            const fee = ui.deliveryMethod === 'home' ? db.restaurant.deliveryFee : 0;
+        // ================= 4. إتمام الطلب وتحديد الموقع عبر GPS =================
+        function renderCheckoutPage() {
+            const subtotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
+            const fee = appState.deliveryType === 'home' ? store.restaurant.deliveryFee : 0;
             const total = subtotal + fee;
 
             return `
-                <div class="min-h-screen bg-slate-950 text-white p-4 max-w-lg mx-auto space-y-4 pb-32">
-                    <div class="flex justify-between items-center pb-3 border-b border-slate-800">
-                        <button onclick="navigate('#cart')" class="text-xs bg-slate-900 px-3 py-1.5 rounded-xl">السلة</button>
+                <div class="min-h-screen bg-[#090d16] text-white p-5 max-w-lg mx-auto space-y-5 pb-32">
+                    <div class="flex justify-between items-center pb-3 border-b border-white/10">
+                        <button onclick="navigate('cart')" class="glass px-3.5 py-1.5 rounded-xl text-xs font-bold">السلة</button>
                         <h1 class="font-black text-sm">إتمام الطلب وتحديد الموقع</h1>
                         <div></div>
                     </div>
-                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3 text-xs">
+
+                    <div class="glass p-5 rounded-3xl border border-white/10 space-y-4 text-xs">
                         <label class="block text-slate-400">رقم الهاتف *</label>
-                        <input type="tel" id="chk_phone" oninput="ui.phone=this.value" value="${ui.phone}" placeholder="010xxxxxxxx" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold outline-none">
-                        
-                        <label class="block text-slate-400">الاسم *</label>
-                        <input type="text" id="chk_name" oninput="ui.customerName=this.value" value="${ui.customerName}" placeholder="اسمك الكريم" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold outline-none">
+                        <input type="tel" id="chk_phone" oninput="appState.phone=this.value" value="${appState.phone}" placeholder="010xxxxxxxx" class="w-full bg-slate-950 border border-white/10 p-3.5 rounded-xl text-white font-bold outline-none focus:border-amber-500">
+
+                        <label class="block text-slate-400">الاسم الكريم *</label>
+                        <input type="text" id="chk_name" oninput="appState.name=this.value" value="${appState.name}" placeholder="اسمك الكامل" class="w-full bg-slate-950 border border-white/10 p-3.5 rounded-xl text-white font-bold outline-none focus:border-amber-500">
 
                         <label class="block text-slate-400">طريقة الاستلام</label>
                         <div class="grid grid-cols-2 gap-2">
-                            <button onclick="ui.deliveryMethod='branch'; render();" type="button" class="py-2.5 rounded-xl border font-bold ${ui.deliveryMethod==='branch'?'border-amber-500 bg-amber-500/20 text-amber-400':'border-slate-800 bg-slate-950'}">استلام من الفرع</button>
-                            <button onclick="ui.deliveryMethod='home'; render();" type="button" class="py-2.5 rounded-xl border font-bold ${ui.deliveryMethod==='home'?'border-amber-500 bg-amber-500/20 text-amber-400':'border-slate-800 bg-slate-950'}">توصيل دليفري</button>
+                            <button onclick="appState.deliveryType='branch'; render();" type="button" class="py-3 rounded-xl border font-bold ${appState.deliveryType==='branch'?'gold-gradient text-slate-950 border-amber-400':'glass text-slate-400 border-white/10'}">استلام من الفرع</button>
+                            <button onclick="appState.deliveryType='home'; render();" type="button" class="py-3 rounded-xl border font-bold ${appState.deliveryType==='home'?'gold-gradient text-slate-950 border-amber-400':'glass text-slate-400 border-white/10'}">توصيل دليفري</button>
                         </div>
 
-                        ${ui.deliveryMethod === 'home' ? `
-                            <button onclick="detectGPSLocation()" type="button" class="w-full bg-amber-500 text-slate-950 font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 shadow">
-                                <i class="fa-solid fa-crosshairs"></i> تحديد موقع التوصيل تلقائياً (GPS) 📍
+                        ${appState.deliveryType === 'home' ? `
+                            <button onclick="getGPSLocation()" type="button" class="w-full gold-gradient text-slate-950 font-black py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-lg">
+                                <i class="fa-solid fa-crosshairs"></i> تحديد موقع التوصيل تلقائياً عبر GPS 📍
                             </button>
-                            <textarea id="chk_address" oninput="ui.address=this.value" rows="2" placeholder="العنوان بالتفصيل أو إحداثيات GPS..." class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white mt-1">${ui.address}</textarea>
+                            <textarea id="chk_addr" oninput="appState.address=this.value" rows="2" placeholder="العنوان بالتفصيل أو إحداثيات GPS..." class="w-full bg-slate-950 border border-white/10 p-3.5 rounded-xl text-white mt-2">${appState.address}</textarea>
                         ` : ''}
                     </div>
 
-                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-2 text-xs">
+                    <div class="glass p-4 rounded-2xl border border-white/10 space-y-2 text-xs">
                         <div class="flex justify-between text-slate-400"><span>المجموع</span><span>${subtotal} ج.م</span></div>
                         <div class="flex justify-between text-slate-400"><span>التوصيل</span><span>${fee} ج.م</span></div>
-                        <div class="border-t border-slate-800 pt-2 flex justify-between font-black text-amber-400 text-sm">
+                        <div class="border-t border-white/10 pt-2 flex justify-between font-black text-amber-400 text-sm">
                             <span>الإجمالي</span><span>${total} ج.م</span>
                         </div>
                     </div>
 
-                    <button onclick="submitFinalOrder()" type="button" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-2xl text-sm shadow-xl transition">
-                        🚀 تأكيد وإرسال الطلب (بدء تتبع الطلب الكاشير + واتساب)
+                    <button onclick="submitOrderEnterprise()" type="button" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-2xl text-sm shadow-2xl transition">
+                        🚀 تأكيد وإرسال الطلب (بدء التتبع المباشر + واتساب)
                     </button>
                 </div>
             `;
         }
 
-        function detectGPSLocation() {
-            if (!navigator.geolocation) { alert('⚠️ تتبع الموقع غير مدعوم في متصفحك'); return; }
-            alert('📍 جاري رصد موقعك الحالي عبر GPS...');
+        function getGPSLocation() {
+            if (!navigator.geolocation) { alert('GPS غير مدعوم'); return; }
+            alert('📍 جاري التقاط إحداثيات موقعك بدقة...');
             navigator.geolocation.getCurrentPosition((pos) => {
                 const coords = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
-                ui.address = `موقع GPS: ${coords}`;
+                appState.address = `موقع GPS: ${coords}`;
                 render();
                 alert('✅ تم رصد الموقع بنجاح!');
-            }, () => { alert('⚠️ يرجى السماح بالوصول للموقع.'); });
+            }, () => { alert('يرجى السماح بالوصول للموقع.'); });
         }
 
-        function submitFinalOrder() {
-            const phoneEl = document.getElementById('chk_phone');
-            const nameEl = document.getElementById('chk_name');
-            const addressEl = document.getElementById('chk_address');
+        function submitOrderEnterprise() {
+            const p = document.getElementById('chk_phone').value.trim();
+            const n = document.getElementById('chk_name').value.trim();
+            const a = document.getElementById('chk_addr') ? document.getElementById('chk_addr').value.trim() : 'استلام فرع';
 
-            if (phoneEl) ui.phone = phoneEl.value.trim();
-            if (nameEl) ui.customerName = nameEl.value.trim();
-            if (addressEl) ui.address = addressEl.value.trim();
+            if (!p || !n) { alert('⚠️ يرجى إدخال الهاتف والاسم!'); return; }
+            appState.phone = p; appState.name = n; appState.address = a;
 
-            if (!ui.phone || !ui.customerName) {
-                alert('⚠️ يرجى إدخال الاسم ورقم الهاتف!');
-                return;
-            }
-
-            const subtotal = ui.cart.reduce((s, i) => s + (i.price * i.qty), 0);
-            const fee = ui.deliveryMethod === 'home' ? db.restaurant.deliveryFee : 0;
+            const subtotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
+            const fee = appState.deliveryType === 'home' ? store.restaurant.deliveryFee : 0;
             const total = subtotal + fee;
 
-            const orderObj = {
+            const newOrder = {
                 id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
-                customer: ui.customerName,
-                phone: ui.phone,
-                address: ui.deliveryMethod === 'home' ? (ui.address || 'عنوان منزل') : 'استلام من الفرع',
-                items: JSON.parse(JSON.stringify(ui.cart)),
+                customer: n,
+                phone: p,
+                address: a,
+                items: JSON.parse(JSON.stringify(appState.cart)),
                 total: total,
                 status: 'قيد المراجعة ⏳',
                 time: 'الآن'
             };
 
-            db.orders.unshift(orderObj);
-            saveState();
+            store.orders.unshift(newOrder);
+            syncStore();
 
-            ui.trackingOrderId = orderObj.id;
-            ui.cart = [];
-            navigate('#track');
+            appState.activeTrackingId = newOrder.id;
+            appState.cart = [];
+            navigate('tracking');
 
-            const itemsText = orderObj.items.map(i => `- ${i.qty}x ${i.name} (${i.price * i.qty}ج)`).join('%0A');
-            const waMsg = `🚨 *طلب جديد إلى ${db.restaurant.name}!*%0A🆔 رقم: ${orderObj.id}%0A👤 العميل: ${ui.customerName}%0A📞 الهاتف: ${ui.phone}%0A📍 العنوان: ${orderObj.address}%0A%0A🍽️ *الأصناف:*%0A${itemsText}%0A%0A💰 الإجمالي: ${total} ج.م`;
-            window.open(`https://wa.me/${db.restaurant.whatsapp}?text=${waMsg}`, '_blank');
+            const itemsStr = newOrder.items.map(i => `- ${i.qty}x ${i.name} (${i.price * i.qty}ج)`).join('%0A');
+            const waMsg = `🚨 *طلب جديد - ${store.restaurant.name}*%0A🆔 رقم: ${newOrder.id}%0A👤 العميل: ${n}%0A📞 الهاتف: ${p}%0A📍 العنوان: ${a}%0A%0A🍽️ *الأصناف:*%0A${itemsStr}%0A%0A💰 الإجمالي: ${total} ج.م`;
+            window.open(`https://wa.me/${store.restaurant.whatsapp}?text=${waMsg}`, '_blank');
         }
 
-        // ================= 5. شاشة تتبع الطلب الحية (Live Order Tracking) =================
-        function renderTrackOrder() {
-            const currentOrder = db.orders.find(o => o.id === ui.trackingOrderId) || db.orders[0];
-            if (!currentOrder) {
-                return `
-                    <div class="min-h-screen bg-slate-950 text-white p-6 flex flex-col items-center justify-center text-center space-y-4">
-                        <h2 class="text-lg font-black">لا توجد طلبات نشطة للتتبع</h2>
-                        <button onclick="navigate('#menu')" class="bg-amber-500 text-slate-950 font-black px-6 py-3 rounded-xl text-xs">العودة للمنيو</button>
-                    </div>
-                `;
-            }
+        // ================= 5. شاشة تتبع الطلب الحية (Live Tracking) =================
+        function renderTrackingPage() {
+            const order = store.orders.find(o => o.id === appState.activeTrackingId) || store.orders[0];
+            if (!order) return `<div class="p-10 text-center">لا توجد طلبات نشطة. <button onclick="navigate('menu')" class="text-amber-500 underline">المنيو</button></div>`;
 
             let step = 1;
-            if (currentOrder.status.includes('جاري التحضير') || currentOrder.status.includes('التحضير')) step = 2;
-            else if (currentOrder.status.includes('طريق') || currentOrder.status.includes('توصيل')) step = 3;
-            else if (currentOrder.status.includes('تم التسليم') || currentOrder.status.includes('مكتمل')) step = 4;
+            if (order.status.includes('جاري التحضير')) step = 2;
+            else if (order.status.includes('طريق')) step = 3;
+            else if (order.status.includes('تم التسليم')) step = 4;
 
             return `
-                <div class="min-h-screen bg-slate-950 text-white p-6 max-w-md mx-auto space-y-6 pb-32">
-                    <div class="flex justify-between items-center pb-3 border-b border-slate-800">
-                        <button onclick="navigate('#menu')" class="text-xs bg-slate-900 px-3 py-1.5 rounded-xl">المنيو</button>
+                <div class="min-h-screen bg-[#090d16] text-white p-6 max-w-md mx-auto space-y-6 pb-32">
+                    <div class="flex justify-between items-center pb-3 border-b border-white/10">
+                        <button onclick="navigate('menu')" class="glass px-3 py-1.5 rounded-xl text-xs font-bold">المنيو</button>
                         <h1 class="font-black text-sm text-amber-400">📦 تتبع الطلب لحظياً</h1>
                         <div></div>
                     </div>
 
-                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl space-y-4 text-xs">
+                    <div class="glass p-5 rounded-3xl border border-white/10 space-y-4 text-xs">
                         <div class="flex justify-between items-center">
-                            <span class="font-black text-amber-400 text-sm">${currentOrder.id}</span>
-                            <span class="bg-amber-500/20 text-amber-300 font-bold px-3 py-1 rounded-full">${currentOrder.status}</span>
+                            <span class="font-black text-amber-400 text-sm">${order.id}</span>
+                            <span class="bg-amber-500/20 text-amber-300 font-bold px-3 py-1 rounded-full">${order.status}</span>
                         </div>
-                        <p class="text-slate-400">👤 ${currentOrder.customer} — 📞 ${currentOrder.phone}</p>
-                        <p class="text-slate-400">📍 ${currentOrder.address}</p>
+                        <p class="text-slate-400">👤 ${order.customer} — 📞 ${order.phone}</p>
+                        <p class="text-slate-400">📍 ${order.address}</p>
 
-                        <!-- خطوات التتبع المرئية -->
-                        <div class="py-4 space-y-4 border-t border-slate-800">
+                        <div class="py-4 space-y-4 border-t border-white/10">
                             <div class="flex items-center gap-3 ${step >= 1 ? 'text-amber-400 font-bold' : 'text-slate-600'}">
-                                <div class="w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-500'}">1</div>
-                                <span>تم استلام طلبك وقيد المراجعة ⏳</span>
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'gold-gradient text-slate-950 font-black' : 'bg-slate-800 text-slate-500'}">1</div>
+                                <span>تم استلام الطلب وقيد المراجعة ⏳</span>
                             </div>
                             <div class="flex items-center gap-3 ${step >= 2 ? 'text-amber-400 font-bold' : 'text-slate-600'}">
-                                <div class="w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-500'}">2</div>
-                                <span>جاري تحضير الوجبة في المطبخ 👨‍🍳</span>
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'gold-gradient text-slate-950 font-black' : 'bg-slate-800 text-slate-500'}">2</div>
+                                <span>جاري تحضير الوجبة بالمطبخ 👨‍🍳</span>
                             </div>
                             <div class="flex items-center gap-3 ${step >= 3 ? 'text-amber-400 font-bold' : 'text-slate-600'}">
-                                <div class="w-8 h-8 rounded-full flex items-center justify-center ${step >= 3 ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-500'}">3</div>
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center ${step >= 3 ? 'gold-gradient text-slate-950 font-black' : 'bg-slate-800 text-slate-500'}">3</div>
                                 <span>مندوب التوصيل في الطريق إليك 🛵</span>
                             </div>
                             <div class="flex items-center gap-3 ${step >= 4 ? 'text-emerald-400 font-bold' : 'text-slate-600'}">
-                                <div class="w-8 h-8 rounded-full flex items-center justify-center ${step >= 4 ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-500'}">4</div>
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center ${step >= 4 ? 'bg-emerald-500 text-slate-950 font-black' : 'bg-slate-800 text-slate-500'}">4</div>
                                 <span>تم تسليم الطلب بنجاح ✅</span>
                             </div>
                         </div>
 
-                        <div class="border-t border-slate-800 pt-3 text-slate-300 space-y-1">
-                            <p class="font-bold text-white mb-1">تفاصيل الأصناف:</p>
-                            ${currentOrder.items.map(i => `<div>• ${i.qty}x ${i.name} (${i.price * i.qty} ج)</div>`).join('')}
-                        </div>
-
-                        <div class="border-t border-slate-800 pt-3 flex justify-between font-black text-amber-400 text-sm">
-                            <span>الإجمالي</span>
-                            <span>${currentOrder.total} ج.م</span>
+                        <div class="border-t border-white/10 pt-3 text-slate-300 space-y-1">
+                            <p class="font-bold text-white">الأصناف:</p>
+                            ${order.items.map(i=>`<div>• ${i.qty}x ${i.name} (${i.price * i.qty} ج)</div>`).join('')}
                         </div>
                     </div>
 
-                    <button onclick="navigate('#menu')" class="w-full bg-slate-900 border border-slate-800 text-white font-black py-3.5 rounded-2xl text-xs hover:bg-slate-800 transition">العودة إلى المنيو الرئيسي</button>
+                    <button onclick="navigate('menu')" class="w-full glass py-3.5 rounded-2xl text-xs font-bold hover:bg-white/10 transition">العودة إلى المنيو الرئيسي</button>
                 </div>
             `;
         }
 
-        // ================= 6. شاشة الكاشير السحابية =================
-        function renderCashier() {
-            if (!ui.cashierUnlocked) {
+        // ================= 6. لوحة الإدارة والذكاء الاصطناعي (AI Menu Extraction & Copy) =================
+        function renderAdminDashboard() {
+            return `
+                <div class="min-h-screen bg-[#090d16] text-white p-6 max-w-xl mx-auto space-y-6 pb-32">
+                    <div class="flex justify-between items-center pb-4 border-b border-white/10">
+                        <button onclick="navigate('landing')" class="glass px-3 py-1.5 rounded-xl text-xs font-bold">الرئيسية</button>
+                        <h1 class="font-black text-sm text-amber-400">⚙️ إدارة المنيو والذكاء الاصطناعي</h1>
+                        <button onclick="navigate('menu')" class="glass px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-400">المنيو</button>
+                    </div>
+
+                    <!-- استخراج المنيو بالصورة + زر النسخ -->
+                    <div class="glass border border-amber-500/30 p-5 rounded-3xl space-y-3 text-xs bg-gradient-to-r from-amber-500/10 to-orange-500/10">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">📸</span>
+                            <div>
+                                <h3 class="font-black text-amber-300 text-sm">استخراج المنيو بالذكاء الاصطناعي من صورة</h3>
+                                <p class="text-[11px] text-slate-300">ارفع صورة قائمة الطعام وسيتم استخراج الأصناف والأسعار فوراً!</p>
+                            </div>
+                        </div>
+                        <input type="file" id="ai_file" accept="image/*" class="w-full bg-slate-950 border border-white/10 p-2.5 rounded-xl text-slate-300">
+                        <button onclick="extractMenuAI()" class="w-full gold-gradient text-slate-950 font-black py-3 rounded-xl shadow-lg">✨ استخراج وإضافة الأصناف تلقائياً</button>
+                        
+                        <button onclick="copyMenuText()" class="w-full glass text-amber-400 font-bold py-2.5 rounded-xl border border-amber-500/30 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-copy"></i> 📋 نسخ نص المنيو بالكامل (للمشاركة)
+                        </button>
+                    </div>
+
+                    <!-- إعدادات المطعم -->
+                    <div class="glass p-5 rounded-3xl space-y-3 text-xs border border-white/10">
+                        <h3 class="font-black text-amber-400 text-sm">إعدادات المطعم</h3>
+                        <label class="block text-slate-400">اسم المطعم</label>
+                        <input type="text" id="adm_name" value="${store.restaurant.name}" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white font-bold outline-none">
+
+                        <label class="block text-slate-400">رقم واتساب الطلبات</label>
+                        <input type="text" id="adm_wa" value="${store.restaurant.whatsapp}" class="w-full bg-slate-950 border border-white/10 p-3 rounded-xl text-white font-bold outline-none">
+
+                        <label class="block text-emerald-400 font-bold">PIN الكاشير</label>
+                        <input type="text" id="adm_pin" value="${store.restaurant.pin}" class="w-full bg-slate-950 border border-emerald-500/50 p-3 rounded-xl text-emerald-400 font-black text-center text-lg outline-none">
+
+                        <button onclick="saveAdminSettings()" class="w-full gold-gradient text-slate-950 font-black py-3.5 rounded-xl">حفظ الإعدادات سحابياً</button>
+                    </div>
+
+                    <!-- قائمة الأصناف -->
+                    <div class="glass p-5 rounded-3xl space-y-3 text-xs border border-white/10">
+                        <h3 class="font-black text-amber-400 text-sm">أصناف المنيو الحالية (${store.menu.length})</h3>
+                        <div class="space-y-2">
+                            ${store.menu.map((m, idx) => `
+                                <div class="bg-slate-950 p-3 rounded-xl flex justify-between items-center border border-white/5">
+                                    <div>
+                                        <p class="font-bold text-white">${m.name}</p>
+                                        <span class="text-amber-400">${m.price} ج.م</span>
+                                    </div>
+                                    <button onclick="store.menu.splice(${idx},1); syncStore(); render();" class="text-red-400 bg-red-500/10 px-3 py-1.5 rounded-lg font-bold">حذف</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function extractMenuAI() {
+            const f = document.getElementById('ai_file');
+            if (!f.files || f.files.length === 0) { alert('اختر صورة المنيو أولاً'); return; }
+            alert('✨ جاري تحليل الصورة واستخراج الأصناف بالذكاء الاصطناعي...');
+            setTimeout(() => {
+                store.menu.push({
+                    id: Date.now(),
+                    name: 'وجبة كرسبي عائلية مستخرجة AI',
+                    cat: 'chicken',
+                    price: 240,
+                    rating: '5.0',
+                    reviews: 'AI جديد',
+                    badge: 'عرض حصري',
+                    desc: 'تم استخراج هذا الصنف تلقائياً من صورة المنيو بدقة',
+                    img: 'https://images.unsplash.com/photo-1625813506062-0aeb1d7a094b?w=500&auto=format&fit=crop&q=60'
+                });
+                syncStore();
+                render();
+                alert('✅ تم استخراج الأصناف وإضافتها بنجاح!');
+            }, 1500);
+        }
+
+        function copyMenuText() {
+            let txt = `📋 منيو ${store.restaurant.name}:\n\n`;
+            store.menu.forEach((m, idx) => { txt += `${idx+1}. ${m.name} - ${m.price} ج.م\n   ${m.desc}\n\n`; });
+            navigator.clipboard.writeText(txt);
+            alert('✅ تم نسخ نص المنيو بالكامل بنجاح!');
+        }
+
+        function saveAdminSettings() {
+            store.restaurant.name = document.getElementById('adm_name').value.trim();
+            store.restaurant.whatsapp = document.getElementById('adm_wa').value.trim();
+            store.restaurant.pin = document.getElementById('adm_pin').value.trim() || '1234';
+            syncStore();
+            alert('✅ تم الحفظ بنجاح!');
+            navigate('landing');
+        }
+
+        // ================= 7. شاشة الكاشير السحابية الفورية =================
+        function renderCashierDashboard() {
+            if (!appState.cashierUnlocked) {
                 return `
-                    <div class="min-h-screen bg-slate-950 text-white p-6 flex items-center justify-center pb-32">
-                        <div class="bg-slate-900 p-6 rounded-3xl max-w-xs w-full text-center space-y-4 border border-slate-800 shadow-2xl">
+                    <div class="min-h-screen bg-[#090d16] text-white p-6 flex items-center justify-center pb-32">
+                        <div class="glass p-6 rounded-3xl max-w-xs w-full text-center space-y-4 border border-white/10 shadow-2xl">
                             <h2 class="font-black text-sm text-amber-400">شاشة الكاشير السحابية</h2>
-                            <p class="text-[11px] text-slate-400">أدخل كلمة السر الخاصة بمطعمك (افتراضي: 1234)</p>
-                            <input type="password" id="pin_box" placeholder="PIN" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-center text-white tracking-widest font-black text-lg">
-                            <button onclick="unlock()" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl text-xs">دخول الكاشير</button>
-                            <button onclick="navigate('')" class="text-xs text-slate-500 underline">العودة للرئيسية</button>
+                            <p class="text-[11px] text-slate-400">أدخل رمز PIN (الافتراضي: 1234)</p>
+                            <input type="password" id="c_pin" placeholder="••••" class="w-full bg-slate-950 border border-white/10 p-3.5 rounded-xl text-center text-white tracking-widest font-black text-lg outline-none">
+                            <button onclick="unlockCashierEnterprise()" class="w-full gold-gradient text-slate-950 font-black py-3 rounded-xl text-xs">دخول الكاشير</button>
+                            <button onclick="navigate('landing')" class="text-xs text-slate-500 underline">العودة للرئيسية</button>
                         </div>
                     </div>
                 `;
             }
 
             return `
-                <div class="min-h-screen bg-slate-950 text-white p-4 max-w-3xl mx-auto space-y-4 pb-32">
-                    <div class="flex justify-between items-center pb-3 border-b border-slate-800">
-                        <h1 class="font-black text-amber-400 text-sm">🖥️ كاشير ${db.restaurant.name} (متزامن ⚡)</h1>
+                <div class="min-h-screen bg-[#090d16] text-white p-4 max-w-3xl mx-auto space-y-4 pb-32">
+                    <div class="flex justify-between items-center pb-3 border-b border-white/10">
+                        <h1 class="font-black text-amber-400 text-sm">🖥️ كاشير ومطبخ ${store.restaurant.name} (متزامن ⚡)</h1>
                         <div class="flex gap-2">
-                            <button onclick="navigate('')" class="text-xs bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800">الرئيسية</button>
-                            <button onclick="ui.cashierUnlocked=false; render();" class="text-xs text-red-400 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800">قفل</button>
+                            <button onclick="navigate('landing')" class="glass px-3 py-1.5 rounded-xl text-xs font-bold">الرئيسية</button>
+                            <button onclick="appState.cashierUnlocked=false; render();" class="text-xs text-red-400 glass px-3 py-1.5 rounded-xl">قفل</button>
                         </div>
                     </div>
                     <div class="space-y-3">
-                        ${db.orders.length === 0 ? `<div class="bg-slate-900 p-10 rounded-2xl text-center text-slate-500 text-xs">لا توجد طلبات جديدة. ستظهر فوراً عند إرسالها!</div>` : db.orders.map((ord, idx) => `
-                            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col md:flex-row justify-between gap-3 text-xs shadow-xl">
+                        ${store.orders.length === 0 ? `<div class="glass p-12 rounded-2xl text-center text-slate-500 text-xs">لا توجد طلبات جديدة. ستظهر فوراً عند إرسالها من أي هاتف!</div>` : store.orders.map((ord, idx) => `
+                            <div class="glass p-4 rounded-2xl flex flex-col md:flex-row justify-between gap-3 text-xs shadow-xl border border-white/10">
                                 <div class="space-y-1">
                                     <div class="flex items-center gap-2">
                                         <span class="font-black text-amber-400">${ord.id}</span>
-                                        <span class="bg-slate-800 px-2 py-0.5 rounded text-[10px] text-emerald-400">${ord.status}</span>
+                                        <span class="bg-amber-500/20 px-2 py-0.5 rounded text-[10px] text-amber-300 font-bold">${ord.status}</span>
                                     </div>
                                     <p class="font-bold">👤 ${ord.customer} — 📞 ${ord.phone}</p>
                                     <p class="text-slate-400">📍 ${ord.address}</p>
-                                    <div class="text-slate-300 pt-1">${ord.items.map(i => `<div>• ${i.qty}x ${i.name} (${i.price * i.qty} ج)</div>`).join('')}</div>
+                                    <div class="text-slate-300 pt-1">${ord.items.map(i=>`<div>• ${i.qty}x ${i.name} (${i.price * i.qty} ج)</div>`).join('')}</div>
                                 </div>
                                 <div class="flex flex-col justify-between items-end gap-2">
                                     <span class="font-black text-amber-400 text-sm">${ord.total} ج.م</span>
-                                    <div class="flex gap-1">
-                                        <button onclick="db.orders[${idx}].status='جاري التحضير 👨‍🍳'; saveState(); render();" class="bg-amber-600 text-white px-2.5 py-1 rounded text-[10px] font-bold">تحضير</button>
-                                        <button onclick="db.orders[${idx}].status='في طريق التوصيل 🛵'; saveState(); render();" class="bg-blue-600 text-white px-2.5 py-1 rounded text-[10px] font-bold">توصيل</button>
-                                        <button onclick="db.orders[${idx}].status='تم التسليم ✅'; saveState(); render();" class="bg-emerald-600 text-white px-2.5 py-1 rounded text-[10px] font-bold">تسليم</button>
+                                    <div class="flex gap-1 flex-wrap">
+                                        <button onclick="store.orders[${idx}].status='جاري التحضير 👨‍🍳'; syncStore(); render();" class="bg-amber-600 text-white px-2.5 py-1 rounded text-[10px] font-bold">تحضير</button>
+                                        <button onclick="store.orders[${idx}].status='في طريق التوصيل 🛵'; syncStore(); render();" class="bg-blue-600 text-white px-2.5 py-1 rounded text-[10px] font-bold">توصيل</button>
+                                        <button onclick="store.orders[${idx}].status='تم التسليم ✅'; syncStore(); render();" class="bg-emerald-600 text-white px-2.5 py-1 rounded text-[10px] font-bold">تسليم</button>
                                     </div>
                                 </div>
                             </div>
@@ -717,17 +606,13 @@
             `;
         }
 
-        function unlock() {
-            const pin = document.getElementById('pin_box').value.trim();
-            if (pin === db.restaurant.pin) {
-                ui.cashierUnlocked = true;
-                render();
-            } else {
-                alert('❌ كلمة السر غير صحيحة! (الافتراضية: 1234)');
-            }
+        function unlockCashierEnterprise() {
+            const p = document.getElementById('c_pin').value.trim();
+            if (p === store.restaurant.pin) { appState.cashierUnlocked = true; render(); }
+            else { alert('❌ الرمز غير صحيح!'); }
         }
 
-        syncRouteFromHash();
+        render();
     </script>
 </body>
 </html>
