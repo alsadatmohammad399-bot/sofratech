@@ -7,8 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script>
         tailwind.config = { theme: { extend: { fontFamily: { cairo: ['Cairo', 'sans-serif'] } } } }
     </script>
@@ -25,27 +23,10 @@
     <div id="app"></div>
 
     <script>
-        // إعدادات آمنة لـ Firebase لمنع التهنيج
-        const firebaseConfig = {
-            apiKey: "AIzaSyCVofMvvbyMBGM1pQNeoG-gMT48Ll5IL4I",
-            authDomain: "sofratech-2e033.firebaseapp.com",
-            databaseURL: "https://sofratech-2e033-default-rtdb.firebaseio.com",
-            projectId: "sofratech-2e033",
-            storageBucket: "sofratech-2e033.firebasestorage.app",
-            messagingSenderId: "742714705801",
-            appId: "1:742714705801:web:ddd019d66fa7435f6f8358"
-        };
-        let cloudDB = null;
-        try { 
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig); 
-            }
-            cloudDB = firebase.database(); 
-        } catch (e) { console.log("Offline mode active"); }
-
         const PLATFORM_OWNER = { walletNumber: '01015861991', monthlyPrice: 600, adminPass: '2030' };
 
-        let globalDB = JSON.parse(localStorage.getItem('tablia_multitenant_2030_v8')) || {
+        // قاعدة البيانات المحلية الفورية الآمنة 100% ضد الشاشة السوداء
+        let globalDB = JSON.parse(localStorage.getItem('tablia_multitenant_2030_v9')) || {
             restaurants: {
                 "rest_demo": {
                     id: "rest_demo", ownerName: "محمد الحاتي", name: "مشويات الحاتي الفاخرة", phone: "01015861991", pass: "1234",
@@ -70,12 +51,9 @@
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_multitenant_2030_v8', JSON.stringify(globalDB));
-                if (cloudDB) {
-                    cloudDB.ref('tablia_multitenant_enterprise_2030_v8').set(globalDB).catch(() => {});
-                }
+                localStorage.setItem('tablia_multitenant_2030_v9', JSON.stringify(globalDB));
             } catch (e) {
-                console.error("Sync error", e);
+                console.error("Storage error", e);
             }
         }
 
@@ -95,7 +73,6 @@
 
         function setPage(p){ appState.page=p; render(); window.scrollTo(0,0); }
 
-        // نظام الحماية القصوى لمنع الشاشة السوداء نهائياً
         function render(){
             const root = document.getElementById('app');
             if(!root) return;
@@ -112,8 +89,8 @@
                 const bottomBar = isCustomerMode ? '' : renderBottomNav();
                 root.innerHTML = content + bottomBar;
             } catch(err) {
-                console.error("Render Crash Prevented:", err);
-                root.innerHTML = `<div class="min-h-screen flex items-center justify-center p-6 text-center bg-slate-950 text-white"><div class="glass p-6 rounded-3xl space-y-4 max-w-sm"><h2 class="text-amber-400 font-black text-base">تم حماية التطبيق من التعليق</h2><p class="text-xs text-slate-400">حدث خطأ مؤقت وتم إيقافه لمنع الشاشة السوداء.</p><button onclick="localStorage.clear(); location.reload();" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl text-xs">إعادة ضبط وتشغيل فوري</button></div></div>`;
+                console.error("Render error:", err);
+                root.innerHTML = `<div class="min-h-screen flex items-center justify-center p-6 text-center bg-slate-950 text-white"><div class="glass p-6 rounded-3xl space-y-4 max-w-sm"><h2 class="text-amber-400 font-black text-base">تم تأمين التطبيق</h2><p class="text-xs text-slate-400">حدث خطأ في العرض وتم منعه.</p><button onclick="localStorage.clear(); location.reload();" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl text-xs">إعادة تشغيل فورية</button></div></div>`;
             }
         }
 
@@ -277,6 +254,7 @@
             const base=location.origin+location.pathname+`?view=menu&rest=${rest.id}&t=`;
             return `${renderNav()}<div class="max-w-3xl mx-auto px-4 py-6 space-y-4 text-xs"><div class="flex justify-between bg-slate-900 p-4 rounded-2xl"><h1 class="font-black text-white">QR للطاولات - ${rest.name}</h1><button onclick="window.print()" class="gold-gradient text-slate-950 px-3 py-2 rounded-xl font-black">اطبع الآن</button></div><div class="grid grid-cols-2 sm:grid-cols-4 gap-2">${Array.from({length:rest.tablesCount},(_,i)=>i+1).map(n=>`<div class="bg-white p-2 rounded-xl text-center"><div class="font-black text-[11px] text-black">طاولة ${n}</div><img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(base+n)}" class="w-20 h-20 mx-auto"></div>`).join('')}</div></div>`;
         }
+        
         render();
     </script>
 </body>
