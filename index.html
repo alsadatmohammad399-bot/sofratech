@@ -43,23 +43,29 @@
 
         const PLATFORM_OWNER = { walletNumber: '01015861991', monthlyPrice: 600, adminPass: '2030' };
 
-        let savedData = null;
+        // جارد أمان للبيانات لمنع أي تلف
+        let globalDB = { restaurants: {} };
         try {
-            savedData = JSON.parse(localStorage.getItem('tablia_multitenant_2030_v17'));
+            const raw = localStorage.getItem('tablia_multitenant_2030_v18');
+            if (raw) {
+                globalDB = JSON.parse(raw);
+            }
         } catch(e) {}
 
-        let globalDB = savedData || {
-            restaurants: {
-                "rest_demo": {
-                    id: "rest_demo", ownerName: "محمد الحاتي", name: "مشويات الحاتي الفاخرة", phone: "01015861991", pass: "1234",
-                    template_id: "foodera-modern", layout: "foodera", theme: { primary: "#ea580c", bg: "#030712" }, tablesCount: 20,
-                    subscription: { isActive: true, expiresAt: Date.now() + 30*24*60*60*1000 },
-                    categories: [{ id: 'cat_1', name: 'المشويات', icon: '🥩' }, { id: 'cat_2', name: 'السندوتشات', icon: '🥙' }],
-                    menu_items: [{ id: 'itm_1', category_id: 'cat_1', name: 'كيلو كباب وكفتة', description: 'لحم بلدي مشوي عالفحم', price: 680, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500', is_available: true, tags: [] }],
-                    orders: []
+        if (!globalDB || !globalDB.restaurants || typeof globalDB.restaurants !== 'object') {
+            globalDB = {
+                restaurants: {
+                    "rest_demo": {
+                        id: "rest_demo", ownerName: "محمد الحاتي", name: "مشويات الحاتي الفاخرة", phone: "01015861991", pass: "1234",
+                        template_id: "foodera-modern", layout: "foodera", theme: { primary: "#ea580c", bg: "#030712" }, tablesCount: 20,
+                        subscription: { isActive: true, expiresAt: Date.now() + 30*24*60*60*1000 },
+                        categories: [{ id: 'cat_1', name: 'المشويات', icon: '🥩' }, { id: 'cat_2', name: 'السندوتشات', icon: '🥙' }],
+                        menu_items: [{ id: 'itm_1', category_id: 'cat_1', name: 'كيلو كباب وكفتة', description: 'لحم بلدي مشوي عالفحم', price: 680, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500', is_available: true, tags: [] }],
+                        orders: []
+                    }
                 }
-            }
-        };
+            };
+        }
 
         const TEMPLATES_CATALOG = [
             { id: 'foodera-modern', name: 'Foodera Modern App', layout: 'foodera', desc: 'تصميم برجر وعصري ببانر تسويقي وبطاقات شبكية فخمة', preview: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500', themeBg: '#030712', primary: '#ea580c' },
@@ -73,20 +79,20 @@
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_multitenant_2030_v17', JSON.stringify(globalDB));
+                localStorage.setItem('tablia_multitenant_2030_v18', JSON.stringify(globalDB));
                 if (cloudDB) {
-                    cloudDB.ref('tablia_multitenant_enterprise_2030_v17').set(globalDB).catch(() => {});
+                    cloudDB.ref('tablia_multitenant_enterprise_2030_v18').set(globalDB).catch(() => {});
                 }
             } catch (e) {}
         }
 
         if (cloudDB) {
-            cloudDB.ref('tablia_multitenant_enterprise_2030_v17').on('value', (snap) => {
+            cloudDB.ref('tablia_multitenant_enterprise_2030_v18').on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.restaurants) {
                     globalDB = data;
                     try {
-                        localStorage.setItem('tablia_multitenant_2030_v17', JSON.stringify(globalDB));
+                        localStorage.setItem('tablia_multitenant_2030_v18', JSON.stringify(globalDB));
                     } catch(e){}
                     playBell();
                     render();
@@ -161,7 +167,7 @@
                 root.innerHTML = content + bottomBar;
             } catch(err) {
                 console.error("Render error:", err);
-                root.innerHTML = `<div class="min-h-screen flex items-center justify-center p-6 text-center bg-slate-950 text-white"><div class="glass p-6 rounded-3xl space-y-4 max-w-sm"><h2 class="text-amber-400 font-black text-base">إعادة ضبط النظام</h2><p class="text-xs text-slate-400">تم تحديث النظام ليعمل بكفاءة عالية وبدون أي أخطاء.</p><button onclick="localStorage.clear(); location.reload();" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl text-xs">تحديث وتشغيل فوري</button></div></div>`;
+                root.innerHTML = `<div class="min-h-screen flex items-center justify-center p-6 text-center bg-slate-950 text-white"><div class="glass p-6 rounded-3xl space-y-4 max-w-sm"><h2 class="text-amber-400 font-black text-base">إعادة ضبط النظام</h2><p class="text-xs text-slate-400">حدث خطأ بسيط وتم تجاوزه، اضغط للتشغيل الفوري.</p><button onclick="localStorage.clear(); location.reload();" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl text-xs">إعادة ضبط وتشغيل</button></div></div>`;
             }
         }
 
@@ -185,11 +191,11 @@
             if(!phone || !pass) { alert('يرجى إدخال رقم الموبايل وكلمة السر'); return; }
 
             if(cloudDB) {
-                cloudDB.ref('tablia_multitenant_enterprise_2030_v17').once('value').then(snap => {
+                cloudDB.ref('tablia_multitenant_enterprise_2030_v18').once('value').then(snap => {
                     const data = snap.val();
                     if(data && data.restaurants) {
                         globalDB = data;
-                        localStorage.setItem('tablia_multitenant_2030_v17', JSON.stringify(globalDB));
+                        localStorage.setItem('tablia_multitenant_2030_v18', JSON.stringify(globalDB));
                     }
                     verifyLoginData(phone, pass);
                 }).catch(() => { verifyLoginData(phone, pass); });
@@ -530,7 +536,7 @@
             if(!rest){ setPage('auth'); return ''; }
             if(!rest.orders) rest.orders = [];
 
-            return `${renderNav()}<div class="max-w-4xl mx-auto px-4 py-4 space-y-4 text-xs"><h1 class="font-black text-white">شاشة الكاشير - ${rest.name}</h1><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${rest.orders.length===0?`<div class="col-span-2 glass p-10 text-center text-slate-400">لا توجد طلبات نشطة حالياً</div>`:rest.orders.map((ord,i)=>`<div class="glass p-4 rounded-2xl space-y-2 border ${ord.status==='new'?'border-amber-500 animate-pulse':'border-white/10'}"><div class="flex justify-between"><span class="font-black text-white">${ord.customer_name} - ${ord.table_number}</span><span class="text-amber-400 font-black">${ord.total}ج</span></div><div class="text-slate-300">${ord.items_json ? ord.items_json.map(x=>`${x.qty}x ${x.name}`).join(', ') : ''}</div><div class="grid grid-cols-3 gap-1"><button onclick="if(globalDB.restaurants['${currentRestId}'].orders[${i}]) { globalDB.restaurants['${currentRestId}'].orders[${i}].status='preparing'; syncCloud(); render(); }" class="bg-sky-600 text-white py-1 rounded font-bold">يحضر</button><button onclick="if(globalDB.restaurants['${currentRestId}'].orders[${i}].status){ globalDB.restaurants['${currentRestId}'].orders[${i}].status='ready'; syncCloud(); render(); }" class="bg-emerald-600 text-white py-1 rounded font-bold">جاهز</button><button onclick="if(globalDB.restaurants['${currentRestId}'].orders[${i}]) { globalDB.restaurants['${currentRestId}'].orders[${i}].status='done'; syncCloud(); render(); }" class="bg-indigo-600 text-white py-1 rounded font-bold">تم</button></div></div>`).join('')}</div></div>`;
+            return `${renderNav()}<div class="max-w-4xl mx-auto px-4 py-4 space-y-4 text-xs"><h1 class="font-black text-white">شاشة الكاشير - ${rest.name}</h1><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${rest.orders.length===0?`<div class="col-span-2 glass p-10 text-center text-slate-400">لا توجد طلبات نشطة حالياً</div>`:rest.orders.map((ord,i)=>`<div class="glass p-4 rounded-2xl space-y-2 border ${ord.status==='new'?'border-amber-500 animate-pulse':'border-white/10'}"><div class="flex justify-between"><span class="font-black text-white">${ord.customer_name} - ${ord.table_number}</span><span class="text-amber-400 font-black">${ord.total}ج</span></div><div class="text-slate-300">${ord.items_json ? ord.items_json.map(x=>`${x.qty}x ${x.name}`).join(', ') : ''}</div><div class="grid grid-cols-3 gap-1"><button onclick="if(globalDB.restaurants['${currentRestId}'].orders[${i}]) { globalDB.restaurants['${currentRestId}'].orders[${i}].status='preparing'; syncCloud(); render(); }" class="bg-sky-600 text-white py-1 rounded font-bold">يحضر</button><button onclick="if(globalDB.restaurants['${currentRestId}'].orders[${i}]) { globalDB.restaurants['${currentRestId}'].orders[${i}].status='ready'; syncCloud(); render(); }" class="bg-emerald-600 text-white py-1 rounded font-bold">جاهز</button><button onclick="if(globalDB.restaurants['${currentRestId}'].orders[${i}]) { globalDB.restaurants['${currentRestId}'].orders[${i}].status='done'; syncCloud(); render(); }" class="bg-indigo-600 text-white py-1 rounded font-bold">تم</button></div></div>`).join('')}</div></div>`;
         }
 
         function renderDashboard(){
