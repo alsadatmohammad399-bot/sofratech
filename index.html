@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tablia OS 2030 | المنصة السحابية المتكاملة للمطاعم</title>
+    <title>Tablia OS 2030 | المنصة السحابية المتكاملة للمطاعم والقوالب</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -44,7 +44,7 @@
 
         let globalDB = { restaurants: {} };
         try {
-            const raw = localStorage.getItem('tablia_multitenant_2030_v22');
+            const raw = localStorage.getItem('tablia_multitenant_2030_v24');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) {}
 
@@ -53,9 +53,10 @@
                 restaurants: {
                     "rest_demo": {
                         id: "rest_demo", ownerName: "محمد الحاتي", name: "دليكاتسي وريستو", phone: "01015861991", pass: "1234",
-                        template_id: "foodera-modern", layout: "foodera", theme: { primary: "#dc2626", bg: "#f8fafc" }, tablesCount: 20,
-                        address: "الإسكندرية، ميامي", wifiName: "Delicacy_Free", wifiPass: "20302030",
+                        template_id: "tahey-red", tablesCount: 20,
+                        address: "الإسكندرية، ميامي", wifiName: "Delicacy_Free", wifiPass: "357159357",
                         subscription: { isActive: true, expiresAt: Date.now() + 30*24*60*60*1000 },
+                        theme: { primary: '#dc2626', bg: '#111827', accent: '#facc15' },
                         categories: [
                             { id: 'cat_1', name: 'فطار وسندوتشات', icon: '🍳' },
                             { id: 'cat_2', name: 'المشويات', icon: '🥩' },
@@ -72,27 +73,38 @@
         }
 
         const TEMPLATES_CATALOG = [
-            { id: 'foodera-modern', name: 'استايل دليكاتسي الفخم (Delicacy)', layout: 'foodera', desc: 'تصميم احترافي ببانر علوي، قائمة جانبية، وأقسام دائرية', preview: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500', themeBg: '#f8fafc', primary: '#dc2626' }
+            { id: 'tahey-red', name: 'الطاهي الأحمر', desc: 'أحمر × أصفر للمشويات - الأكثر مبيعا', layout: 'tahey', preview: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800', theme: { primary: '#dc2626', bg: '#111827', accent: '#facc15' }, badge: '🔥 الأكثر طلبا' },
+            { id: 'gold-premium', name: 'شواء الذهب الفاخر', desc: 'أسود وذهبي للمطاعم الفاخرة', layout: 'premium', preview: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800', theme: { primary: '#d4af37', bg: '#0a0a0a', accent: '#f59e0b' }, badge: '⭐ فاخر' },
+            { id: 'fast-yellow', name: 'فاست فود مرح', desc: 'أصفر مرح للبرجر والبيتزا والوجبات السريعة', layout: 'fastfood', preview: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800', theme: { primary: '#eab308', bg: '#fefce8', accent: '#dc2626' }, badge: '🎉 شبابي' },
+            { id: 'minimal-white', name: 'نور - Minimal', desc: 'أبيض أنيق ومريح للمطاعم الصحية والكافيهات', layout: 'minimal', preview: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800', theme: { primary: '#171717', bg: '#ffffff', accent: '#737373' }, badge: '✨ راقي' }
         ];
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_multitenant_2030_v22', JSON.stringify(globalDB));
+                localStorage.setItem('tablia_multitenant_2030_v24', JSON.stringify(globalDB));
                 if (cloudDB) {
-                    cloudDB.ref('tablia_multitenant_enterprise_2030_v22').set(globalDB).catch(() => {});
+                    cloudDB.ref('tablia_multitenant_enterprise_2030_v24').set(globalDB).catch(() => {});
                 }
             } catch (e) {}
         }
 
         if (cloudDB) {
-            cloudDB.ref('tablia_multitenant_enterprise_2030_v22').on('value', (snap) => {
+            cloudDB.ref('tablia_multitenant_enterprise_2030_v24').on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.restaurants) {
+                    if (currentRestId && data.restaurants[currentRestId]) {
+                        const oldRest = globalDB.restaurants[currentRestId];
+                        const newRest = data.restaurants[currentRestId];
+                        const oldOrdersCount = oldRest && oldRest.orders ? oldRest.orders.length : 0;
+                        const newOrdersCount = newRest && newRest.orders ? newRest.orders.length : 0;
+                        if (newOrdersCount > oldOrdersCount) {
+                            playBell();
+                        }
+                    }
                     globalDB = data;
                     try {
-                        localStorage.setItem('tablia_multitenant_2030_v22', JSON.stringify(globalDB));
+                        localStorage.setItem('tablia_multitenant_2030_v24', JSON.stringify(globalDB));
                     } catch(e){}
-                    playBell();
                     render();
                 }
             });
@@ -130,8 +142,9 @@
             adminUnlocked: false,
             editingItemId: null,
             drawerOpen: false,
-            modalType: null,
-            gpsLocation: null
+            modalType: null, // 'waiter', 'wifi', 'branch'
+            gpsLocation: null,
+            previewTpl: null
         };
 
         function setPage(p){ appState.page = p; render(); window.scrollTo(0,0); }
@@ -165,7 +178,7 @@
                 }
                 
                 const bottomBar = (isCustomerMode || !currentRestId || !globalDB.restaurants || !globalDB.restaurants[currentRestId]) ? '' : renderBottomNav();
-                root.innerHTML = content + bottomBar;
+                root.innerHTML = content + bottomBar + (appState.previewTpl ? renderPreviewModal() : '');
             } catch(err) {
                 console.error("Render error:", err);
                 root.innerHTML = `<div class="min-h-screen flex items-center justify-center p-6 text-center bg-slate-950 text-white"><div class="glass p-6 rounded-3xl space-y-4 max-w-sm"><h2 class="text-amber-400 font-black text-base">إعادة تشغيل النظام</h2><p class="text-xs text-slate-400">تم تحديث النظام ليعمل بكفاءة عالية وبدون أي أخطاء.</p><button onclick="localStorage.clear(); location.reload();" class="w-full bg-red-600 text-white font-black py-3 rounded-xl text-xs">تحديث وتشغيل فوري</button></div></div>`;
@@ -187,7 +200,7 @@
             <div class="max-w-md mx-auto px-4 py-12 space-y-6">
                 <div class="text-center space-y-2">
                     <h1 class="text-2xl font-black text-slate-900">منصة مطاعم المستقبل</h1>
-                    <p class="text-xs text-slate-500">أنشئ منيو مطعمك باحترافية كاملة وتتبع دقيق للـ GPS</p>
+                    <p class="text-xs text-slate-500">أنشئ منيو مطعمك واختر قالبك الفاخر مع تتبع الـ GPS</p>
                 </div>
                 <div class="flex bg-slate-100 p-1.5 rounded-2xl text-xs border border-slate-200">
                     <button onclick="appState.authTab='login'; render();" class="flex-1 py-3 rounded-xl font-bold transition ${appState.authTab==='login'?'bg-red-600 text-white font-black shadow':'text-slate-500 hover:text-slate-900'}">تسجيل دخول</button>
@@ -235,11 +248,11 @@
             if(!phone || !pass) { alert('يرجى إدخال رقم الموبايل وكلمة السر'); return; }
 
             if(cloudDB) {
-                cloudDB.ref('tablia_multitenant_enterprise_2030_v22').once('value').then(snap => {
+                cloudDB.ref('tablia_multitenant_enterprise_2030_v24').once('value').then(snap => {
                     const data = snap.val();
                     if(data && data.restaurants) {
                         globalDB = data;
-                        localStorage.setItem('tablia_multitenant_2030_v22', JSON.stringify(globalDB));
+                        localStorage.setItem('tablia_multitenant_2030_v24', JSON.stringify(globalDB));
                     }
                     verifyLoginData(phone, pass);
                 }).catch(() => { verifyLoginData(phone, pass); });
@@ -276,8 +289,8 @@
             if(!globalDB.restaurants) globalDB.restaurants = {};
             globalDB.restaurants[restId] = { 
                 id: restId, ownerName: owner, name: name, phone: phone, pass: pass, 
-                template_id: 'foodera-modern', layout: 'foodera', theme: { primary: '#dc2626', bg: '#f8fafc' }, tablesCount: 20, 
-                address: 'الإسكندرية، ميامي', wifiName: name + '_Free', wifiPass: '20302030',
+                template_id: 'tahey-red', theme: TEMPLATES_CATALOG[0].theme, tablesCount: 20, 
+                address: 'الإسكندرية، ميامي', wifiName: name + '_Free', wifiPass: '357159357',
                 subscription: { isActive: true, expiresAt: Date.now() + 30*24*60*60*1000 }, 
                 categories: [
                     { id: 'cat_1', name: 'الرئيسية', icon: '🍔' },
@@ -295,69 +308,113 @@
         function renderBuilder(){
             const rest = (globalDB && globalDB.restaurants) ? globalDB.restaurants[currentRestId] : null;
             if(!rest){ setPage('auth'); return ''; }
-            const selectedTpl = TEMPLATES_CATALOG.find(t => t.id === rest.template_id) || TEMPLATES_CATALOG[0];
             return `
                 ${renderNav()}
                 <div class="max-w-3xl mx-auto px-4 py-6 space-y-5">
                     <div class="flex gap-1.5 bg-white p-1.5 rounded-2xl text-xs border border-slate-200 shadow-sm">
-                        <button onclick="appState.builderStep=1; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===1?'bg-red-600 text-white font-black shadow':'text-slate-600 hover:text-slate-900'}">1. بيانات وقالب المطعم</button>
+                        <button onclick="appState.builderStep=1; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===1?'bg-red-600 text-white font-black shadow':'text-slate-600 hover:text-slate-900'}">1. اختيار القالب الفاخر</button>
                         <button onclick="appState.builderStep=2; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===2?'bg-red-600 text-white font-black shadow':'text-slate-600 hover:text-slate-900'}">2. الأقسام والوجبات</button>
                         <button onclick="appState.builderStep=4; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===4?'bg-red-600 text-white font-black shadow':'text-slate-600 hover:text-slate-900'}">3. المعاينة ونشر اللينك</button>
                     </div>
-                    ${appState.builderStep===1 ? renderStep1(rest, selectedTpl) : (appState.builderStep===2 ? renderStep2(rest) : renderStep4(rest))}
+                    ${appState.builderStep===1 ? renderStep1(rest) : (appState.builderStep===2 ? renderStep2(rest) : renderStep4(rest))}
                 </div>
             `;
         }
 
-        function renderStep1(rest, selectedTpl){
+        function renderStep1(rest){
             return `
                 <div class="bg-white p-6 rounded-3xl space-y-5 text-xs border border-slate-200 shadow-xl">
-                    <h2 class="font-black text-slate-900 text-sm">الخطوة 1: تخصيص اسم المطعم، العنوان، الواي فاي، وكلمة السر</h2>
-                    
+                    <h2 class="font-black text-slate-900 text-sm">🎨 اختر قالبك الفاخر - شاهد المعاينة الحية قبل التفعيل</h2>
+                    <div>
+                        <label class="block text-slate-600 font-bold mb-1.5">اسم المطعم</label>
+                        <input id="r_name" value="${rest.name || ''}" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-slate-900 font-bold outline-none focus:border-red-600">
+                    </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-slate-600 font-bold mb-1.5">اسم المطعم</label>
-                            <input id="r_name" value="${rest.name || ''}" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-900 font-bold outline-none focus:border-red-600">
+                        ${TEMPLATES_CATALOG.map(t => `
+                            <div class="border-2 rounded-3xl overflow-hidden shadow-sm transition ${rest.template_id === t.id ? 'border-red-600 ring-2 ring-red-100' : 'border-slate-200'}">
+                                <div class="relative h-48">
+                                    <img src="${t.preview}" class="w-full h-full object-cover">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                                    <div class="absolute top-3 right-3 bg-white px-2.5 py-1 rounded-full text-[10px] font-black text-slate-900 shadow">${t.badge}</div>
+                                    ${rest.template_id === t.id ? '<div class="absolute top-3 left-3 bg-red-600 text-white px-2.5 py-1 rounded-full text-[10px] font-black shadow">مفعل ✓</div>' : ''}
+                                    <div class="absolute bottom-0 p-3 text-white">
+                                        <div class="font-black text-sm">${t.name}</div>
+                                        <div class="text-[10px] text-slate-300 mt-0.5">${t.desc}</div>
+                                    </div>
+                                    <div class="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 flex items-center justify-center gap-2 transition">
+                                        <button onclick="openPreview('${t.id}')" class="bg-white text-slate-900 px-4 py-2 rounded-xl text-xs font-black shadow">معاينة 👁️</button>
+                                        <button onclick="selectTemplate('${t.id}')" class="bg-red-600 text-white px-4 py-2 rounded-xl text-xs font-black shadow">اختيار ✓</button>
+                                    </div>
+                                </div>
+                                <div class="p-3 bg-slate-50 flex justify-between items-center border-t border-slate-100">
+                                    <div class="flex gap-1.5">
+                                        <div class="w-5 h-5 rounded-full border shadow-sm" style="background:${t.theme.primary}"></div>
+                                        <div class="w-5 h-5 rounded-full border shadow-sm" style="background:${t.theme.bg}"></div>
+                                        <div class="w-5 h-5 rounded-full border shadow-sm" style="background:${t.theme.accent}"></div>
+                                    </div>
+                                    <button onclick="openPreview('${t.id}')" class="text-red-600 text-xs font-bold hover:underline">معاينة القالب ←</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button onclick="saveStep1()" class="bg-red-600 text-white font-black px-5 py-3.5 rounded-xl w-full text-xs shadow-lg hover:bg-red-700 transition">حفظ والانتقال لإدارة المنيو ➔</button>
+                </div>
+            `;
+        }
+
+        function openPreview(tid){
+            appState.previewTpl = TEMPLATES_CATALOG.find(x => x.id === tid);
+            render();
+        }
+
+        function closePreview(){
+            appState.previewTpl = null;
+            render();
+        }
+
+        function selectTemplate(tid){
+            const t = TEMPLATES_CATALOG.find(x => x.id === tid);
+            const r = globalDB.restaurants[currentRestId];
+            if(r && t) {
+                r.template_id = t.id;
+                r.theme = t.theme;
+                syncCloud();
+            }
+            appState.previewTpl = null;
+            render();
+        }
+
+        function renderPreviewModal(){
+            const t = appState.previewTpl;
+            const r = globalDB.restaurants[currentRestId];
+            return `
+                <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 text-xs">
+                    <div class="bg-white rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl space-y-3 pb-4">
+                        <div class="relative h-64">
+                            <img src="${t.preview}" class="w-full h-full object-cover">
+                            <button onclick="closePreview()" class="absolute top-3 left-3 bg-black/70 text-white w-8 h-8 rounded-full flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                            <div class="absolute bottom-0 p-4 text-white bg-gradient-to-t from-black w-full">
+                                <span class="bg-white/20 text-white px-2 py-0.5 rounded-full text-[10px] font-bold">${t.badge}</span>
+                                <h3 class="font-black text-base mt-1">${t.name}</h3>
+                                <p class="text-[11px] text-slate-200">${t.desc}</p>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-slate-600 font-bold mb-1.5">العنوان (المدينة، المنطقة)</label>
-                            <input id="r_address" value="${rest.address || 'الإسكندرية، ميامي'}" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-900 font-bold outline-none focus:border-red-600">
-                        </div>
-                        <div>
-                            <label class="block text-slate-600 font-bold mb-1.5">اسم شبكة الواي فاي</label>
-                            <input id="r_wifi" value="${rest.wifiName || 'Free_WiFi'}" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-900 font-bold outline-none focus:border-red-600">
-                        </div>
-                        <div>
-                            <label class="block text-slate-600 font-bold mb-1.5">كلمة مرور الواي فاي</label>
-                            <input id="r_wifipass" value="${rest.wifiPass || '12345678'}" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-900 font-bold outline-none focus:border-red-600">
-                        </div>
-                        <div class="sm:col-span-2">
-                            <label class="block text-slate-600 font-bold mb-1.5">كلمة السر الجديدة لدخول لوحة التحكم</label>
-                            <input id="r_new_pass" type="password" placeholder="أدخل كلمة السر الجديدة" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-900 font-bold outline-none focus:border-red-600">
+                        <div class="px-4 space-y-3">
+                            <div class="bg-slate-50 border border-slate-200 p-3 rounded-2xl text-center text-slate-700">
+                                عند تفعيل هذا القالب سيظهر مطعمك <b>${r.name}</b> بنفس الألوان المذهلة والفخامة المعروضة.
+                            </div>
+                            <button onclick="selectTemplate('${t.id}')" class="w-full bg-red-600 text-white font-black py-3 rounded-xl shadow-lg hover:bg-red-700 transition">تفعيل هذا القالب الآن ✓</button>
+                            <button onclick="closePreview()" class="w-full bg-slate-100 text-slate-700 font-bold py-2.5 rounded-xl">إغلاق</button>
                         </div>
                     </div>
-
-                    <button onclick="saveStep1()" class="bg-red-600 text-white font-black px-5 py-3.5 rounded-xl w-full text-xs shadow-lg hover:bg-red-700 transition">حفظ والانتقال للمنيو ➔</button>
                 </div>
             `;
         }
 
         function saveStep1(){ 
             const nameInput = document.getElementById('r_name');
-            const addrInput = document.getElementById('r_address');
-            const wifiInput = document.getElementById('r_wifi');
-            const wifipassInput = document.getElementById('r_wifipass');
-            const passInput = document.getElementById('r_new_pass');
-
             const r = globalDB.restaurants[currentRestId];
             if(nameInput) r.name = nameInput.value.trim();
-            if(addrInput) r.address = addrInput.value.trim();
-            if(wifiInput) r.wifiName = wifiInput.value.trim();
-            if(wifipassInput) r.wifiPass = wifipassInput.value.trim();
-            if(passInput && passInput.value.trim() !== '') {
-                r.pass = passInput.value.trim();
-                alert('تم تحديث كلمة السر بنجاح!');
-            }
             syncCloud(); 
             appState.builderStep = 2; 
             render(); 
@@ -386,39 +443,25 @@
                     </div>
 
                     <div class="bg-red-50 border border-red-200 p-4 rounded-2xl space-y-3">
-                        <label class="block text-red-700 font-black">أضف أصناف وأسعار بسرعة (مثال: طبق فول 45, سندوتش برجر 120):</label>
+                        <label class="block text-red-700 font-black">أضف أصناف وأسعار بسرعة (الصندوق السحري):</label>
                         <textarea id="magic_box" placeholder="طبق فول 45, سندوتش برجر 120, شوربة عدس 35" class="w-full bg-white border border-slate-200 p-3 rounded-xl text-slate-900 outline-none focus:border-red-600" rows="3"></textarea>
                         <button onclick="parseMagicText()" class="w-full bg-red-600 text-white font-black py-3 rounded-xl shadow hover:bg-red-700 transition">توليد وإضافة الأصناف تلقائياً</button>
                     </div>
 
                     <div class="space-y-3">
-                        <h3 class="font-black text-slate-900">الأصناف الحالية في المنيو (${rest.menu_items.length}):</h3>
-                        ${rest.menu_items.length === 0 ? '<p class="text-slate-400 text-center py-6">لا توجد أصناف مضافة بعد. أضف بالصندوق أعلاه!</p>' : ''}
+                        <h3 class="font-black text-slate-900">الأصناف الحالية (${rest.menu_items.length}):</h3>
+                        ${rest.menu_items.length === 0 ? '<p class="text-slate-400 text-center py-6">لا توجد أصناف مضافة بعد.</p>' : ''}
                         <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
                             ${rest.menu_items.map((it, i) => `
-                                <div class="bg-slate-50 p-3 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border border-slate-200 shadow-sm">
-                                    ${appState.editingItemId === it.id ? `
-                                        <div class="flex-1 flex gap-2 w-full">
-                                            <input id="edit_name_${it.id}" value="${it.name}" class="flex-1 bg-white border border-slate-300 p-2 rounded-xl text-slate-900 outline-none">
-                                            <input id="edit_price_${it.id}" type="number" value="${it.price}" class="w-24 bg-white border border-slate-300 p-2 rounded-xl text-slate-900 outline-none">
+                                <div class="bg-slate-50 p-3 rounded-2xl flex justify-between items-center border border-slate-200 shadow-sm">
+                                    <div class="flex items-center gap-3">
+                                        <img src="${it.image}" class="w-12 h-12 object-cover rounded-xl shadow">
+                                        <div>
+                                            <h4 class="font-black text-slate-900 text-xs">${it.name}</h4>
+                                            <span class="text-red-600 font-bold text-xs">${it.price} ج.م</span>
                                         </div>
-                                        <div class="flex gap-2">
-                                            <button onclick="saveEditedItem('${it.id}')" class="bg-emerald-600 text-white px-3.5 py-1.5 rounded-xl font-bold">حفظ</button>
-                                            <button onclick="appState.editingItemId=null; render();" class="bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl">إلغاء</button>
-                                        </div>
-                                    ` : `
-                                        <div class="flex items-center gap-3">
-                                            <img src="${it.image || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500'}" class="w-12 h-12 object-cover rounded-xl shadow">
-                                            <div>
-                                                <h4 class="font-black text-slate-900 text-xs">${it.name}</h4>
-                                                <span class="text-red-600 font-bold text-xs">${it.price} ج.م</span>
-                                            </div>
-                                        </div>
-                                        <div class="flex gap-2">
-                                            <button onclick="appState.editingItemId='${it.id}'; render();" class="bg-sky-50 text-sky-600 px-3 py-1.5 rounded-xl font-bold hover:bg-sky-100 transition"><i class="fa-solid fa-pen ml-1"></i> تعديل</button>
-                                            <button onclick="globalDB.restaurants['${currentRestId}'].menu_items.splice(${i},1); syncCloud(); render();" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl hover:bg-red-100 transition"><i class="fa-solid fa-trash"></i></button>
-                                        </div>
-                                    `}
+                                    </div>
+                                    <button onclick="globalDB.restaurants['${currentRestId}'].menu_items.splice(${i},1); syncCloud(); render();" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl hover:bg-red-100 transition"><i class="fa-solid fa-trash"></i></button>
                                 </div>
                             `).join('')}
                         </div>
@@ -443,24 +486,6 @@
             const rest = globalDB.restaurants[currentRestId];
             if(rest.categories.length <= 1) { alert('يجب أن يكون هناك قسم واحد على الأقل.'); return; }
             rest.categories = rest.categories.filter(c => c.id !== catId);
-            syncCloud();
-            render();
-        }
-
-        function saveEditedItem(id) {
-            const rest = globalDB.restaurants[currentRestId];
-            if(!rest || !rest.menu_items) return;
-            const item = rest.menu_items.find(i => i.id === id);
-            if(item) {
-                const nameEl = document.getElementById(`edit_name_${id}`);
-                const priceEl = document.getElementById(`edit_price_${id}`);
-                if(nameEl) item.name = nameEl.value.trim();
-                if(priceEl) {
-                    const p = Number(priceEl.value);
-                    if(!isNaN(p)) item.price = p;
-                }
-            }
-            appState.editingItemId = null;
             syncCloud();
             render();
         }
@@ -496,57 +521,35 @@
         }
 
         function renderStep4(rest){
-            const isSub = rest.subscription?.isActive; 
             const url = location.origin + location.pathname + `?view=menu&rest=${rest.id}`;
-            const selectedTpl = TEMPLATES_CATALOG.find(t => t.id === rest.template_id) || TEMPLATES_CATALOG[0];
-            if(!rest.menu_items) rest.menu_items = [];
+            const tpl = TEMPLATES_CATALOG.find(x => x.id === rest.template_id) || TEMPLATES_CATALOG[0];
 
             return `
                 <div class="bg-white p-6 rounded-3xl space-y-5 text-xs border border-slate-200 shadow-xl">
                     <div class="text-center space-y-1">
                         <h2 class="font-black text-slate-900 text-sm">🎉 المنيو جاهز تماماً ونشر اللينك بضغطة زر</h2>
-                        <p class="text-slate-500 text-[10px]">انسخ الرابط أو أرسله عبر واتساب لعملائك فوراً</p>
+                        <p class="text-slate-500 text-[10px]">القالب المفعل حالياً: <b class="text-red-600">${tpl.name}</b></p>
                     </div>
 
                     <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                        <label class="block text-red-600 font-bold text-xs">🔗 رابط المنيو المباشر الخاص بك (نشر اللينك):</label>
+                        <label class="block text-red-600 font-bold text-xs">🔗 رابط المنيو المباشر:</label>
                         <div class="flex gap-2">
                             <input readonly value="${url}" class="flex-1 bg-white border border-slate-300 p-3 rounded-xl text-slate-900 text-[11px] select-all outline-none">
-                            <button onclick="navigator.clipboard.writeText('${url}'); alert('تم نسخ رابط المنيو بنجاح!');" class="bg-red-600 text-white px-4 py-3 rounded-xl font-black text-xs hover:bg-red-700 transition">نسخ الرابط</button>
+                            <button onclick="navigator.clipboard.writeText('${url}'); alert('تم نسخ رابط المنيو بنجاح!');" class="bg-red-600 text-white px-4 py-3 rounded-xl font-black text-xs hover:bg-red-700 transition">نسخ</button>
                         </div>
                         
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                            <button onclick="shareViaWhatsApp('${url}', '${rest.name}')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl flex items-center justify-center gap-2 text-xs shadow-lg transition">
-                                <i class="fa-brands fa-whatsapp text-sm"></i> إرسال عبر واتساب
+                            <button onclick="window.open('https://wa.me/?text='+encodeURIComponent('اطلب الآن من منيو مطعم ${rest.name}:\\n${url}'), '_blank')" class="w-full bg-emerald-600 text-white font-black py-3 rounded-xl flex items-center justify-center gap-2 text-xs shadow transition">
+                                <i class="fa-brands fa-whatsapp text-sm"></i> واتساب
                             </button>
-                            <button onclick="nativeShare('${url}', '${rest.name}')" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-black py-3 rounded-xl flex items-center justify-center gap-2 text-xs shadow-lg transition">
-                                <i class="fa-solid fa-share-nodes text-sm"></i> مشاركة الرابط
+                            <button onclick="if(navigator.share){navigator.share({title:'${rest.name}',url:'${url}'}).catch(()=>{})}else{navigator.clipboard.writeText('${url}');alert('تم النسخ!');}" class="w-full bg-sky-600 text-white font-black py-3 rounded-xl flex items-center justify-center gap-2 text-xs shadow transition">
+                                <i class="fa-solid fa-share-nodes text-sm"></i> مشاركة
                             </button>
                         </div>
                     </div>
-
-                    ${!isSub ? `
-                        <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-2xl text-center space-y-2">
-                            <p class="text-[10px] text-amber-800">لتفعيل استقبال الطلبات الفورية وربطها بالكاشير (${PLATFORM_OWNER.monthlyPrice} ج/شهرياً)، تواصل للإدارة:</p>
-                            <a href="https://wa.me/2${PLATFORM_OWNER.walletNumber}?text=${encodeURIComponent('تفعيل مطعم '+rest.name+' بمبلغ '+PLATFORM_OWNER.monthlyPrice+' جنيه')}" target="_blank" class="inline-block bg-emerald-600 text-white font-black px-4 py-2 rounded-xl text-xs">تفعيل الحساب (واتساب)</a>
-                        </div>
-                    ` : '<div class="bg-emerald-50 text-emerald-600 p-2.5 rounded-xl text-center font-black">✅ حسابك مفعل ونشط بالكامل والمنيو يظهر للجميع</div>'}
+                    <a href="${url}" target="_blank" class="block w-full bg-slate-900 text-white text-center font-black py-3.5 rounded-xl shadow">معاينة المنيو للعملاء ➔</a>
                 </div>
             `;
-        }
-
-        function shareViaWhatsApp(url, restName) {
-            const text = encodeURIComponent(`🍽️ تفضل بزيارة منيو مطعم ${restName} واطلب وجبتك المفضلة أونلاين:\n${url}`);
-            window.open(`https://wa.me/?text=${text}`, '_blank');
-        }
-
-        function nativeShare(url, restName) {
-            if (navigator.share) {
-                navigator.share({ title: restName, text: `اطلب الآن من منيو مطعم ${restName}`, url: url }).catch(() => {});
-            } else {
-                navigator.clipboard.writeText(url);
-                alert('تم نسخ الرابط إلى الحافظة!');
-            }
         }
 
         function renderStorefront(){
@@ -555,6 +558,9 @@
             if(!rest) return `<div class="min-h-screen flex items-center justify-center text-slate-900">المطعم غير موجود</div>`;
             if(!rest.menu_items) rest.menu_items = [];
             if(!rest.categories) rest.categories = [];
+
+            const theme = rest.theme || TEMPLATES_CATALOG[0].theme;
+            const tpl = TEMPLATES_CATALOG.find(x => x.id === rest.template_id) || TEMPLATES_CATALOG[0];
 
             const filtered = rest.menu_items.filter(i => {
                 if (!i.is_available) return false;
@@ -567,152 +573,104 @@
             const cartTotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
 
             return `
-                <div class="min-h-screen pb-32 bg-slate-50 relative">
-                    <!-- القائمة الجانبية (Drawer) -->
+                <div style="background-color: ${theme.bg}; color: ${theme.bg === '#ffffff' || theme.bg === '#fefce8' ? '#0f172a' : '#ffffff'};" class="min-h-screen pb-32 relative">
+                    <!-- Drawer -->
                     ${appState.drawerOpen ? `
                         <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end" onclick="appState.drawerOpen=false; render();">
-                            <div class="w-80 bg-white h-full shadow-2xl p-5 space-y-5 overflow-y-auto" onclick="event.stopPropagation();">
-                                <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-9 h-9 rounded-xl bg-red-600 text-white flex items-center justify-center font-black">ط</div>
-                                        <span class="font-black text-slate-900 text-sm">قائمة الخدمات</span>
-                                    </div>
-                                    <button onclick="appState.drawerOpen=false; render();" class="text-slate-400 hover:text-slate-900"><i class="fa-solid fa-xmark text-lg"></i></button>
+                            <div class="w-80 bg-white text-slate-900 h-full shadow-2xl p-5 space-y-5 overflow-y-auto" onclick="event.stopPropagation();">
+                                <div class="flex justify-between items-center border-b pb-3">
+                                    <span class="font-black text-sm">خدمات المطعم</span>
+                                    <button onclick="appState.drawerOpen=false; render();"><i class="fa-solid fa-xmark text-lg"></i></button>
                                 </div>
-                                <div class="space-y-2">
-                                    <button onclick="appState.drawerOpen=false; appState.modalType='waiter'; render();" class="w-full bg-slate-50 hover:bg-slate-100 p-3.5 rounded-2xl flex items-center justify-between text-slate-800 font-bold text-xs transition border border-slate-100">
-                                        <span class="flex items-center gap-3"><i class="fa-solid fa-bell-concierge text-red-600 text-base"></i> استدعاء النادل</span>
-                                        <i class="fa-solid fa-chevron-left text-slate-400 text-xs"></i>
-                                    </button>
-                                    <button onclick="appState.drawerOpen=false; appState.modalType='wifi'; render();" class="w-full bg-slate-50 hover:bg-slate-100 p-3.5 rounded-2xl flex items-center justify-between text-slate-800 font-bold text-xs transition border border-slate-100">
-                                        <span class="flex items-center gap-3"><i class="fa-solid fa-wifi text-red-600 text-base"></i> معلومات الواي فاي</span>
-                                        <i class="fa-solid fa-chevron-left text-slate-400 text-xs"></i>
-                                    </button>
-                                    <button onclick="appState.drawerOpen=false; appState.modalType='branch'; render();" class="w-full bg-slate-50 hover:bg-slate-100 p-3.5 rounded-2xl flex items-center justify-between text-slate-800 font-bold text-xs transition border border-slate-100">
-                                        <span class="flex items-center gap-3"><i class="fa-solid fa-location-dot text-red-600 text-base"></i> تفاصيل الفرع والعنوان</span>
-                                        <i class="fa-solid fa-chevron-left text-slate-400 text-xs"></i>
-                                    </button>
-                                    <a href="https://wa.me/2${rest.phone}" target="_blank" class="w-full bg-slate-50 hover:bg-slate-100 p-3.5 rounded-2xl flex items-center justify-between text-slate-800 font-bold text-xs transition border border-slate-100">
-                                        <span class="flex items-center gap-3"><i class="fa-solid fa-headset text-red-600 text-base"></i> خدمة العملاء والدعم</span>
-                                        <i class="fa-solid fa-chevron-left text-slate-400 text-xs"></i>
-                                    </a>
-                                </div>
-                                <div class="pt-10 text-center text-[10px] text-slate-400">
-                                    Powered by Tablia OS 2030
+                                <div class="space-y-2 text-xs font-bold">
+                                    <button onclick="appState.drawerOpen=false; appState.modalType='waiter'; render();" class="w-full bg-slate-50 p-3 rounded-xl flex justify-between items-center"><span>استدعاء النادل 🛎️</span><i class="fa-solid fa-chevron-left"></i></button>
+                                    <button onclick="appState.drawerOpen=false; appState.modalType='wifi'; render();" class="w-full bg-slate-50 p-3 rounded-xl flex justify-between items-center"><span>معلومات الواي فاي 📶</span><i class="fa-solid fa-chevron-left"></i></button>
+                                    <button onclick="appState.drawerOpen=false; appState.modalType='branch'; render();" class="w-full bg-slate-50 p-3 rounded-xl flex justify-between items-center"><span>عنوان الفرع والخرائط 📍</span><i class="fa-solid fa-chevron-left"></i></button>
                                 </div>
                             </div>
                         </div>
                     ` : ''}
 
-                    <!-- مودال استدعاء النادل -->
+                    <!-- Modals -->
                     ${appState.modalType === 'waiter' ? `
-                        <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-                            <div class="bg-white p-6 rounded-3xl max-w-sm w-full space-y-4 shadow-2xl">
-                                <div class="flex justify-between items-center"><h3 class="font-black text-slate-900 text-sm">استدعاء النادل</h3><button onclick="appState.modalType=null; render();"><i class="fa-solid fa-xmark"></i></button></div>
-                                <p class="text-xs text-slate-500">طلب خدمة النادل على طاولتك فوراً</p>
-                                <select id="waiter_table" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold text-xs">
-                                    ${Array.from({length: rest.tablesCount || 20}, (_, i) => `<option value="طاولة ${i+1}">طاولة ${i+1}</option>`).join('')}
-                                </select>
-                                <button onclick="alert('تم إرسال طلب استدعاء النادل للطاولة بنجاح! سيأتي إليك الويتر فوراً.'); appState.modalType=null; render();" class="w-full bg-red-600 text-white font-black py-3 rounded-xl shadow">استدعاء الآن</button>
+                        <div class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 text-xs text-slate-900">
+                            <div class="bg-white p-6 rounded-3xl max-w-sm w-full space-y-3">
+                                <h3 class="font-black text-sm">استدعاء النادل للطاولة</h3>
+                                <select id="w_tbl" class="w-full border p-3 rounded-xl font-bold">${Array.from({length:rest.tablesCount||20},(_,i)=>`<option value="طاولة ${i+1}">طاولة ${i+1}</option>`).join('')}</select>
+                                <button onclick="alert('تم إرسال طلب استدعاء النادل بنجاح!'); appState.modalType=null; render();" class="w-full bg-red-600 text-white font-black py-3 rounded-xl">إرسال</button>
                             </div>
                         </div>
                     ` : ''}
-
-                    <!-- مودال الواي فاي -->
                     ${appState.modalType === 'wifi' ? `
-                        <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-                            <div class="bg-white p-6 rounded-3xl max-w-sm w-full space-y-4 shadow-2xl text-center">
-                                <div class="w-12 h-12 rounded-full bg-red-50 text-red-600 mx-auto flex items-center justify-center text-lg"><i class="fa-solid fa-wifi"></i></div>
-                                <h3 class="font-black text-slate-900 text-sm">اتصل بشبكة الواي فاي</h3>
-                                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2 text-xs">
-                                    <p class="text-slate-500">اسم الشبكة: <span class="font-bold text-slate-900">${rest.wifiName || 'Delicacy_Free'}</span></p>
-                                    <p class="text-slate-500">كلمة المرور: <span class="font-bold text-slate-900">${rest.wifiPass || '20302030'}</span></p>
-                                </div>
-                                <button onclick="navigator.clipboard.writeText('${rest.wifiPass || '20302030'}'); alert('تم نسخ كلمة المرور!');" class="w-full bg-red-600 text-white font-black py-3 rounded-xl shadow">نسخ كلمة المرور</button>
-                                <button onclick="appState.modalType=null; render();" class="w-full bg-slate-100 text-slate-700 py-2 rounded-xl">إغلاق</button>
+                        <div class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 text-xs text-slate-900 text-center">
+                            <div class="bg-white p-6 rounded-3xl max-w-sm w-full space-y-3">
+                                <h3 class="font-black text-sm">بيانات الواي فاي</h3>
+                                <div class="bg-slate-50 p-3 rounded-xl border">شبكة: <b>${rest.wifiName||'Free'}</b><br>كلمة المرور: <b>${rest.wifiPass||'357159'}</b></div>
+                                <button onclick="navigator.clipboard.writeText('${rest.wifiPass||'357159'}'); alert('تم النسخ!');" class="w-full bg-red-600 text-white font-black py-3 rounded-xl">نسخ كلمة السر</button>
+                                <button onclick="appState.modalType=null; render();" class="w-full bg-slate-100 py-2 rounded-xl">إغلاق</button>
                             </div>
                         </div>
                     ` : ''}
-
-                    <!-- مودال تفاصيل الفرع -->
                     ${appState.modalType === 'branch' ? `
-                        <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-                            <div class="bg-white p-6 rounded-3xl max-w-sm w-full space-y-4 shadow-2xl text-center">
-                                <div class="w-12 h-12 rounded-full bg-red-50 text-red-600 mx-auto flex items-center justify-center text-lg"><i class="fa-solid fa-location-dot"></i></div>
-                                <h3 class="font-black text-slate-900 text-sm">عنوان الفرع الرئيسي</h3>
-                                <p class="text-xs text-slate-600 font-bold">${rest.address || 'الإسكندرية، ميامي'}</p>
-                                <a href="https://maps.google.com/?q=${encodeURIComponent(rest.address || 'الإسكندرية، ميامي')}" target="_blank" class="block w-full bg-red-600 text-white font-black py-3 rounded-xl shadow">فتح الموقع في خرائط جوجل</a>
-                                <button onclick="appState.modalType=null; render();" class="w-full bg-slate-100 text-slate-700 py-2 rounded-xl">إغلاق</button>
+                        <div class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 text-xs text-slate-900 text-center">
+                            <div class="bg-white p-6 rounded-3xl max-w-sm w-full space-y-3">
+                                <h3 class="font-black text-sm">عنوان الفرع</h3>
+                                <p class="font-bold">${rest.address||'الإسكندرية'}</p>
+                                <a href="https://maps.google.com/?q=${encodeURIComponent(rest.address||'الإسكندرية')}" target="_blank" class="block bg-red-600 text-white font-black py-3 rounded-xl">فتح في خريطة جوجل</a>
+                                <button onclick="appState.modalType=null; render();" class="w-full bg-slate-100 py-2 rounded-xl">إغلاق</button>
                             </div>
                         </div>
                     ` : ''}
 
-                    <!-- البانر العلوي التسويقي -->
-                    <div class="relative bg-slate-900 text-white">
-                        <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200" class="w-full h-44 object-cover opacity-60">
-                        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent flex items-end p-4">
+                    <!-- Hero Banner -->
+                    <div class="relative h-48 text-white" style="background:${theme.primary}">
+                        <img src="${tpl.preview}" class="w-full h-full object-cover opacity-40">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4">
                             <div class="flex justify-between items-end w-full">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-14 h-14 rounded-2xl bg-white shadow-xl p-1 shrink-0 flex items-center justify-center">
-                                        <div class="w-full h-full rounded-xl bg-red-600 text-white flex items-center justify-center text-xl font-black">🔥</div>
-                                    </div>
-                                    <div>
-                                        <h1 class="font-black text-white text-base">${rest.name}</h1>
-                                        <p class="text-[11px] text-slate-300 flex items-center gap-1 mt-0.5"><i class="fa-solid fa-location-dot text-red-500"></i> ${rest.address || 'الإسكندرية، ميامي'}</p>
-                                    </div>
+                                <div>
+                                    <span class="text-[10px] bg-white/20 px-2.5 py-0.5 rounded-full font-bold">${tpl.name}</span>
+                                    <h1 class="font-black text-lg mt-1">${rest.name}</h1>
+                                    <p class="text-[11px] text-slate-200"><i class="fa-solid fa-location-dot"></i> ${rest.address || 'الإسكندرية'}</p>
                                 </div>
-                                <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] px-2.5 py-1 rounded-full font-bold">مفتوح الآن</span>
+                                <span class="bg-emerald-500 text-white text-[10px] px-2.5 py-1 rounded-full font-black shadow">مفتوح الآن</span>
                             </div>
                         </div>
-                        <div class="absolute top-4 right-4 flex gap-2">
-                            <button onclick="appState.drawerOpen=true; render();" class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center shadow"><i class="fa-solid fa-bars"></i></button>
+                        <div class="absolute top-4 right-4">
+                            <button onclick="appState.drawerOpen=true; render();" class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md text-white flex items-center justify-center shadow"><i class="fa-solid fa-bars"></i></button>
                         </div>
                     </div>
 
-                    <!-- شريط التواصل السريع -->
-                    <div class="bg-white border-b border-slate-200 px-4 py-2.5 flex justify-around items-center text-xs shadow-sm">
-                        <a href="tel:${rest.phone}" class="flex items-center gap-1.5 font-bold text-slate-700 hover:text-red-600"><i class="fa-solid fa-phone text-red-600"></i> اتصال</a>
-                        <span class="text-slate-300">|</span>
-                        <a href="https://wa.me/2${rest.phone}" target="_blank" class="flex items-center gap-1.5 font-bold text-slate-700 hover:text-emerald-600"><i class="fa-brands fa-whatsapp text-emerald-600"></i> واتساب</a>
-                        <span class="text-slate-300">|</span>
-                        <button onclick="appState.modalType='branch'; render();" class="flex items-center gap-1.5 font-bold text-slate-700 hover:text-sky-600"><i class="fa-solid fa-location-dot text-sky-600"></i> الخريطة</button>
-                    </div>
+                    <div class="max-w-3xl mx-auto px-4 pt-4 space-y-4">
+                        <input value="${appState.search}" oninput="appState.search=this.value; render();" placeholder="ابحث في وجبات المنيو..." class="w-full py-3 px-4 rounded-2xl bg-white text-slate-900 border border-slate-200 text-xs outline-none shadow-sm">
 
-                    <div class="max-w-3xl mx-auto px-4 pt-4 space-y-5">
-                        <!-- شريط البحث -->
-                        <div class="relative">
-                            <input value="${appState.search}" oninput="appState.search=this.value; render();" placeholder="ابحث في قائمة الطعام..." class="w-full py-3.5 pr-10 pl-4 rounded-2xl bg-white border border-slate-200 text-slate-900 text-xs outline-none focus:border-red-600 shadow-sm">
-                            <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-4 text-slate-400"></i>
-                        </div>
-
-                        <!-- الأقسام الدائرية (Categories) -->
-                        <div class="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
-                            <div onclick="appState.activeCat='all'; render();" class="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer">
-                                <div class="w-16 h-16 rounded-full flex items-center justify-center text-xl shadow transition ${appState.activeCat==='all'?'bg-red-600 text-white shadow-red-600/30':'bg-white border border-slate-200 text-slate-700'}">🌟</div>
-                                <span class="text-[11px] font-bold ${appState.activeCat==='all'?'text-red-600':'text-slate-600'}">الكل</span>
+                        <!-- Categories -->
+                        <div class="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
+                            <div onclick="appState.activeCat='all'; render();" class="flex flex-col items-center gap-1 cursor-pointer shrink-0">
+                                <div class="w-14 h-14 rounded-full flex items-center justify-center text-lg shadow ${appState.activeCat==='all'?'':'bg-white text-slate-700 border'}" style="${appState.activeCat==='all'?`background:${theme.primary}; color:#fff;`:''}">🌟</div>
+                                <span class="text-[10px] font-bold">الكل</span>
                             </div>
                             ${rest.categories.map(c => `
-                                <div onclick="appState.activeCat='${c.id}'; render();" class="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer">
-                                    <div class="w-16 h-16 rounded-full flex items-center justify-center text-xl shadow transition ${appState.activeCat===c.id?'bg-red-600 text-white shadow-red-600/30':'bg-white border border-slate-200 text-slate-700'}">${c.icon || '🍽️'}</div>
-                                    <span class="text-[11px] font-bold ${appState.activeCat===c.id?'text-red-600':'text-slate-600'}">${c.name}</span>
+                                <div onclick="appState.activeCat='${c.id}'; render();" class="flex flex-col items-center gap-1 cursor-pointer shrink-0">
+                                    <div class="w-14 h-14 rounded-full flex items-center justify-center text-lg shadow ${appState.activeCat===c.id?'':'bg-white text-slate-700 border'}" style="${appState.activeCat===c.id?`background:${theme.primary}; color:#fff;`:''}">${c.icon || '🍽️'}</div>
+                                    <span class="text-[10px] font-bold">${c.name}</span>
                                 </div>
                             `).join('')}
                         </div>
 
-                        <!-- شبكة الوجبات (Menu Items Grid) -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <!-- Menu Items -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             ${filtered.map(item => `
-                                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition relative">
+                                <div class="bg-white text-slate-900 rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col justify-between relative">
                                     ${item.discount ? `<span class="absolute top-2.5 right-2.5 bg-red-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow">خصم ${item.discount}</span>` : ''}
                                     <img src="${item.image}" class="h-36 w-full object-cover">
                                     <div class="p-3.5 space-y-2">
                                         <div>
-                                            <h3 class="font-black text-xs text-slate-900">${item.name}</h3>
-                                            <p class="text-[10px] text-slate-500 line-clamp-2 mt-1">${item.description}</p>
+                                            <h3 class="font-black text-xs">${item.name}</h3>
+                                            <p class="text-[10px] text-slate-500 line-clamp-2 mt-0.5">${item.description}</p>
                                         </div>
-                                        <div class="flex justify-between items-center pt-1 border-t border-slate-100">
-                                            <span class="text-red-600 font-black text-xs">${item.price} ج.م</span>
-                                            <button onclick="addToCart('${item.id}')" class="px-3.5 py-2 text-xs font-black text-white rounded-xl shadow hover:bg-red-700 transition bg-red-600">+ أضف</button>
+                                        <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+                                            <span class="font-black text-xs" style="color:${theme.primary}">${item.price} ج.م</span>
+                                            <button onclick="addToCart('${item.id}')" class="px-4 py-2 text-xs font-black text-white rounded-xl shadow transition" style="background:${theme.primary}">+ أضف</button>
                                         </div>
                                     </div>
                                 </div>
@@ -748,47 +706,32 @@
 
         function getGPSLocation(){
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((position) => {
-                    appState.gpsLocation = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    appState.gpsLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                     alert('تم تحديد موقعك بدقة عبر الـ GPS بنجاح! 📍');
+                    render();
                 }, () => {
-                    alert('تعذر تحديد الموقع. تأكد من السماح للبرنامج بالوصول للـ GPS.');
+                    alert('تعذر تحديد الموقع. يجدر السماح بالوصول للموقع.');
                 });
             } else {
-                alert('متصفحك لا يدعم خاصية الـ GPS.');
+                alert('متصفحك لا يدعم الـ GPS.');
             }
         }
 
         function renderCheckoutModal(rest){
             return `
-                <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 text-xs">
-                    <div class="bg-white p-6 rounded-3xl max-w-sm w-full space-y-4 border border-slate-200 shadow-2xl">
-                        <h3 class="font-black text-slate-900 text-sm text-center">تأكيد الطلب وتتبع الـ GPS</h3>
+                <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 text-xs text-slate-900">
+                    <div class="bg-white p-6 rounded-3xl max-w-sm w-full space-y-4 shadow-2xl">
+                        <h3 class="font-black text-sm text-center">تأكيد الطلب وتتبع الـ GPS</h3>
                         <div class="space-y-3">
-                            <div>
-                                <label class="block text-slate-600 mb-1 font-bold">اسمك الكريم</label>
-                                <input id="cust_name" placeholder="محمد علي" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-900 font-bold outline-none focus:border-red-600">
-                            </div>
-                            <div>
-                                <label class="block text-slate-600 mb-1 font-bold">رقم الموبايل</label>
-                                <input id="cust_phone" placeholder="010xxxxxxxx" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-900 font-bold outline-none focus:border-red-600">
-                            </div>
-                            <div>
-                                <label class="block text-slate-600 mb-1 font-bold">العنوان التفصيلي</label>
-                                <input id="cust_address" placeholder="الشارع، رقم العمارة، الدور" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-900 font-bold outline-none focus:border-red-600">
-                            </div>
-                            <div>
-                                <button onclick="getGPSLocation()" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-black py-2.5 rounded-xl flex items-center justify-center gap-2 shadow transition">
-                                    <i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي بالـ GPS 📍
-                                </button>
-                                ${appState.gpsLocation ? `<p class="text-[10px] text-emerald-600 font-bold text-center mt-1">✓ تم التقاط إحداثيات الـ GPS بنجاح</p>` : ''}
-                            </div>
+                            <input id="c_name" placeholder="اسمك الكريم" class="w-full bg-slate-50 border p-3 rounded-xl font-bold">
+                            <input id="c_phone" placeholder="رقم الموبايل" class="w-full bg-slate-50 border p-3 rounded-xl font-bold">
+                            <input id="c_addr" placeholder="العنوان التفصيلي (الشارع، رقم العمارة)" class="w-full bg-slate-50 border p-3 rounded-xl font-bold">
+                            <button onclick="getGPSLocation()" class="w-full bg-sky-600 text-white font-black py-2.5 rounded-xl shadow">حدد موقعي الحالي بالـ GPS 📍</button>
+                            ${appState.gpsLocation ? '<p class="text-[10px] text-emerald-600 font-bold text-center">✓ تم التقاط إحداثيات الـ GPS</p>' : ''}
                         </div>
-                        <button onclick="submitOrder()" class="w-full bg-red-600 text-white font-black py-3.5 rounded-xl shadow-lg hover:bg-red-700 transition">إرسال الطلب الآن ➔</button>
-                        <button onclick="appState.cartOpen=false; render();" class="w-full bg-slate-100 text-slate-700 py-2.5 rounded-xl hover:bg-slate-200 transition">إلغاء</button>
+                        <button onclick="submitOrder()" class="w-full bg-red-600 text-white font-black py-3.5 rounded-xl shadow-lg">إرسال الطلب الآن ➔</button>
+                        <button onclick="appState.cartOpen=false; render();" class="w-full bg-slate-100 text-slate-700 py-2.5 rounded-xl">إلغاء</button>
                     </div>
                 </div>
             `;
@@ -798,65 +741,57 @@
             const restId = targetRestSlug || currentRestId || (globalDB && globalDB.restaurants ? Object.keys(globalDB.restaurants)[0] : null);
             const rest = (globalDB && globalDB.restaurants) ? globalDB.restaurants[restId] : null;
             if(!rest) return;
-            const nameEl = document.getElementById('cust_name');
-            const phoneEl = document.getElementById('cust_phone');
-            const addressEl = document.getElementById('cust_address');
-            
-            const name = nameEl ? nameEl.value.trim() : ''; 
-            const phone = phoneEl ? phoneEl.value.trim() : '';
-            const address = addressEl ? addressEl.value.trim() : 'دليفري عادي';
-            
-            if(!name || !phone){ alert('أدخل الاسم ورقم الهاتف!'); return; }
-            
+            const name = document.getElementById('c_name').value.trim();
+            const phone = document.getElementById('c_phone').value.trim();
+            const address = document.getElementById('c_addr').value.trim();
+            if(!name || !phone) { alert('أدخل الاسم ورقم الهاتف!'); return; }
+
             if(!rest.orders) rest.orders = [];
             const total = appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
             
-            rest.orders.unshift({ 
-                id: 'ORD-' + Math.floor(1000 + Math.random() * 9000), 
-                customer_name: name, 
-                phone, 
-                address,
+            rest.orders.unshift({
+                id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
+                customer_name: name,
+                phone,
+                address: address || 'دليفري عادي',
                 gps: appState.gpsLocation ? `https://maps.google.com/?q=${appState.gpsLocation.lat},${appState.gpsLocation.lng}` : null,
-                items_json: JSON.parse(JSON.stringify(appState.cart)), 
-                total, 
-                status: 'new', 
-                table_number: appState.tableNumber || 'دليفري', 
-                created_at: new Date().toLocaleTimeString('ar-EG') 
+                items_json: JSON.parse(JSON.stringify(appState.cart)),
+                total,
+                status: 'new',
+                table_number: appState.tableNumber || 'دليفري',
+                created_at: new Date().toLocaleTimeString('ar-EG')
             });
-            
-            appState.activeOrderId = rest.orders[0].id; 
-            localStorage.setItem('tablia_active_order_id', appState.activeOrderId); 
-            appState.cart = []; 
-            appState.cartOpen = false; 
+
+            appState.activeOrderId = rest.orders[0].id;
+            localStorage.setItem('tablia_active_order_id', appState.activeOrderId);
+            appState.cart = [];
+            appState.cartOpen = false;
             appState.gpsLocation = null;
-            appState.trackerOpen = true; 
-            syncCloud(); 
-            render(); 
-            playBell();
+            appState.trackerOpen = true;
+            syncCloud();
+            render();
         }
 
         function renderLiveOrderTracker(rest){
-            if(!rest || !rest.orders) return '';
-            const ord = rest.orders.find(o => o.id === appState.activeOrderId); 
+            const ord = rest.orders.find(o => o.id === appState.activeOrderId);
             if(!ord) return '';
-            
-            let statusText = 'قيد المراجعة والتحضير 🔥';
-            if(ord.status === 'preparing') statusText = 'جاري تحضير الوجبات بالمنتجات الطازجة 👨‍🍳';
-            if(ord.status === 'delivering') statusText = 'الطلب في الطريق إليك مع الدليفري 🛵';
-            if(ord.status === 'done') statusText = 'تم تسليم الطلب بنجاح، بالهناء والشفاء! ✅';
+            let st = 'قيد المراجعة والتحضير 🔥';
+            if(ord.status==='preparing') st = 'جاري التحضير بالمطبخ 👨‍🍳';
+            if(ord.status==='delivering') st = 'الطلب في الطريق إليك مع الدليفري 🛵';
+            if(ord.status==='done') st = 'تم تسليم الطلب بنجاح، بالهناء والشفاء! ✅';
 
             return `
-                <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 text-xs">
-                    <div class="bg-white p-6 rounded-3xl max-w-sm w-full text-center space-y-4 border border-slate-200 shadow-2xl">
-                        <div class="w-14 h-14 rounded-full bg-red-50 text-red-600 mx-auto flex items-center justify-center text-xl font-black shadow">📦</div>
-                        <h3 class="font-black text-slate-900 text-sm">متابعة الطلب #${ord.id}</h3>
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2 text-right">
-                            <p class="text-red-600 font-bold text-xs text-center">${statusText}</p>
-                            <p class="text-slate-600 text-[11px]">📍 العنوان: ${ord.address}</p>
-                            ${ord.gps ? `<a href="${ord.gps}" target="_blank" class="block text-sky-600 font-bold text-[11px] underline text-center">عرض موقع الـ GPS على الخريطة 🗺️</a>` : ''}
-                            <p class="text-slate-900 font-black text-sm text-center pt-1">${ord.total} ج.م</p>
+                <div class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 text-xs text-slate-900 text-center">
+                    <div class="bg-white p-6 rounded-3xl max-w-sm w-full space-y-4 shadow-2xl">
+                        <div class="w-14 h-14 rounded-full bg-red-50 text-red-600 mx-auto flex items-center justify-center text-xl font-black">📦</div>
+                        <h3 class="font-black text-sm">متابعة الطلب #${ord.id}</h3>
+                        <div class="bg-slate-50 p-4 rounded-2xl border space-y-2 text-right">
+                            <p class="text-red-600 font-bold text-center">${st}</p>
+                            <p class="text-[11px]">📍 العنوان: ${ord.address}</p>
+                            ${ord.gps ? `<a href="${ord.gps}" target="_blank" class="block text-sky-600 font-bold underline text-center">عرض موقع الـ GPS على الخريطة 🗺️</a>` : ''}
+                            <p class="font-black text-sm text-center pt-1">${ord.total} ج.م</p>
                         </div>
-                        <button onclick="appState.trackerOpen=false; render();" class="w-full bg-slate-100 text-slate-800 py-3 rounded-xl hover:bg-slate-200 transition font-bold">إغلاق وتصفح المنيو</button>
+                        <button onclick="appState.trackerOpen=false; render();" class="w-full bg-slate-100 font-bold py-3 rounded-xl">إغلاق وتصفح المنيو</button>
                     </div>
                 </div>
             `;
@@ -870,31 +805,31 @@
             return `
                 ${renderNav()}
                 <div class="max-w-4xl mx-auto px-4 py-6 space-y-4 text-xs">
-                    <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                        <h1 class="font-black text-slate-900 text-sm">شاشة الكاشير والتنبيهات الصوتية - ${rest.name}</h1>
-                        <span class="bg-red-50 text-red-600 font-bold px-3 py-1 rounded-full text-[11px]">الطلبات النشطة: ${rest.orders.length}</span>
+                    <div class="flex justify-between items-center bg-white p-4 rounded-2xl border shadow-sm">
+                        <h1 class="font-black text-slate-900 text-sm">شاشة الكاشير والطلبات الحية - ${rest.name}</h1>
+                        <span class="bg-red-50 text-red-600 font-bold px-3 py-1 rounded-full text-[11px]">الطلبات: ${rest.orders.length}</span>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        ${rest.orders.length === 0 ? `<div class="col-span-2 bg-white p-12 text-center text-slate-400 rounded-3xl border border-slate-200 shadow-sm">لا توجد طلبات جديدة حالياً.. تنتظر طلبات العملاء 🚀</div>` : rest.orders.map((ord, i) => `
-                            <div class="bg-white p-4 rounded-3xl space-y-3 border ${ord.status==='new'?'border-red-500 animate-pulse bg-red-50/20':'border-slate-200'} shadow-md">
-                                <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                        ${rest.orders.length === 0 ? `<div class="col-span-2 bg-white p-12 text-center text-slate-400 rounded-3xl border shadow-sm">لا توجد طلبات جديدة حالياً.. تنتظر طلبات العملاء 🚀</div>` : rest.orders.map((ord, i) => `
+                            <div class="bg-white p-4 rounded-3xl space-y-3 border ${ord.status==='new'?'border-red-500 animate-pulse bg-red-50/25':'border-slate-200'} shadow-md">
+                                <div class="flex justify-between items-center border-b pb-2">
                                     <div>
                                         <span class="font-black text-slate-900 text-sm">${ord.customer_name}</span>
                                         <span class="text-slate-500 text-[10px] block">${ord.phone} | ${ord.table_number}</span>
                                     </div>
                                     <span class="text-red-600 font-black text-sm">${ord.total} ج.م</span>
                                 </div>
-                                <div class="text-slate-700 text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-100 space-y-1">
-                                    <p class="font-bold text-red-600">📍 العنوان: ${ord.address || 'بدون عنوان'}</p>
+                                <div class="text-slate-700 text-[11px] bg-slate-50 p-2.5 rounded-xl border space-y-1">
+                                    <p class="font-bold text-red-600">📍 العنوان: ${ord.address}</p>
                                     ${ord.gps ? `<a href="${ord.gps}" target="_blank" class="text-sky-600 font-bold underline block">فتح موقع الـ GPS للعميل 🗺️</a>` : ''}
                                     <div class="pt-1">${ord.items_json ? ord.items_json.map(x => `• ${x.qty}x ${x.name}`).join('<br>') : ''}</div>
                                 </div>
                                 <div class="grid grid-cols-4 gap-1.5 pt-1">
-                                    <button onclick="updateOrderStatus(${i}, 'preparing')" class="bg-sky-600 hover:bg-sky-500 text-white py-2 rounded-xl font-bold transition">تحضير</button>
-                                    <button onclick="updateOrderStatus(${i}, 'delivering')" class="bg-amber-600 hover:bg-amber-500 text-white py-2 rounded-xl font-bold transition">دليفري 🛵</button>
-                                    <button onclick="updateOrderStatus(${i}, 'done')" class="bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-xl font-bold transition">تم</button>
-                                    <button onclick="deleteOrder(${i})" class="bg-red-50 text-red-600 hover:bg-red-100 py-2 rounded-xl transition"><i class="fa-solid fa-trash"></i></button>
+                                    <button onclick="updateOrderStatus(${i}, 'preparing')" class="bg-sky-600 text-white py-2 rounded-xl font-bold">تحضير</button>
+                                    <button onclick="updateOrderStatus(${i}, 'delivering')" class="bg-amber-600 text-white py-2 rounded-xl font-bold">دليفري 🛵</button>
+                                    <button onclick="updateOrderStatus(${i}, 'done')" class="bg-emerald-600 text-white py-2 rounded-xl font-bold">تم</button>
+                                    <button onclick="deleteOrder(${i})" class="bg-red-50 text-red-600 py-2 rounded-xl"><i class="fa-solid fa-trash"></i></button>
                                 </div>
                             </div>
                         `).join('')}
@@ -924,25 +859,25 @@
         function renderDashboard(){
             const rest = (globalDB && globalDB.restaurants) ? globalDB.restaurants[currentRestId] : null; 
             if(!rest){ setPage('auth'); return ''; }
-            if(!appState.adminUnlocked) return `${renderNav()}<div class="max-w-md mx-auto py-12 px-4 text-center space-y-4 text-xs"><div class="bg-white p-6 rounded-3xl space-y-3 border border-slate-200 shadow-xl"><h2 class="font-black text-slate-900 text-sm">لوحة الإدارة (تفعيل الباقات - 600 ج)</h2><input id="admin_pin" type="password" placeholder="الرمز السري 357159" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-center text-slate-900 outline-none focus:border-red-600"><button onclick="if(document.getElementById('admin_pin').value==='${PLATFORM_OWNER.adminPass}'){appState.adminUnlocked=true;render();}else{alert('الرمز غلط')}" class="w-full bg-red-600 text-white font-black py-3.5 rounded-xl shadow">دخول الإدارة</button></div></div>`;
+            if(!appState.adminUnlocked) return `${renderNav()}<div class="max-w-md mx-auto py-12 px-4 text-center space-y-4 text-xs"><div class="bg-white p-6 rounded-3xl space-y-3 border shadow-xl"><h2 class="font-black text-slate-900 text-sm">لوحة الإدارة (الباقات والاشتراكات)</h2><input id="admin_pin" type="password" placeholder="الرمز السري (مخفي)" class="w-full bg-slate-50 border p-3.5 rounded-xl text-center outline-none"><button onclick="if(document.getElementById('admin_pin').value==='${PLATFORM_OWNER.adminPass}'){appState.adminUnlocked=true;render();}else{alert('الرمز غلط')}" class="w-full bg-red-600 text-white font-black py-3.5 rounded-xl">دخول الإدارة</button></div></div>`;
             
             return `
                 ${renderNav()}
                 <div class="max-w-4xl mx-auto px-4 py-6 space-y-4 text-xs">
-                    <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                        <h1 class="font-black text-slate-900 text-sm">إدارة كافة مطاعم المنصة (الاشتراكات الشهرية)</h1>
-                        <button onclick="appState.adminUnlocked=false; render();" class="text-red-600 font-bold hover:underline">قفل الإدارة</button>
+                    <div class="flex justify-between items-center bg-white p-4 rounded-2xl border shadow-sm">
+                        <h1 class="font-black text-slate-900 text-sm">إدارة كافة مطاعم المنصة</h1>
+                        <button onclick="appState.adminUnlocked=false; render();" class="text-red-600 font-bold">قفل الإدارة</button>
                     </div>
                     <div class="space-y-3">
                         ${Object.values(globalDB.restaurants).map(r => `
-                            <div class="bg-white p-4 rounded-2xl flex justify-between items-center border ${r.subscription?.isActive?'border-emerald-500/40':'border-amber-500/40'} shadow-sm">
+                            <div class="bg-white p-4 rounded-2xl flex justify-between items-center border shadow-sm">
                                 <div>
                                     <h3 class="font-black text-slate-900 text-xs">${r.name}</h3>
-                                    <p class="text-slate-500 text-[11px] mt-0.5">المالك: ${r.ownerName} (${r.phone}) - الحالة: ${r.subscription?.isActive ? 'نشط ومفعل ✅' : 'غير مفعل ⏸️'}</p>
+                                    <p class="text-slate-500 text-[11px]">المالك: ${r.ownerName} (${r.phone})</p>
                                 </div>
                                 <div class="flex gap-2">
-                                    <button onclick="globalDB.restaurants['${r.id}'].subscription={isActive:true, expiresAt:Date.now()+2592000000}; syncCloud(); render();" class="bg-emerald-600 text-white px-3 py-2 rounded-xl font-bold hover:bg-emerald-500 transition">تفعيل شهر</button>
-                                    <button onclick="globalDB.restaurants['${r.id}'].subscription={isActive:false}; syncCloud(); render();" class="bg-red-50 text-red-600 px-3 py-2 rounded-xl hover:bg-red-100 transition">إيقاف</button>
+                                    <button onclick="globalDB.restaurants['${r.id}'].subscription={isActive:true, expiresAt:Date.now()+2592000000}; syncCloud(); render();" class="bg-emerald-600 text-white px-3 py-2 rounded-xl font-bold">تفعيل شهر</button>
+                                    <button onclick="globalDB.restaurants['${r.id}'].subscription={isActive:false}; syncCloud(); render();" class="bg-red-50 text-red-600 px-3 py-2 rounded-xl">إيقاف</button>
                                 </div>
                             </div>
                         `).join('')}
@@ -958,14 +893,14 @@
             return `
                 ${renderNav()}
                 <div class="max-w-3xl mx-auto px-4 py-6 space-y-4 text-xs">
-                    <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="flex justify-between items-center bg-white p-4 rounded-2xl border shadow-sm">
                         <h1 class="font-black text-slate-900 text-sm">QR Code الطاولات والدليفري - ${rest.name}</h1>
-                        <button onclick="window.print()" class="bg-red-600 text-white px-4 py-2.5 rounded-xl font-black shadow hover:bg-red-700 transition">طباعة الـ QR</button>
+                        <button onclick="window.print()" class="bg-red-600 text-white px-4 py-2.5 rounded-xl font-black shadow">طباعة الـ QR</button>
                     </div>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         ${Array.from({length: rest.tablesCount || 20}, (_, i) => i + 1).map(n => `
-                            <div class="bg-white p-3 rounded-2xl text-center shadow-md space-y-2 border border-slate-100">
-                                <div class="font-black text-xs text-slate-900">طاولة رقم ${n}</div>
+                            <div class="bg-white p-3 rounded-2xl text-center shadow-md space-y-2 border">
+                                <div class="font-black text-xs">طاولة رقم ${n}</div>
                                 <img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(base + n)}" class="w-24 h-24 mx-auto rounded-lg">
                             </div>
                         `).join('')}
