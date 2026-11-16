@@ -49,7 +49,7 @@
 
         let globalDB = { restaurants: {} };
         try {
-            const raw = localStorage.getItem('tablia_multitenant_2030_v31');
+            const raw = localStorage.getItem('tablia_multitenant_2030_v32');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) {}
 
@@ -63,16 +63,14 @@
                         subscription: { isActive: true, expiresAt: Date.now() + 30*24*60*60*1000 },
                         theme: { primary: '#dc2626', bg: '#0b0f19', accent: '#facc15' },
                         categories: [
-                            { id: 'cat_1', name: 'الرئيسية', icon: '🍔' }
+                            { id: 'cat_1', name: 'البرجر والسندوتشات', icon: '🍔' },
+                            { id: 'cat_2', name: 'المشروبات', icon: '🥤' }
                         ],
                         menu_items: [
-                            { id: 'itm_1', category_id: 'cat_1', name: 'برجر كلاسيك', description: 'لحم بقري مشوي، خس، طماطم، صوص خاص', price: 120, stock: 50, image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500', is_available: true, discount: 'عرض اليوم' },
-                            { id: 'itm_2', category_id: 'cat_1', name: 'بطاطس مقلية', description: 'بطاطس مقرمشة بالبهارات', price: 45, stock: 100, image: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500', is_available: true, discount: '' }
+                            { id: 'itm_1', category_id: 'cat_1', name: 'برجر كلاسيك', description: 'لحم بقري مشوي، خس، طماطم', price: 120, stock: 50, image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500', is_available: true, discount: 'عرض اليوم' }
                         ],
                         orders: [],
-                        employees: [
-                            { id: 'emp_1', name: 'أحمد محمود (ويتر)', status: 'حاضر ✓', time: '09:00 ص' }
-                        ]
+                        employees: []
                     }
                 }
             };
@@ -95,15 +93,15 @@
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_multitenant_2030_v31', JSON.stringify(globalDB));
+                localStorage.setItem('tablia_multitenant_2030_v32', JSON.stringify(globalDB));
                 if (cloudDB) {
-                    cloudDB.ref('tablia_multitenant_enterprise_2030_v31').set(globalDB).catch(() => {});
+                    cloudDB.ref('tablia_multitenant_enterprise_2030_v32').set(globalDB).catch(() => {});
                 }
             } catch (e) {}
         }
 
         if (cloudDB) {
-            cloudDB.ref('tablia_multitenant_enterprise_2030_v31').on('value', (snap) => {
+            cloudDB.ref('tablia_multitenant_enterprise_2030_v32').on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.restaurants) {
                     if (currentRestId && data.restaurants[currentRestId]) {
@@ -117,7 +115,7 @@
                     }
                     globalDB = data;
                     try {
-                        localStorage.setItem('tablia_multitenant_2030_v31', JSON.stringify(globalDB));
+                        localStorage.setItem('tablia_multitenant_2030_v32', JSON.stringify(globalDB));
                     } catch(e){}
                     render();
                 }
@@ -151,13 +149,13 @@
             search: '', 
             cart: [], 
             checkoutView: false, 
-            tableNumber: urlParams.get('t')||null, 
+            orderType: urlParams.get('t') ? 'dine-in' : 'delivery',
+            tableNumber: urlParams.get('t') || 'طاولة 1', 
             activeOrderId: localStorage.getItem('tablia_active_order_id')||null, 
             trackerOpen: false, 
             superAdminUnlocked: false,
             drawerOpen: false,
             modalType: null,
-            gpsLocation: null,
             previewTpl: null,
             paymentMethod: 'cash'
         };
@@ -274,7 +272,7 @@
             <div class="max-w-md mx-auto px-4 py-12 space-y-6">
                 <div class="text-center space-y-2">
                     <h1 class="text-2xl font-black text-white">منصة طبلية | Tablia OS</h1>
-                    <p class="text-xs text-slate-400">اطلب من الـ QR.. المويتر يرن فوراً، كاش وفودافون كاش، مخزن، حضور وانصراف</p>
+                    <p class="text-xs text-slate-400">اطلب من الـ QR.. المويتر يرن فوراً، صالة، دليفري، استلام، ومخزن</p>
                 </div>
                 <div class="flex bg-slate-900 p-1.5 rounded-2xl text-xs border border-slate-800">
                     <button onclick="appState.authTab='login'; render();" class="flex-1 py-3 rounded-xl font-bold transition ${appState.authTab==='login'?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">تسجيل دخول</button>
@@ -322,11 +320,11 @@
             if(!phone || !pass) { alert('يرجى إدخال رقم الموبايل وكلمة السر'); return; }
 
             if(cloudDB) {
-                cloudDB.ref('tablia_multitenant_enterprise_2030_v31').once('value').then(snap => {
+                cloudDB.ref('tablia_multitenant_enterprise_2030_v32').once('value').then(snap => {
                     const data = snap.val();
                     if(data && data.restaurants) {
                         globalDB = data;
-                        localStorage.setItem('tablia_multitenant_2030_v31', JSON.stringify(globalDB));
+                        localStorage.setItem('tablia_multitenant_2030_v32', JSON.stringify(globalDB));
                     }
                     verifyLoginData(phone, pass);
                 }).catch(() => { verifyLoginData(phone, pass); });
@@ -387,7 +385,7 @@
                 <div class="max-w-3xl mx-auto px-4 py-6 space-y-5">
                     <div class="flex gap-1.5 bg-slate-900 p-1.5 rounded-2xl text-xs border border-slate-800 shadow-sm">
                         <button onclick="appState.builderStep=1; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===1?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">1. القالب والمعاينة</button>
-                        <button onclick="appState.builderStep=2; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===2?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">2. الأقسام والمنيو</button>
+                        <button onclick="appState.builderStep=2; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===2?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">2. الصندوق السحري والمنيو</button>
                         <button onclick="appState.builderStep=4; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===4?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">3. نشر اللينك والـ QR</button>
                     </div>
                     ${appState.builderStep===1 ? renderStep1(rest) : (appState.builderStep===2 ? renderStep2(rest) : renderStep4(rest))}
@@ -544,14 +542,14 @@
                     </div>
 
                     <div class="bg-emerald-950/30 border border-emerald-900 p-4 rounded-2xl space-y-3">
-                        <label class="block text-emerald-400 font-black">🪄 الصندوق السحري (أو صورة المنيو الورقي):</label>
-                        <p class="text-[11px] text-slate-300">اكتب اسم الصنف وجنبه السعر والكمية (مثال: برجر كلاسيك 120 كمية 50):</p>
-                        <textarea id="magic_box" placeholder="برجر كلاسيك 120 (50), بطاطس مقلية 45 (100)" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-white outline-none focus:border-emerald-600" rows="3"></textarea>
-                        <button onclick="parseMagicText()" class="w-full bg-emerald-600 text-white font-black py-3 rounded-xl shadow hover:bg-emerald-500 transition">توليد وإضافة الأصناف للمخزن تلقائياً ✓</button>
+                        <label class="block text-emerald-400 font-black">🪄 الصندوق السحري الذكي (يضيف الأقسام والأصناف تلقائياً):</label>
+                        <p class="text-[11px] text-slate-300">اكتب الأقسام وجواها الأصناف والأسعار (مثال: <b>قسم البرجر: برجر كلاسيك 120، برجر دجاج 110 | قسم المشروبات: كوكاكولا 25</b>):</p>
+                        <textarea id="magic_box" placeholder="قسم البرجر: برجر كلاسيك 120, برجر دجاج 110&#10;قسم المشروبات: كوكاكولا 25, مياه معدنية 10" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-white outline-none focus:border-emerald-600 font-mono" rows="4"></textarea>
+                        <button onclick="parseSmartMagicText()" class="w-full bg-emerald-600 text-white font-black py-3 rounded-xl shadow hover:bg-emerald-500 transition">تحويل وتوليد الأقسام والأصناف تلقائياً ✓</button>
                     </div>
 
                     <div class="space-y-3">
-                        <h3 class="font-black text-white">الأصناف الحالية (${rest.menu_items.length}):</h3>
+                        <h3 class="font-black text-white">الأصناف الحالية بالمخزن والمنيو (${rest.menu_items.length}):</h3>
                         ${rest.menu_items.length === 0 ? '<p class="text-slate-500 text-center py-6">لا توجد أصناف مضافة بعد.</p>' : ''}
                         <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
                             ${rest.menu_items.map((it, i) => `
@@ -560,7 +558,7 @@
                                         <img src="${it.image}" class="w-12 h-12 object-cover rounded-xl shadow">
                                         <div>
                                             <h4 class="font-black text-white text-xs">${it.name}</h4>
-                                            <span class="text-red-500 font-bold text-xs">${it.price} ج.م | المخزون: <b class="text-emerald-400">${it.stock || 0}</b></span>
+                                            <span class="text-red-500 font-bold text-xs">${it.price} ج.م | المخزون: <b class="text-emerald-400">${it.stock || 50}</b></span>
                                         </div>
                                     </div>
                                     <button onclick="globalDB.restaurants['${currentRestId}'].menu_items.splice(${i},1); syncCloud(); render();" class="bg-red-500/10 text-red-400 px-3 py-1.5 rounded-xl hover:bg-red-500/20 transition"><i class="fa-solid fa-trash"></i></button>
@@ -592,35 +590,63 @@
             render();
         }
 
-        function parseMagicText(){
+        function parseSmartMagicText(){
             const rest = globalDB.restaurants[currentRestId];
             if(!rest) return;
             if(!rest.menu_items) rest.menu_items = [];
-            if(!rest.categories || rest.categories.length === 0) rest.categories = [{id:'cat_1', name:'الرئيسية', icon:'🍔'}];
+            if(!rest.categories) rest.categories = [];
             
             const text = document.getElementById('magic_box').value.trim(); 
             if(!text) return;
-            text.split(/,|\n/).forEach(line => {
-                const m = line.match(/\d+/); if(!m) return;
-                const price = Number(m[0]); 
-                const name = line.replace(m[0],'').replace(/ج/g,'').replace(/جنيه/g,'').trim();
-                if(name) {
-                    rest.menu_items.push({ 
-                        id: 'itm_' + Date.now() + Math.random(), 
-                        category_id: rest.categories[0].id, 
-                        name, 
-                        description: 'طازج ومعد بإتقان لتستمتع بألذ طعم', 
-                        price, 
-                        stock: 50,
-                        image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500', 
-                        is_available: true,
-                        discount: ''
+
+            let currentCatId = rest.categories.length > 0 ? rest.categories[0].id : 'cat_1';
+
+            text.split('\n').forEach(line => {
+                line = line.trim();
+                if(!line) return;
+                if(line.includes(':') || line.includes('قسم')) {
+                    const parts = line.split(':');
+                    const catName = parts[0].replace('قسم', '').trim();
+                    const catId = 'cat_' + Date.now() + Math.random();
+                    rest.categories.push({ id: catId, name: catName, icon: '🍽️' });
+                    currentCatId = catId;
+                    
+                    if(parts[1]) {
+                        parts[1].split(',').forEach(itemStr => {
+                            parseAndAddItem(rest, currentCatId, itemStr);
+                        });
+                    }
+                } else {
+                    line.split(',').forEach(itemStr => {
+                        parseAndAddItem(rest, currentCatId, itemStr);
                     });
                 }
-            }); 
+            });
+
             document.getElementById('magic_box').value = '';
-            syncCloud(); 
+            syncCloud();
             render();
+        }
+
+        function parseAndAddItem(rest, catId, str) {
+            str = str.trim();
+            const m = str.match(/\d+/);
+            if(!m) return;
+            const price = Number(m[0]);
+            const name = str.replace(m[0], '').replace(/ج/g, '').replace(/جنيه/g, '').trim();
+            if(name) {
+                rest.menu_items.push({
+                    id: 'itm_' + Date.now() + Math.random(),
+                    category_id: catId,
+                    name,
+                    description: 'طازج ومعد بإتقان لترضيك',
+                    price,
+                    stock: 50,
+                    image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500',
+                    is_available: true,
+                    discount: ''
+                });
+            }
         }
 
         function renderStep4(rest){
@@ -667,7 +693,6 @@
             `;
         }
 
-        // شاشة الكاشير والطلبات الحية مع زر طباعة المطبخ الحرارية
         function renderCashier(){
             const rest = (globalDB && globalDB.restaurants) ? globalDB.restaurants[currentRestId] : null; 
             if(!rest){ setPage('auth'); return ''; }
@@ -690,7 +715,7 @@
                                 <div class="flex justify-between items-center border-b border-slate-800 pb-2">
                                     <div>
                                         <span class="font-black text-white text-sm">${ord.customer_name}</span>
-                                        <span class="text-slate-400 text-[10px] block">${ord.phone} | <b class="text-amber-400">${ord.table_number}</b></span>
+                                        <span class="text-slate-400 text-[10px] block">${ord.phone} | <b class="text-amber-400">${ord.order_type_label}</b></span>
                                     </div>
                                     <div class="text-left">
                                         <span class="text-red-500 font-black text-sm">${ord.total} ج.م</span>
@@ -698,7 +723,7 @@
                                     </div>
                                 </div>
                                 <div class="text-slate-300 text-[11px] bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-1">
-                                    <p class="font-bold text-red-400">📍 المكان: ${ord.address}</p>
+                                    <p class="font-bold text-red-400">📍 تفاصيل الطلب: ${ord.address}</p>
                                     <div class="pt-1">${ord.items_json ? ord.items_json.map(x => `• ${x.qty}x ${x.name} (${x.price * x.qty} ج.م)`).join('<br>') : ''}</div>
                                 </div>
                                 <div class="grid grid-cols-5 gap-1 pt-1">
@@ -733,7 +758,6 @@
             }
         }
 
-        // قسم المخزن والمخزون
         function renderInventory(){
             const rest = (globalDB && globalDB.restaurants) ? globalDB.restaurants[currentRestId] : null; 
             if(!rest){ setPage('auth'); return ''; }
@@ -777,7 +801,6 @@
             render();
         }
 
-        // نظام حضور وانصراف الموظفين
         function renderAttendance(){
             const rest = (globalDB && globalDB.restaurants) ? globalDB.restaurants[currentRestId] : null; 
             if(!rest){ setPage('auth'); return ''; }
@@ -853,7 +876,7 @@
             const cartCount = appState.cart.reduce((s,i)=>s+i.qty,0); 
             const itemsTotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
             const deliveryFee = rest.deliveryFee || 25;
-            const grandTotal = itemsTotal + (cartCount > 0 && appState.tableNumber==='دليفري' ? deliveryFee : 0);
+            const grandTotal = itemsTotal + (cartCount > 0 && appState.orderType==='delivery' ? deliveryFee : 0);
 
             return `
                 <div style="background-color: ${theme.bg}; color: ${theme.bg === '#ffffff' || theme.bg === '#fdf8f6' ? '#0f172a' : '#ffffff'};" class="min-h-screen pb-32 relative">
@@ -912,7 +935,7 @@
                         <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4">
                             <div class="flex justify-between items-end w-full">
                                 <div>
-                                    <span class="text-[10px] bg-white/20 px-2.5 py-0.5 rounded-full font-bold">${appState.tableNumber ? 'أنت على ' + appState.tableNumber : 'المنيو الإلكتروني'}</span>
+                                    <span class="text-[10px] bg-white/20 px-2.5 py-0.5 rounded-full font-bold">منيو مطعم ${rest.name}</span>
                                     <h1 class="font-black text-lg mt-1">${rest.name}</h1>
                                     <p class="text-[11px] text-slate-200"><i class="fa-solid fa-location-dot"></i> ${rest.address || 'القاهرة'}</p>
                                 </div>
@@ -925,6 +948,13 @@
                     </div>
 
                     <div class="max-w-3xl mx-auto px-4 pt-4 space-y-4">
+                        <!-- Order Type Selection Buttons -->
+                        <div class="grid grid-cols-3 gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 text-xs">
+                            <button onclick="appState.orderType='dine-in'; render();" class="py-2.5 rounded-xl font-black transition ${appState.orderType==='dine-in'?'bg-red-600 text-white shadow':'text-slate-400 hover:text-white'}">🍽️ صالة المطعم</button>
+                            <button onclick="appState.orderType='delivery'; render();" class="py-2.5 rounded-xl font-black transition ${appState.orderType==='delivery'?'bg-red-600 text-white shadow':'text-slate-400 hover:text-white'}">🛵 دليفري</button>
+                            <button onclick="appState.orderType='pickup'; render();" class="py-2.5 rounded-xl font-black transition ${appState.orderType==='pickup'?'bg-red-600 text-white shadow':'text-slate-400 hover:text-white'}">🏪 استلام فرع</button>
+                        </div>
+
                         ${!isSub ? `
                             <div class="bg-amber-500 text-slate-950 p-3.5 rounded-2xl font-black text-center text-xs shadow">
                                 ⚠️ هذا المطعم في وضع "المعاينـة فقط" ولم يتم تفعيل اشتراكه الشهري.
@@ -976,8 +1006,6 @@
                             </button>
                         </div>
                     ` : ''}
-
-                    ${appState.trackerOpen ? renderLiveOrderTracker(rest) : ''}
                 </div>
             `;
         }
@@ -985,8 +1013,12 @@
         function renderCheckoutPage(rest, theme) {
             const deliveryFee = rest.deliveryFee || 25;
             const itemsTotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
-            const isDelivery = appState.tableNumber === 'دليفري';
+            const isDelivery = appState.orderType === 'delivery';
             const grandTotal = itemsTotal + (isDelivery ? deliveryFee : 0);
+            
+            let orderTypeTitle = '🍽️ طلب صالة المطعم';
+            if(appState.orderType==='delivery') orderTypeTitle = '🛵 طلب دليفري منزلي';
+            if(appState.orderType==='pickup') orderTypeTitle = '🏪 استلام من الفرع';
 
             return `
                 <div class="min-h-screen bg-slate-950 text-white pb-20">
@@ -998,7 +1030,10 @@
                     
                     <div class="max-w-md mx-auto p-4 space-y-4 text-xs">
                         <div class="bg-slate-900 p-4 rounded-3xl border border-slate-800 shadow-sm space-y-2">
-                            <h3 class="font-black text-xs text-slate-300 border-b border-slate-800 pb-2">ملخص الوجبات (${appState.cart.reduce((s,i)=>s+i.qty,0)})</h3>
+                            <div class="flex justify-between items-center text-red-500 font-black border-b border-slate-800 pb-2">
+                                <span>نوع الطلب المختار:</span>
+                                <span>${orderTypeTitle}</span>
+                            </div>
                             <div class="space-y-1.5 max-h-40 overflow-y-auto">
                                 ${appState.cart.map(item => `
                                     <div class="flex justify-between items-center text-[11px]">
@@ -1009,7 +1044,7 @@
                             </div>
                             <div class="pt-2 border-t border-slate-800 space-y-1 font-bold">
                                 <div class="flex justify-between text-slate-400"><span>سعر الوجبات:</span><span>${itemsTotal} ج.م</span></div>
-                                ${isDelivery ? `<div class="flex justify-between text-slate-400"><span>رسوم التوصيل:</span><span>${deliveryFee} ج.م</span></div>` : '<div class="flex justify-between text-emerald-400"><span>الطلب من داخل الصالة:</span><span>بدون توصيل</span></div>'}
+                                ${isDelivery ? `<div class="flex justify-between text-slate-400"><span>رسوم التوصيل:</span><span>${deliveryFee} ج.م</span></div>` : '<div class="flex justify-between text-emerald-400"><span>بدون مصاريف توصيل:</span><span>مجاناً</span></div>'}
                                 <div class="flex justify-between text-white text-sm font-black pt-1 border-t border-slate-800"><span>الإجمالي النهائي:</span><span style="color:${theme.primary}">${grandTotal} ج.م</span></div>
                             </div>
                         </div>
@@ -1025,8 +1060,8 @@
                                 <input id="co_phone" placeholder="010xxxxxxxx" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl font-bold outline-none focus:border-red-600 text-white">
                             </div>
                             <div>
-                                <label class="block font-bold text-slate-300 mb-1">مكانك / الطاولة أو العنوان</label>
-                                <input id="co_addr" value="${appState.tableNumber || 'دليفري منزلي'}" placeholder="رقم الطاولة أو العنوان بالتفصيل" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl font-bold outline-none focus:border-red-600 text-white">
+                                <label class="block font-bold text-slate-300 mb-1">${appState.orderType==='dine-in'?'رقم الطاولة':(appState.orderType==='delivery'?'عنوان الاستلام بالتفصيل':'ملاحظات الاستلام من الفرع')}</label>
+                                <input id="co_addr" value="${appState.orderType==='dine-in'?'طاولة 1':(appState.orderType==='delivery'?'العنوان بالتفصيل':'الاستلام من الفرع الرئيسي' )}" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl font-bold outline-none focus:border-red-600 text-white">
                             </div>
 
                             <div>
@@ -1042,7 +1077,7 @@
                                 <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 text-center space-y-1">
                                     <p class="font-bold text-amber-400">حول المبلغ (${grandTotal} ج.م) على رقم المحفظة:</p>
                                     <p class="text-sm font-black select-all">01015861991</p>
-                                    <p class="text-[10px] text-slate-400">ثم اضغط تأكيد الطلب وسيرن هاتف المطعم والويتر فوراً!</p>
+                                    <p class="text-[10px] text-slate-400">ثم اضغط تأكيد الطلب وسيرن هاتف الويتر والمطعم فوراً!</p>
                                 </div>
                             ` : ''}
 
@@ -1079,10 +1114,13 @@
 
             if(!rest.orders) rest.orders = [];
             const itemsTotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty),0);
-            const isDelivery = appState.tableNumber === 'دليفري';
+            const isDelivery = appState.orderType === 'delivery';
             const total = itemsTotal + (isDelivery ? deliveryFee : 0);
 
-            // خصم الكميات من المخزن تلقائياً
+            let orderTypeLabel = '🍽️ صالة المطعم';
+            if(appState.orderType==='delivery') orderTypeLabel = '🛵 دليفري';
+            if(appState.orderType==='pickup') orderTypeLabel = '🏪 استلام فرع';
+
             appState.cart.forEach(cartItem => {
                 const menuItem = rest.menu_items.find(m => m.id === cartItem.id);
                 if(menuItem) {
@@ -1094,14 +1132,14 @@
                 id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
                 customer_name: name,
                 phone,
-                address: address || 'صالة المطعم',
+                order_type_label: orderTypeLabel,
+                address: address || orderTypeLabel,
                 items_json: JSON.parse(JSON.stringify(appState.cart)),
                 items_total: itemsTotal,
                 delivery_fee: isDelivery ? deliveryFee : 0,
                 total,
                 status: 'new',
                 payment_method: appState.paymentMethod,
-                table_number: appState.tableNumber || 'طاولة الصالة',
                 created_at: new Date().toLocaleTimeString('ar-EG')
             });
 
@@ -1109,34 +1147,10 @@
             localStorage.setItem('tablia_active_order_id', appState.activeOrderId);
             appState.cart = [];
             appState.checkoutView = false;
-            appState.trackerOpen = true;
             syncCloud();
             playBell();
+            alert('تم إرسال طلبك بنجاح ورن هاتف المطعم والويتر فوراً!');
             render();
-        }
-
-        function renderLiveOrderTracker(rest){
-            const ord = rest.orders.find(o => o.id === appState.activeOrderId);
-            if(!ord) return '';
-            let st = 'تم إرسال الطلب ورن الويتر والمطعم بنجاح 🔥';
-            if(ord.status==='preparing') st = 'جاري تحضير طلبك بالمطبخ الآن 👨‍🍳';
-            if(ord.status==='delivering') st = 'الطلب في الطريق إليك 🛵';
-            if(ord.status==='done') st = 'تم تسليم الطلب بنجاح، بالهناء والشفاء! ✅';
-
-            return `
-                <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 text-xs text-slate-950 text-center">
-                    <div class="bg-white p-6 rounded-3xl max-w-sm w-full space-y-4 shadow-2xl">
-                        <div class="w-14 h-14 rounded-full bg-red-50 text-red-600 mx-auto flex items-center justify-center text-xl font-black animate-bounce">🔔</div>
-                        <h3 class="font-black text-sm">تم رن هاتف الويتر والمطعم! #${ord.id}</h3>
-                        <div class="bg-slate-50 p-4 rounded-2xl border space-y-2 text-right">
-                            <p class="text-red-600 font-bold text-center">${st}</p>
-                            <p class="text-[11px]">📍 المكان: ${ord.address}</p>
-                            <p class="font-black text-sm text-center pt-1">${ord.total} ج.م</p>
-                        </div>
-                        <button onclick="appState.trackerOpen=false; render();" class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl">إغلاق وتصفح المنيو</button>
-                    </div>
-                </div>
-            `;
         }
 
         function renderDashboard(){
