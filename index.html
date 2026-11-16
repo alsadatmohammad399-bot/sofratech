@@ -39,37 +39,38 @@
 
         const PLATFORM_OWNER = { walletNumber: '01015861991', monthlyPrice: 600, adminPass: '2030' };
 
-        let globalDB = JSON.parse(localStorage.getItem('tablia_multitenant_2030_v5')) || {
+        let globalDB = JSON.parse(localStorage.getItem('tablia_multitenant_2030_v6')) || {
             restaurants: {
                 "rest_demo": {
                     id: "rest_demo", ownerName: "محمد الحاتي", name: "مشويات الحاتي الفاخرة", phone: "01015861991", pass: "1234",
                     template_id: "foodera-modern", layout: "foodera", theme: { primary: "#ea580c", bg: "#030712" }, tablesCount: 20,
                     subscription: { isActive: true, expiresAt: Date.now() + 30*24*60*60*1000 },
                     categories: [{ id: 'cat_1', name: 'المشويات', icon: '🥩' }, { id: 'cat_2', name: 'السندوتشات', icon: '🥙' }],
-                    menu_items: [{ id: 'itm_1', category_id: 'cat_1', name: 'كيلو كباب وكفتة', description: 'لحم بلدي مشوي', price: 680, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500', is_available: true, tags: [] }],
+                    menu_items: [{ id: 'itm_1', category_id: 'cat_1', name: 'كيلو كباب وكفتة', description: 'لحم بلدي مشوي عالفحم', price: 680, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500', is_available: true, tags: [] }],
                     orders: []
                 }
             }
         };
 
-        // الـ 7 قوالب كاملة ومفصلة
+        // الـ 7 قوالب الاحترافية كاملة
         const TEMPLATES_CATALOG = [
-            { id: 'foodera-modern', name: 'Foodera Modern App', layout: 'foodera', desc: 'تصميم برجر وعصري ببانر تسويقي وبطاقات شبكية فخمة', preview: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
-            { id: 'pizza-deli', name: 'Pizza Deli Style', layout: 'pizza', desc: 'تصميم بيتزا فخم ببانر علوي أحمر وبطاقات عريضة', preview: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500' },
-            { id: 'dark-grill', name: 'Dark Grill VIP', layout: 'dark_grill', desc: 'تصميم ليلي فاخر للستيك والبرجر بالأسود والذهبي', preview: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500' },
-            { id: 'verde-table', name: 'Verde Organic', layout: 'verde', desc: 'تصميم عضوي وطبيعي مستوحى من المزارع', preview: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500' },
-            { id: 'boardroom-bites', name: 'Boardroom Catering', layout: 'boardroom', desc: 'تصميم مؤسسي لضيافة الشركات وباقات الاجتماعات', preview: 'https://images.unsplash.com/photo-1555244162-803834f70033?w=500' },
-            { id: 'ember-wok', name: 'Ember Wok Kitchen', layout: 'wok', desc: 'تصميم آسيوي حيوي وساخن للمشويات الآسيوية', preview: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=500' },
-            { id: 'modern-japanese', name: 'Japanese Zen Fine Dining', layout: 'japanese', desc: 'تصميم ياباني مينيمال راقٍ وهادئ', preview: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=500' }
+            { id: 'foodera-modern', name: 'Foodera Modern App', layout: 'foodera', desc: 'تصميم برجر وعصري ببانر تسويقي وبطاقات شبكية فخمة', preview: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500', themeBg: '#030712', primary: '#ea580c' },
+            { id: 'pizza-deli', name: 'Pizza Deli Style', layout: 'pizza', desc: 'تصميم بيتزا فخم ببانر علوي أحمر وبطاقات عريضة', preview: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500', themeBg: '#1a0505', primary: '#dc2626' },
+            { id: 'dark-grill', name: 'Dark Grill VIP', layout: 'dark_grill', desc: 'تصميم ليلي فاخر للستيك والبرجر بالأسود والذهبي', preview: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500', themeBg: '#09090b', primary: '#f59e0b' },
+            { id: 'verde-table', name: 'Verde Organic', layout: 'verde', desc: 'تصميم عضوي وطبيعي مستوحى من المزارع', preview: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500', themeBg: '#05160a', primary: '#10b981' },
+            { id: 'boardroom-bites', name: 'Boardroom Catering', layout: 'boardroom', desc: 'تصميم مؤسسي لضيافة الشركات وباقات الاجتماعات', preview: 'https://images.unsplash.com/photo-1555244162-803834f70033?w=500', themeBg: '#0f172a', primary: '#3b82f6' },
+            { id: 'ember-wok', name: 'Ember Wok Kitchen', layout: 'wok', desc: 'تصميم آسيوي حيوي وساخن للمشويات الآسيوية', preview: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=500', themeBg: '#180303', primary: '#ef4444' },
+            { id: 'modern-japanese', name: 'Japanese Zen Fine Dining', layout: 'japanese', desc: 'تصميم ياباني مينيمال راقٍ وهادئ', preview: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=500', themeBg: '#0a0a0c', primary: '#e2e8f0' }
         ];
 
         function syncCloud() {
-            localStorage.setItem('tablia_multitenant_2030_v5', JSON.stringify(globalDB));
-            if (cloudDB) cloudDB.ref('tablia_multitenant_enterprise_2030_v5').set(globalDB);
+            localStorage.setItem('tablia_multitenant_2030_v6', JSON.stringify(globalDB));
+            if (cloudDB) cloudDB.ref('tablia_multitenant_enterprise_2030_v6').set(globalDB);
         }
 
+        // منع إعادة التحميل المزعج أثناء العمل لمنع التهنيج
         if (cloudDB) {
-            cloudDB.ref('tablia_multitenant_enterprise_2030_v5').on('value', (snap) => {
+            cloudDB.ref('tablia_multitenant_enterprise_2030_v6').on('value', (snap) => {
                 const data = snap.val();
                 if (data) { 
                     const rest = currentRestId ? globalDB.restaurants[currentRestId] : null;
@@ -78,9 +79,9 @@
                     const newRest = currentRestId ? globalDB.restaurants[currentRestId] : null;
                     const newCount = newRest?.orders?.length || 0;
                     if(newCount > oldCount) playBell();
-                    // تحديث صامت بدون تدمير التركيز في النماذج
+                    // تحديث الشاشة فقط إذا لم يكن المستخدم يكتب في لوحة التصميم
                     if(appState.page !== 'builder') render(); 
-                } else syncCloud();
+                }
             });
         }
 
@@ -143,46 +144,63 @@
 
         function renderBuilder(){
             const rest=globalDB.restaurants[currentRestId]; if(!rest){ setPage('auth'); return ''; }
-            return `${renderNav()}<div class="max-w-3xl mx-auto px-4 py-6 space-y-5"><div class="flex gap-1 bg-slate-900 p-1 rounded-xl text-[11px]"><button onclick="appState.builderStep=1; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===1?'bg-amber-500 text-slate-950':'text-slate-400'}">1. القالب والمعاينة</button><button onclick="appState.builderStep=2; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===2?'bg-amber-500 text-slate-950':'text-slate-400'}">2. المنيو</button><button onclick="appState.builderStep=4; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===4?'bg-amber-500 text-slate-950':'text-slate-400'}">3. النشر</button></div>${appState.builderStep===1?renderStep1(rest):''}${appState.builderStep===2?renderStep2(rest):''}${appState.builderStep===4?renderStep4(rest):''}</div>`;
+            return `${renderNav()}<div class="max-w-3xl mx-auto px-4 py-6 space-y-5"><div class="flex gap-1 bg-slate-900 p-1 rounded-xl text-[11px]"><button onclick="appState.builderStep=1; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===1?'bg-amber-500 text-slate-950':'text-slate-400'}">1. اختيار ومعاينة القالب</button><button onclick="appState.builderStep=2; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===2?'bg-amber-500 text-slate-950':'text-slate-400'}">2. المنيو</button><button onclick="appState.builderStep=4; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===4?'bg-amber-500 text-slate-950':'text-slate-400'}">3. النشر</button></div>${appState.builderStep===1?renderStep1(rest):''}${appState.builderStep===2?renderStep2(rest):''}${appState.builderStep===4?renderStep4(rest):''}</div>`;
         }
 
-        // الخطوة 1: اختيار القالب مع معاينة فورية قبل البدء
+        // الخطوة 1: اختيار القالب مع معاينة فورية ومباشرة للمستخدم
         function renderStep1(rest){
             const selectedTpl = TEMPLATES_CATALOG.find(t => t.id === rest.template_id) || TEMPLATES_CATALOG[0];
             return `
                 <div class="glass p-5 rounded-2xl space-y-4 text-xs">
-                    <h2 class="font-black text-white text-sm">الخطوة 1: اختيار القالب ومعاينته فوراً</h2>
+                    <h2 class="font-black text-white text-sm">الخطوة 1: اختيار القالب والمعاينة الفورية</h2>
                     <div>
                         <label class="block text-slate-400 font-bold mb-1">اسم المطعم</label>
                         <input id="r_name" value="${rest.name}" class="w-full bg-slate-950 border border-white/10 p-2.5 rounded-xl text-white font-bold">
                     </div>
                     
                     <div class="space-y-2">
-                        <label class="block text-slate-400 font-bold">اختر من الـ 7 قوالب المتاحة:</label>
+                        <label class="block text-slate-400 font-bold">اختر قالباً من الـ 7 قوالب المتاحة (اضغط على القالب لرؤية معاينته فورا):</label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             ${TEMPLATES_CATALOG.map(t=>`
-                                <div onclick="globalDB.restaurants[currentRestId].template_id='${t.id}'; globalDB.restaurants[currentRestId].layout='${t.layout}'; syncCloud(); render();" class="border-2 rounded-xl p-2.5 cursor-pointer transition ${rest.template_id===t.id?'border-amber-500 bg-amber-500/10':'border-white/10 bg-slate-950'}">
+                                <div onclick="globalDB.restaurants[currentRestId].template_id='${t.id}'; globalDB.restaurants[currentRestId].layout='${t.layout}'; globalDB.restaurants[currentRestId].theme.primary='${t.primary}'; globalDB.restaurants[currentRestId].theme.bg='${t.themeBg}'; syncCloud(); render();" class="border-2 rounded-xl p-2.5 cursor-pointer transition ${rest.template_id===t.id?'border-amber-500 bg-amber-500/10 shadow-lg':'border-white/10 bg-slate-950'}">
                                     <img src="${t.preview}" class="h-20 w-full object-cover rounded-lg mb-2">
                                     <h4 class="font-black text-white text-[11px]">${t.name}</h4>
                                     <p class="text-[9px] text-slate-400 line-clamp-1 mt-0.5">${t.desc}</p>
+                                    ${rest.template_id===t.id?`<span class="block mt-1 text-[9px] text-amber-400 font-black">● القالب المحدد حالياً</span>`:''}
                                 </div>
                             `).join('')}
                         </div>
                     </div>
 
-                    <!-- معاينة سريعة للشكل المختار -->
-                    <div class="bg-slate-950 p-3 rounded-2xl border border-amber-500/30 space-y-2">
-                        <span class="text-[10px] text-amber-400 font-bold">👁️ معاينة القالب الحالي (${selectedTpl.name}):</span>
-                        <div class="bg-slate-900 p-3 rounded-xl flex items-center justify-between border border-white/10">
-                            <div>
-                                <h3 class="font-black text-white text-xs">${selectedTpl.name}</h3>
-                                <p class="text-[10px] text-slate-400">${selectedTpl.desc}</p>
+                    <!-- صندوق المعاينة الحية البصرية للقالب المختار -->
+                    <div class="bg-slate-950 p-4 rounded-2xl border-2 border-amber-500/40 space-y-3">
+                        <div class="flex justify-between items-center border-b border-white/10 pb-2">
+                            <span class="font-black text-amber-400 text-xs">👁️ معاينة شكل القالب المختار الآن:</span>
+                            <span class="bg-emerald-500/20 text-emerald-400 text-[10px] px-2.5 py-0.5 rounded-full font-bold">${selectedTpl.name}</span>
+                        </div>
+                        <div class="p-4 rounded-xl border border-white/10 space-y-3" style="background:${selectedTpl.themeBg}">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg text-white shadow" style="background:${selectedTpl.primary}">🔥</div>
+                                <div>
+                                    <h3 class="font-black text-white text-xs">${rest.name || 'اسم المطعم'}</h3>
+                                    <p class="text-[9px] text-emerald-400">● معاينة حية لشكل العرض</p>
+                                </div>
                             </div>
-                            <span class="bg-emerald-500/20 text-emerald-400 text-[10px] px-2.5 py-1 rounded-lg font-bold">جاهز للاستخدام</span>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="glass p-2.5 rounded-xl border border-white/10 space-y-1">
+                                    <div class="h-16 rounded-lg bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300')"></div>
+                                    <div class="text-[10px] font-black text-white">وجبة تجريبية</div>
+                                    <div class="text-[10px] font-bold" style="color:${selectedTpl.primary}">150 ج.م</div>
+                                </div>
+                                <div class="glass p-2.5 rounded-xl border border-white/10 space-y-1 flex flex-col justify-between">
+                                    <div class="text-[10px] text-slate-400">هكذا سيظهر تصميم البطاقات والبانر لعملائك تماماً عند اختيار هذا القالب.</div>
+                                    <div class="w-full py-1 text-center text-[9px] font-black text-white rounded-lg" style="background:${selectedTpl.primary}">أضف للسلة +</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <button onclick="saveStep1()" class="gold-gradient text-slate-950 font-black px-5 py-2.5 rounded-xl w-full">حفظ والانتقال لإضافة الأصناف ➔</button>
+                    <button onclick="saveStep1()" class="gold-gradient text-slate-950 font-black px-5 py-3 rounded-xl w-full text-xs shadow-xl">حفظ الانتقال لإضافة الأصناف ➔</button>
                 </div>
             `;
         }
