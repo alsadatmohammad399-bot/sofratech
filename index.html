@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tablia OS 2030 | النظام الذكي لإدارة المطاعم</title>
+    <title>Tablia OS 2030 | المنصة السحابية المتكاملة للمطاعم</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -16,10 +16,9 @@
         body { font-family: 'Cairo', sans-serif; background-color: #f8fafc; color: #0f172a; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(0, 0, 0, 0.06); }
-        .gold-gradient { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
     </style>
 </head>
-<body class="antialiased min-h-screen pb-28 selection:bg-amber-500 selection:text-slate-950">
+<body class="antialiased min-h-screen pb-28 selection:bg-red-600 selection:text-white">
 
     <audio id="cloud-bell" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
     <div id="app"></div>
@@ -41,11 +40,11 @@
             cloudDB = firebase.database();
         } catch (e) {}
 
-        const PLATFORM_OWNER = { walletNumber: '01015861991', monthlyPrice: 600, adminPass: '2030' };
+        const PLATFORM_OWNER = { walletNumber: '01015861991', monthlyPrice: 600, adminPass: '357159' };
 
         let globalDB = { restaurants: {} };
         try {
-            const raw = localStorage.getItem('tablia_multitenant_2030_v20');
+            const raw = localStorage.getItem('tablia_multitenant_2030_v22');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) {}
 
@@ -53,20 +52,18 @@
             globalDB = {
                 restaurants: {
                     "rest_demo": {
-                        id: "rest_demo", ownerName: "محمد الحاتي", name: "فطارك ودليكاتسي", phone: "01015861991", pass: "1234",
+                        id: "rest_demo", ownerName: "محمد الحاتي", name: "دليكاتسي وريستو", phone: "01015861991", pass: "1234",
                         template_id: "foodera-modern", layout: "foodera", theme: { primary: "#dc2626", bg: "#f8fafc" }, tablesCount: 20,
                         address: "الإسكندرية، ميامي", wifiName: "Delicacy_Free", wifiPass: "20302030",
                         subscription: { isActive: true, expiresAt: Date.now() + 30*24*60*60*1000 },
                         categories: [
-                            { id: 'cat_1', name: 'فطار', icon: '🍳' },
-                            { id: 'cat_2', name: 'الشوربة', icon: '🥣' },
-                            { id: 'cat_3', name: 'المقبلات', icon: '🥗' },
-                            { id: 'cat_4', name: 'البرجر', icon: '🍔' }
+                            { id: 'cat_1', name: 'فطار وسندوتشات', icon: '🍳' },
+                            { id: 'cat_2', name: 'المشويات', icon: '🥩' },
+                            { id: 'cat_3', name: 'المقبلات', icon: '🥗' }
                         ],
                         menu_items: [
-                            { id: 'itm_1', category_id: 'cat_1', name: 'طبق تورينو', description: 'بيض أو فول بالخلطة | فلافل | جبنة قريش بالطماطم بالزبدة الفلاحي | عيش بلدي حار', price: 125, image: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=500', is_available: true, discount: '20%' },
-                            { id: 'itm_2', category_id: 'cat_1', name: 'طبق فطار مميز', description: 'طبق سلطة مميز مع خضروات طازجة', price: 90, image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500', is_available: true, discount: '' },
-                            { id: 'itm_3', category_id: 'cat_1', name: 'الجبنة الشيدر', description: 'جبنة شيدر فاخرة مقرمشة', price: 350, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500', is_available: true, discount: '' }
+                            { id: 'itm_1', category_id: 'cat_1', name: 'طبق تورينو المميز', description: 'بيض أو فول بالخلطة، فلافل، جبنة قريش، زبدة فلاحي', price: 125, image: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=500', is_available: true, discount: '20%' },
+                            { id: 'itm_2', category_id: 'cat_2', name: 'كيلو كباب وكفتة', description: 'لحم بلدي مشوي عالفحم على طريقتنا الخاصة', price: 680, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500', is_available: true, discount: '' }
                         ],
                         orders: []
                     }
@@ -80,20 +77,20 @@
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_multitenant_2030_v20', JSON.stringify(globalDB));
+                localStorage.setItem('tablia_multitenant_2030_v22', JSON.stringify(globalDB));
                 if (cloudDB) {
-                    cloudDB.ref('tablia_multitenant_enterprise_2030_v20').set(globalDB).catch(() => {});
+                    cloudDB.ref('tablia_multitenant_enterprise_2030_v22').set(globalDB).catch(() => {});
                 }
             } catch (e) {}
         }
 
         if (cloudDB) {
-            cloudDB.ref('tablia_multitenant_enterprise_2030_v20').on('value', (snap) => {
+            cloudDB.ref('tablia_multitenant_enterprise_2030_v22').on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.restaurants) {
                     globalDB = data;
                     try {
-                        localStorage.setItem('tablia_multitenant_2030_v20', JSON.stringify(globalDB));
+                        localStorage.setItem('tablia_multitenant_2030_v22', JSON.stringify(globalDB));
                     } catch(e){}
                     playBell();
                     render();
@@ -133,7 +130,8 @@
             adminUnlocked: false,
             editingItemId: null,
             drawerOpen: false,
-            modalType: null // 'waiter', 'wifi', 'branch'
+            modalType: null,
+            gpsLocation: null
         };
 
         function setPage(p){ appState.page = p; render(); window.scrollTo(0,0); }
@@ -170,7 +168,7 @@
                 root.innerHTML = content + bottomBar;
             } catch(err) {
                 console.error("Render error:", err);
-                root.innerHTML = `<div class="min-h-screen flex items-center justify-center p-6 text-center bg-slate-950 text-white"><div class="glass p-6 rounded-3xl space-y-4 max-w-sm"><h2 class="text-amber-400 font-black text-base">إعادة تشغيل النظام</h2><p class="text-xs text-slate-400">تم تحديث النظام ليعمل بكفاءة عالية وبدون أي أخطاء.</p><button onclick="localStorage.clear(); location.reload();" class="w-full gold-gradient text-slate-950 font-black py-3 rounded-xl text-xs">تحديث وتشغيل فوري</button></div></div>`;
+                root.innerHTML = `<div class="min-h-screen flex items-center justify-center p-6 text-center bg-slate-950 text-white"><div class="glass p-6 rounded-3xl space-y-4 max-w-sm"><h2 class="text-amber-400 font-black text-base">إعادة تشغيل النظام</h2><p class="text-xs text-slate-400">تم تحديث النظام ليعمل بكفاءة عالية وبدون أي أخطاء.</p><button onclick="localStorage.clear(); location.reload();" class="w-full bg-red-600 text-white font-black py-3 rounded-xl text-xs">تحديث وتشغيل فوري</button></div></div>`;
             }
         }
 
@@ -189,7 +187,7 @@
             <div class="max-w-md mx-auto px-4 py-12 space-y-6">
                 <div class="text-center space-y-2">
                     <h1 class="text-2xl font-black text-slate-900">منصة مطاعم المستقبل</h1>
-                    <p class="text-xs text-slate-500">أنشئ منيو مطعمك باحترافية كاملة مثل أشهر المطاعم</p>
+                    <p class="text-xs text-slate-500">أنشئ منيو مطعمك باحترافية كاملة وتتبع دقيق للـ GPS</p>
                 </div>
                 <div class="flex bg-slate-100 p-1.5 rounded-2xl text-xs border border-slate-200">
                     <button onclick="appState.authTab='login'; render();" class="flex-1 py-3 rounded-xl font-bold transition ${appState.authTab==='login'?'bg-red-600 text-white font-black shadow':'text-slate-500 hover:text-slate-900'}">تسجيل دخول</button>
@@ -237,11 +235,11 @@
             if(!phone || !pass) { alert('يرجى إدخال رقم الموبايل وكلمة السر'); return; }
 
             if(cloudDB) {
-                cloudDB.ref('tablia_multitenant_enterprise_2030_v20').once('value').then(snap => {
+                cloudDB.ref('tablia_multitenant_enterprise_2030_v22').once('value').then(snap => {
                     const data = snap.val();
                     if(data && data.restaurants) {
                         globalDB = data;
-                        localStorage.setItem('tablia_multitenant_2030_v20', JSON.stringify(globalDB));
+                        localStorage.setItem('tablia_multitenant_2030_v22', JSON.stringify(globalDB));
                     }
                     verifyLoginData(phone, pass);
                 }).catch(() => { verifyLoginData(phone, pass); });
@@ -280,7 +278,7 @@
                 id: restId, ownerName: owner, name: name, phone: phone, pass: pass, 
                 template_id: 'foodera-modern', layout: 'foodera', theme: { primary: '#dc2626', bg: '#f8fafc' }, tablesCount: 20, 
                 address: 'الإسكندرية، ميامي', wifiName: name + '_Free', wifiPass: '20302030',
-                subscription: { isActive: false, expiresAt: null }, 
+                subscription: { isActive: true, expiresAt: Date.now() + 30*24*60*60*1000 }, 
                 categories: [
                     { id: 'cat_1', name: 'الرئيسية', icon: '🍔' },
                     { id: 'cat_2', name: 'المشويات', icon: '🥩' }
@@ -304,7 +302,7 @@
                     <div class="flex gap-1.5 bg-white p-1.5 rounded-2xl text-xs border border-slate-200 shadow-sm">
                         <button onclick="appState.builderStep=1; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===1?'bg-red-600 text-white font-black shadow':'text-slate-600 hover:text-slate-900'}">1. بيانات وقالب المطعم</button>
                         <button onclick="appState.builderStep=2; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===2?'bg-red-600 text-white font-black shadow':'text-slate-600 hover:text-slate-900'}">2. الأقسام والوجبات</button>
-                        <button onclick="appState.builderStep=4; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===4?'bg-red-600 text-white font-black shadow':'text-slate-600 hover:text-slate-900'}">3. المعاينة والمشاركة</button>
+                        <button onclick="appState.builderStep=4; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===4?'bg-red-600 text-white font-black shadow':'text-slate-600 hover:text-slate-900'}">3. المعاينة ونشر اللينك</button>
                     </div>
                     ${appState.builderStep===1 ? renderStep1(rest, selectedTpl) : (appState.builderStep===2 ? renderStep2(rest) : renderStep4(rest))}
                 </div>
@@ -367,7 +365,7 @@
 
         function renderStep2(rest){
             if(!rest.menu_items) rest.menu_items = [];
-            if(!rest.categories) rest.categories = [{id:'cat_1', name:'فطار', icon:'🍳'}];
+            if(!rest.categories) rest.categories = [{id:'cat_1', name:'الرئيسية', icon:'🍔'}];
 
             return `
                 <div class="bg-white p-6 rounded-3xl space-y-5 text-xs border border-slate-200 shadow-xl">
@@ -426,7 +424,7 @@
                         </div>
                     </div>
 
-                    <button onclick="appState.builderStep=4; render();" class="bg-red-600 text-white font-black px-4 py-3.5 rounded-xl w-full shadow-lg hover:bg-red-700 transition">التالي: المعاينة ومشاركة المنيو ➔</button>
+                    <button onclick="appState.builderStep=4; render();" class="bg-red-600 text-white font-black px-4 py-3.5 rounded-xl w-full shadow-lg hover:bg-red-700 transition">التالي: معاينة ونشر اللينك ➔</button>
                 </div>
             `;
         }
@@ -506,15 +504,15 @@
             return `
                 <div class="bg-white p-6 rounded-3xl space-y-5 text-xs border border-slate-200 shadow-xl">
                     <div class="text-center space-y-1">
-                        <h2 class="font-black text-slate-900 text-sm">🎉 المنيو جاهز تماماً والمشاركة بضغطة زر</h2>
+                        <h2 class="font-black text-slate-900 text-sm">🎉 المنيو جاهز تماماً ونشر اللينك بضغطة زر</h2>
                         <p class="text-slate-500 text-[10px]">انسخ الرابط أو أرسله عبر واتساب لعملائك فوراً</p>
                     </div>
 
                     <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                        <label class="block text-red-600 font-bold text-xs">🔗 رابط المنيو المباشر الخاص بك:</label>
+                        <label class="block text-red-600 font-bold text-xs">🔗 رابط المنيو المباشر الخاص بك (نشر اللينك):</label>
                         <div class="flex gap-2">
                             <input readonly value="${url}" class="flex-1 bg-white border border-slate-300 p-3 rounded-xl text-slate-900 text-[11px] select-all outline-none">
-                            <button onclick="navigator.clipboard.writeText('${url}'); alert('تم نسخ الرابط بنجاح!');" class="bg-red-600 text-white px-4 py-3 rounded-xl font-black text-xs hover:bg-red-700 transition">نسخ</button>
+                            <button onclick="navigator.clipboard.writeText('${url}'); alert('تم نسخ رابط المنيو بنجاح!');" class="bg-red-600 text-white px-4 py-3 rounded-xl font-black text-xs hover:bg-red-700 transition">نسخ الرابط</button>
                         </div>
                         
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
@@ -532,7 +530,7 @@
                             <p class="text-[10px] text-amber-800">لتفعيل استقبال الطلبات الفورية وربطها بالكاشير (${PLATFORM_OWNER.monthlyPrice} ج/شهرياً)، تواصل للإدارة:</p>
                             <a href="https://wa.me/2${PLATFORM_OWNER.walletNumber}?text=${encodeURIComponent('تفعيل مطعم '+rest.name+' بمبلغ '+PLATFORM_OWNER.monthlyPrice+' جنيه')}" target="_blank" class="inline-block bg-emerald-600 text-white font-black px-4 py-2 rounded-xl text-xs">تفعيل الحساب (واتساب)</a>
                         </div>
-                    ` : '<div class="bg-emerald-50 text-emerald-600 p-2.5 rounded-xl text-center font-black">✅ حسابك مفعل ونشط بالكامل</div>'}
+                    ` : '<div class="bg-emerald-50 text-emerald-600 p-2.5 rounded-xl text-center font-black">✅ حسابك مفعل ونشط بالكامل والمنيو يظهر للجميع</div>'}
                 </div>
             `;
         }
@@ -555,7 +553,6 @@
             const restId = targetRestSlug || (globalDB && globalDB.restaurants ? Object.keys(globalDB.restaurants)[0] : null);
             const rest = (globalDB && globalDB.restaurants) ? globalDB.restaurants[restId] : null;
             if(!rest) return `<div class="min-h-screen flex items-center justify-center text-slate-900">المطعم غير موجود</div>`;
-            if(!rest.subscription?.isActive) return `<div class="min-h-screen flex items-center justify-center bg-slate-950 text-white text-center p-4">المنيو متوقف مؤقتاً بانتظار التفعيل لدى الإدارة</div>`;
             if(!rest.menu_items) rest.menu_items = [];
             if(!rest.categories) rest.categories = [];
 
@@ -749,11 +746,27 @@
             render();
         }
 
+        function getGPSLocation(){
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    appState.gpsLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    alert('تم تحديد موقعك بدقة عبر الـ GPS بنجاح! 📍');
+                }, () => {
+                    alert('تعذر تحديد الموقع. تأكد من السماح للبرنامج بالوصول للـ GPS.');
+                });
+            } else {
+                alert('متصفحك لا يدعم خاصية الـ GPS.');
+            }
+        }
+
         function renderCheckoutModal(rest){
             return `
                 <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 text-xs">
                     <div class="bg-white p-6 rounded-3xl max-w-sm w-full space-y-4 border border-slate-200 shadow-2xl">
-                        <h3 class="font-black text-slate-900 text-sm text-center">تأكيد بيانات الطلب والتوصيل</h3>
+                        <h3 class="font-black text-slate-900 text-sm text-center">تأكيد الطلب وتتبع الـ GPS</h3>
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-slate-600 mb-1 font-bold">اسمك الكريم</label>
@@ -764,8 +777,14 @@
                                 <input id="cust_phone" placeholder="010xxxxxxxx" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-900 font-bold outline-none focus:border-red-600">
                             </div>
                             <div>
-                                <label class="block text-slate-600 mb-1 font-bold">عنوان التوصيل / تفاصيل الشارع</label>
-                                <input id="cust_address" placeholder="الشارع، العمارة، الدور" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-900 font-bold outline-none focus:border-red-600">
+                                <label class="block text-slate-600 mb-1 font-bold">العنوان التفصيلي</label>
+                                <input id="cust_address" placeholder="الشارع، رقم العمارة، الدور" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-900 font-bold outline-none focus:border-red-600">
+                            </div>
+                            <div>
+                                <button onclick="getGPSLocation()" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-black py-2.5 rounded-xl flex items-center justify-center gap-2 shadow transition">
+                                    <i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي بالـ GPS 📍
+                                </button>
+                                ${appState.gpsLocation ? `<p class="text-[10px] text-emerald-600 font-bold text-center mt-1">✓ تم التقاط إحداثيات الـ GPS بنجاح</p>` : ''}
                             </div>
                         </div>
                         <button onclick="submitOrder()" class="w-full bg-red-600 text-white font-black py-3.5 rounded-xl shadow-lg hover:bg-red-700 transition">إرسال الطلب الآن ➔</button>
@@ -797,6 +816,7 @@
                 customer_name: name, 
                 phone, 
                 address,
+                gps: appState.gpsLocation ? `https://maps.google.com/?q=${appState.gpsLocation.lat},${appState.gpsLocation.lng}` : null,
                 items_json: JSON.parse(JSON.stringify(appState.cart)), 
                 total, 
                 status: 'new', 
@@ -808,6 +828,7 @@
             localStorage.setItem('tablia_active_order_id', appState.activeOrderId); 
             appState.cart = []; 
             appState.cartOpen = false; 
+            appState.gpsLocation = null;
             appState.trackerOpen = true; 
             syncCloud(); 
             render(); 
@@ -829,10 +850,11 @@
                     <div class="bg-white p-6 rounded-3xl max-w-sm w-full text-center space-y-4 border border-slate-200 shadow-2xl">
                         <div class="w-14 h-14 rounded-full bg-red-50 text-red-600 mx-auto flex items-center justify-center text-xl font-black shadow">📦</div>
                         <h3 class="font-black text-slate-900 text-sm">متابعة الطلب #${ord.id}</h3>
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
-                            <p class="text-red-600 font-bold text-xs">${statusText}</p>
-                            <p class="text-slate-600 text-[11px]">العنوان: ${ord.address || 'دليفري'}</p>
-                            <p class="text-slate-900 font-black text-sm">${ord.total} ج.م</p>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2 text-right">
+                            <p class="text-red-600 font-bold text-xs text-center">${statusText}</p>
+                            <p class="text-slate-600 text-[11px]">📍 العنوان: ${ord.address}</p>
+                            ${ord.gps ? `<a href="${ord.gps}" target="_blank" class="block text-sky-600 font-bold text-[11px] underline text-center">عرض موقع الـ GPS على الخريطة 🗺️</a>` : ''}
+                            <p class="text-slate-900 font-black text-sm text-center pt-1">${ord.total} ج.م</p>
                         </div>
                         <button onclick="appState.trackerOpen=false; render();" class="w-full bg-slate-100 text-slate-800 py-3 rounded-xl hover:bg-slate-200 transition font-bold">إغلاق وتصفح المنيو</button>
                     </div>
@@ -849,7 +871,7 @@
                 ${renderNav()}
                 <div class="max-w-4xl mx-auto px-4 py-6 space-y-4 text-xs">
                     <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                        <h1 class="font-black text-slate-900 text-sm">شاشة الكاشير والمتابعة الحية - ${rest.name}</h1>
+                        <h1 class="font-black text-slate-900 text-sm">شاشة الكاشير والتنبيهات الصوتية - ${rest.name}</h1>
                         <span class="bg-red-50 text-red-600 font-bold px-3 py-1 rounded-full text-[11px]">الطلبات النشطة: ${rest.orders.length}</span>
                     </div>
 
@@ -863,9 +885,10 @@
                                     </div>
                                     <span class="text-red-600 font-black text-sm">${ord.total} ج.م</span>
                                 </div>
-                                <div class="text-slate-700 text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                                    <p class="font-bold text-red-600 mb-1">📍 العنوان: ${ord.address || 'بدون عنوان'}</p>
-                                    ${ord.items_json ? ord.items_json.map(x => `• ${x.qty}x ${x.name}`).join('<br>') : ''}
+                                <div class="text-slate-700 text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-100 space-y-1">
+                                    <p class="font-bold text-red-600">📍 العنوان: ${ord.address || 'بدون عنوان'}</p>
+                                    ${ord.gps ? `<a href="${ord.gps}" target="_blank" class="text-sky-600 font-bold underline block">فتح موقع الـ GPS للعميل 🗺️</a>` : ''}
+                                    <div class="pt-1">${ord.items_json ? ord.items_json.map(x => `• ${x.qty}x ${x.name}`).join('<br>') : ''}</div>
                                 </div>
                                 <div class="grid grid-cols-4 gap-1.5 pt-1">
                                     <button onclick="updateOrderStatus(${i}, 'preparing')" class="bg-sky-600 hover:bg-sky-500 text-white py-2 rounded-xl font-bold transition">تحضير</button>
@@ -901,7 +924,7 @@
         function renderDashboard(){
             const rest = (globalDB && globalDB.restaurants) ? globalDB.restaurants[currentRestId] : null; 
             if(!rest){ setPage('auth'); return ''; }
-            if(!appState.adminUnlocked) return `${renderNav()}<div class="max-w-md mx-auto py-12 px-4 text-center space-y-4 text-xs"><div class="bg-white p-6 rounded-3xl space-y-3 border border-slate-200 shadow-xl"><h2 class="font-black text-slate-900 text-sm">لوحة الإدارة (تفعيل الباقات - 600 ج)</h2><input id="admin_pin" type="password" placeholder="الرمز السري 2030" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-center text-slate-900 outline-none focus:border-red-600"><button onclick="if(document.getElementById('admin_pin').value==='${PLATFORM_OWNER.adminPass}'){appState.adminUnlocked=true;render();}else{alert('الرمز غلط')}" class="w-full bg-red-600 text-white font-black py-3.5 rounded-xl shadow">دخول الإدارة</button></div></div>`;
+            if(!appState.adminUnlocked) return `${renderNav()}<div class="max-w-md mx-auto py-12 px-4 text-center space-y-4 text-xs"><div class="bg-white p-6 rounded-3xl space-y-3 border border-slate-200 shadow-xl"><h2 class="font-black text-slate-900 text-sm">لوحة الإدارة (تفعيل الباقات - 600 ج)</h2><input id="admin_pin" type="password" placeholder="الرمز السري 357159" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-center text-slate-900 outline-none focus:border-red-600"><button onclick="if(document.getElementById('admin_pin').value==='${PLATFORM_OWNER.adminPass}'){appState.adminUnlocked=true;render();}else{alert('الرمز غلط')}" class="w-full bg-red-600 text-white font-black py-3.5 rounded-xl shadow">دخول الإدارة</button></div></div>`;
             
             return `
                 ${renderNav()}
