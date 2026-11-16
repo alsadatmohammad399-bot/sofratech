@@ -25,6 +25,7 @@
     <div id="app"></div>
 
     <script>
+        // إعدادات آمنة لـ Firebase لمنع التهنيج
         const firebaseConfig = {
             apiKey: "AIzaSyCVofMvvbyMBGM1pQNeoG-gMT48Ll5IL4I",
             authDomain: "sofratech-2e033.firebaseapp.com",
@@ -35,11 +36,16 @@
             appId: "1:742714705801:web:ddd019d66fa7435f6f8358"
         };
         let cloudDB = null;
-        try { firebase.initializeApp(firebaseConfig); cloudDB = firebase.database(); } catch (e) {}
+        try { 
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig); 
+            }
+            cloudDB = firebase.database(); 
+        } catch (e) { console.log("Offline mode active"); }
 
         const PLATFORM_OWNER = { walletNumber: '01015861991', monthlyPrice: 600, adminPass: '2030' };
 
-        let globalDB = JSON.parse(localStorage.getItem('tablia_multitenant_2030_v7')) || {
+        let globalDB = JSON.parse(localStorage.getItem('tablia_multitenant_2030_v8')) || {
             restaurants: {
                 "rest_demo": {
                     id: "rest_demo", ownerName: "محمد الحاتي", name: "مشويات الحاتي الفاخرة", phone: "01015861991", pass: "1234",
@@ -63,29 +69,23 @@
         ];
 
         function syncCloud() {
-            localStorage.setItem('tablia_multitenant_2030_v7', JSON.stringify(globalDB));
-            if (cloudDB) cloudDB.ref('tablia_multitenant_enterprise_2030_v7').set(globalDB);
-        }
-
-        if (cloudDB) {
-            cloudDB.ref('tablia_multitenant_enterprise_2030_v7').on('value', (snap) => {
-                const data = snap.val();
-                if (data && appState.page !== 'builder') { 
-                    globalDB = data; 
-                    render(); 
+            try {
+                localStorage.setItem('tablia_multitenant_2030_v8', JSON.stringify(globalDB));
+                if (cloudDB) {
+                    cloudDB.ref('tablia_multitenant_enterprise_2030_v8').set(globalDB).catch(() => {});
                 }
-            });
+            } catch (e) {
+                console.error("Sync error", e);
+            }
         }
 
         function playBell(){
-            const a=document.getElementById('cloud-bell');
-            if(a){ a.currentTime=0; a.play().catch(()=>{}); }
-            if('vibrate' in navigator) navigator.vibrate([400,200,400]);
+            try {
+                const a=document.getElementById('cloud-bell');
+                if(a){ a.currentTime=0; a.play().catch(()=>{}); }
+                if('vibrate' in navigator) navigator.vibrate([400,200,400]);
+            } catch(e){}
         }
-        document.body.addEventListener('click', ()=>{ 
-            const a=document.getElementById('cloud-bell'); 
-            if(a){ a.play().then(()=>a.pause()).catch(()=>{}); } 
-        }, {once:true});
 
         const urlParams = new URLSearchParams(window.location.search);
         const isCustomerMode = urlParams.get('view') === 'menu';
@@ -95,27 +95,35 @@
 
         function setPage(p){ appState.page=p; render(); window.scrollTo(0,0); }
 
+        // نظام الحماية القصوى لمنع الشاشة السوداء نهائياً
         function render(){
-            const root=document.getElementById('app');
-            let content='';
-            if(isCustomerMode) content=renderStorefront();
-            else if(appState.page==='auth') content=renderAuthScreen();
-            else if(appState.page==='builder') content=renderBuilder();
-            else if(appState.page==='cashier') content=renderCashier();
-            else if(appState.page==='dashboard') content=renderDashboard();
-            else if(appState.page==='qr_print') content=renderQRPrint();
-            else content=renderBuilder();
-            const bottomBar = isCustomerMode ? '' : renderBottomNav();
-            root.innerHTML=content+bottomBar;
+            const root = document.getElementById('app');
+            if(!root) return;
+            try {
+                let content='';
+                if(isCustomerMode) content=renderStorefront();
+                else if(appState.page==='auth') content=renderAuthScreen();
+                else if(appState.page==='builder') content=renderBuilder();
+                else if(appState.page==='cashier') content=renderCashier();
+                else if(appState.page==='dashboard') content=renderDashboard();
+                else if(appState.page==='qr_print') content=renderQRPrint();
+                else content=renderBuilder();
+                
+                const bottomBar = isCustomerMode ? '' : renderBottomNav();
+                root.innerHTML = content + bottomBar;
+            } catch(err) {
+                console.error("Render Crash Prevented:", err);
+                root.innerHTML = `<div class="min-h-screen flex items-center justify-center p-6 text-center bg-slate-950 text-white"><div class="glass p-6 rounded-3xl space-y-4 max-w-sm"><h2 class="text-amber-400 font-black text-base">تم حماية التطبيق من التعليق</h2><p class="text-xs text-slate-400">حدث خطأ مؤقت وتم إيقافه لمنع الشاشة السوداء.</p><button onclick="localStorage.clear(); location.reload();" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl text-xs">إعادة ضبط وتشغيل فوري</button></div></div>`;
+            }
         }
 
         function renderNav(){
             const rest=currentRestId?globalDB.restaurants[currentRestId]:null;
-            return `<nav class="sticky top-0 z-50 glass border-b border-white/10 px-4 py-3"><div class="max-w-4xl mx-auto flex justify-between items-center"><div class="flex gap-2 items-center cursor-pointer" onclick="setPage(currentRestId?'builder':'auth')"><div class="w-9 h-9 rounded-xl gold-gradient text-slate-950 flex items-center justify-center font-black">ط</div><span class="font-black text-white">Tablia <span class="text-amber-400">2030</span></span></div>${currentRestId?`<button onclick="currentRestId=null; localStorage.removeItem('tablia_logged_rest_id'); setPage('auth');" class="bg-red-500/10 text-red-400 px-3 py-1 rounded-xl text-xs">خروج</button>`:''}</div></nav>`;
+            return `<nav class="sticky top-0 z-50 glass border-b border-white/10 px-4 py-3"><div class="max-w-4xl mx-auto flex justify-between items-center"><div class="flex gap-2 items-center cursor-pointer" onclick="setPage(currentRestId?'builder':'auth')"><div class="w-9 h-9 rounded-xl gold-gradient text-slate-950 flex items-center justify-center font-black">ط</div><span class="font-black text-white">Tablia <span class="text-amber-400">2030</span></span></div>${currentRestId?`<button onclick="currentRestId=null; localStorage.removeItem('tablia_logged_rest_id'); setPage('auth');" class="bg-red-500/10 text-red-400 px-3 py-1 rounded-xl text-xs font-bold">خروج</button>`:''}</div></nav>`;
         }
         function renderBottomNav(){
             if(!currentRestId) return '';
-            return `<div class="fixed bottom-0 left-0 right-0 z-50 glass border-t border-white/10 px-2 py-2"><div class="max-w-md mx-auto grid grid-cols-4 gap-1 text-center"><button onclick="setPage('builder')" class="flex flex-col items-center py-1 ${appState.page==='builder'?'text-amber-400':'text-slate-400'}"><i class="fa-solid fa-wand-magic-sparkles text-sm"></i><span class="text-[10px]">المنشئ</span></button><button onclick="setPage('cashier')" class="flex flex-col items-center py-1 ${appState.page==='cashier'?'text-red-400':'text-slate-400'}"><i class="fa-solid fa-cash-register text-sm"></i><span class="text-[10px]">الكاشير</span></button><button onclick="setPage('dashboard')" class="flex flex-col items-center py-1 ${appState.page==='dashboard'?'text-amber-400':'text-slate-400'}"><i class="fa-solid fa-chart-line text-sm"></i><span class="text-[10px]">الباقات</span></button><button onclick="setPage('qr_print')" class="flex flex-col items-center py-1 ${appState.page==='qr_print'?'text-amber-400':'text-slate-400'}"><i class="fa-solid fa-qrcode text-sm"></i><span class="text-[10px]">QR</span></button></div></div>`;
+            return `<div class="fixed bottom-0 left-0 right-0 z-50 glass border-t border-white/10 px-2 py-2"><div class="max-w-md mx-auto grid grid-cols-4 gap-1 text-center"><button onclick="setPage('builder')" class="flex flex-col items-center py-1 ${appState.page==='builder'?'text-amber-400 font-black':'text-slate-400'}"><i class="fa-solid fa-wand-magic-sparkles text-sm"></i><span class="text-[10px]">المنشئ</span></button><button onclick="setPage('cashier')" class="flex flex-col items-center py-1 ${appState.page==='cashier'?'text-red-400 font-black':'text-slate-400'}"><i class="fa-solid fa-cash-register text-sm"></i><span class="text-[10px]">الكاشير</span></button><button onclick="setPage('dashboard')" class="flex flex-col items-center py-1 ${appState.page==='dashboard'?'text-amber-400 font-black':'text-slate-400'}"><i class="fa-solid fa-chart-line text-sm"></i><span class="text-[10px]">الباقات</span></button><button onclick="setPage('qr_print')" class="flex flex-col items-center py-1 ${appState.page==='qr_print'?'text-amber-400 font-black':'text-slate-400'}"><i class="fa-solid fa-qrcode text-sm"></i><span class="text-[10px]">QR</span></button></div></div>`;
         }
 
         function renderAuthScreen(){
@@ -136,7 +144,7 @@
 
         function renderBuilder(){
             const rest=globalDB.restaurants[currentRestId]; if(!rest){ setPage('auth'); return ''; }
-            return `${renderNav()}<div class="max-w-3xl mx-auto px-4 py-6 space-y-5"><div class="flex gap-1 bg-slate-900 p-1 rounded-xl text-[11px]"><button onclick="appState.builderStep=1; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===1?'bg-amber-500 text-slate-950':'text-slate-400'}">1. اختيار ومعاينة القالب</button><button onclick="appState.builderStep=2; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===2?'bg-amber-500 text-slate-950':'text-slate-400'}">2. المنيو</button><button onclick="appState.builderStep=4; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===4?'bg-amber-500 text-slate-950':'text-slate-400'}">3. النشر</button></div>${appState.builderStep===1?renderStep1(rest):''}${appState.builderStep===2?renderStep2(rest):''}${appState.builderStep===4?renderStep4(rest):''}</div>`;
+            return `${renderNav()}<div class="max-w-3xl mx-auto px-4 py-6 space-y-5"><div class="flex gap-1 bg-slate-900 p-1 rounded-xl text-[11px]"><button onclick="appState.builderStep=1; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===1?'bg-amber-500 text-slate-950 font-black':'text-slate-400'}">1. اختيار ومعاينة القالب</button><button onclick="appState.builderStep=2; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===2?'bg-amber-500 text-slate-950 font-black':'text-slate-400'}">2. المنيو</button><button onclick="appState.builderStep=4; render();" class="flex-1 py-2 rounded-lg ${appState.builderStep===4?'bg-amber-500 text-slate-950 font-black':'text-slate-400'}">3. النشر</button></div>${appState.builderStep===1?renderStep1(rest):''}${appState.builderStep===2?renderStep2(rest):''}${appState.builderStep===4?renderStep4(rest):''}</div>`;
         }
 
         function renderStep1(rest){
@@ -190,7 +198,7 @@
                         </div>
                     </div>
 
-                    <button onclick="saveStep1()" class="gold-gradient text-slate-950 font-black px-5 py-3 rounded-xl w-full text-xs shadow-xl">حفظ الانتقال لإضافة الأصناف ➔</button>
+                    <button onclick="saveStep1()" class="gold-gradient text-slate-950 font-black px-5 py-3 rounded-xl w-full text-xs shadow-xl">حفظ والانتقال لإضافة الأصناف ➔</button>
                 </div>
             `;
         }
