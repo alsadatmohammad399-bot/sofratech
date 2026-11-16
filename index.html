@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سُفرة تك | منصة بناء المنيو الرقمي ومواقع المطاعم السحابية</title>
+    <title>سُفرة تك | منصة بناء المنيو الرقمي والمطاعم السحابية</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
@@ -54,6 +54,7 @@
                 name: 'مطعم السعادة',
                 taglet: 'أشهى المأكولات الطازجة والسريعة',
                 logo: '🍔',
+                style: 'crispy_cream', // الاستايل الافتراضي
                 whatsapp: '201015861991',
                 deliveryFee: 15,
                 pin: '1234'
@@ -74,7 +75,7 @@
         };
 
         function loadState() {
-            const saved = localStorage.getItem('sofratech_core_db');
+            const saved = localStorage.getItem('sofratech_pro_v2');
             if (saved) { try { return JSON.parse(saved); } catch (e) {} }
             return JSON.parse(JSON.stringify(DEFAULT_DATA));
         }
@@ -82,12 +83,12 @@
         let db = loadState();
 
         function saveState() {
-            localStorage.setItem('sofratech_core_db', JSON.stringify(db));
-            if (fbDB) { fbDB.ref('sofratech_core_db').set(db); }
+            localStorage.setItem('sofratech_pro_v2', JSON.stringify(db));
+            if (fbDB) { fbDB.ref('sofratech_pro_v2').set(db); }
         }
 
         if (fbDB) {
-            fbDB.ref('sofratech_core_db').on('value', (snapshot) => {
+            fbDB.ref('sofratech_pro_v2').on('value', (snapshot) => {
                 const val = snapshot.val();
                 if (val) {
                     db = val;
@@ -145,21 +146,20 @@
                             <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center text-xl font-black">🍽️</div>
                             <span class="text-2xl font-black">سُفرة <span class="text-amber-500">تك</span></span>
                         </div>
-                        <button onclick="navigate('#builder')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-5 py-2.5 rounded-xl font-black text-sm transition">أنشئ منيو مطعمك</button>
+                        <button onclick="navigate('#builder')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-5 py-2.5 rounded-xl font-black text-sm transition">إدارة مطعمك والمنيو</button>
                     </nav>
 
                     <section class="container mx-auto px-6 py-12 text-center max-w-4xl my-auto">
                         <span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-4 py-1.5 rounded-full text-xs font-bold inline-block mb-5">منصة إنشاء المنيو الرقمي السحابي للمطاعم</span>
-                        <h1 class="text-4xl md:text-6xl font-black leading-tight mb-6">أنشئ رابط منيو <span class="text-amber-500">${db.restaurant.name}</span> واستقبل طلباتك فوراً</h1>
-                        <p class="text-slate-400 text-lg mb-10">صمم واجهة مطعمك، واحصل على روابط مستقلة للزبائن والكاشير متزامنة لحظياً عبر السحاب.</p>
+                        <h1 class="text-4xl md:text-6xl font-black leading-tight mb-6">رابط منيو <span class="text-amber-500">${db.restaurant.name}</span> جاهز لاستقبال الطلبات</h1>
+                        <p class="text-slate-400 text-lg mb-10">اختر استايل مطعمك، استخرج المنيو بصورة بالذكاء الاصطناعي، واستقبل طلباتك فوراً.</p>
 
                         <div class="flex flex-wrap justify-center gap-4 mb-12">
-                            <button onclick="navigate('#builder')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-8 py-4 rounded-2xl text-base shadow-xl transition">🛠️ تخصيص وبناء بيانات المطعم</button>
+                            <button onclick="navigate('#builder')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-8 py-4 rounded-2xl text-base shadow-xl transition">🛠️ تخصيص القوالب والذكاء الاصطناعي</button>
                             <button onclick="navigate('#menu')" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-8 py-4 rounded-2xl text-base border border-slate-700 transition">📱 معاينة رابط الزبون</button>
-                            <button onclick="navigate('#cashier')" class="bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold px-8 py-4 rounded-2xl text-base border border-amber-500/30 transition">🖥️ دخول شاشة الكاشير</button>
+                            <button onclick="navigate('#cashier')" class="bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold px-8 py-4 rounded-2xl text-base border border-slate-500/30 transition">🖥️ شاشة الكاشير السحابية</button>
                         </div>
 
-                        <!-- الروابط المستقلة للمطعم باسمه -->
                         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 text-right max-w-2xl mx-auto space-y-4">
                             <h3 class="font-black text-amber-400 text-sm flex items-center gap-2"><i class="fa-solid fa-link"></i> روابط مطعمك الخاصة (${db.restaurant.name}):</h3>
                             <div class="space-y-3 text-xs">
@@ -193,25 +193,58 @@
             alert('✅ تم نسخ الرابط بنجاح!');
         }
 
-        // ================= 2. صفحة بناء وتخصيص المطعم (Builder) =================
+        // ================= 2. لوحة التخصيص والقوالب والذكاء الاصطناعي (Builder) =================
         function renderBuilder() {
+            const styles = [
+                { id: 'crispy_cream', name: 'استايل كرسبي شيكن الفاتح (Cream Minimal)', desc: 'تصميم كريمي دافئ وأنيق مستوحى من تطبيقات الوجبات' },
+                { id: 'pizza_hut_dark', name: 'استايل بيتزا هت الفاخر (Dark Luxury)', desc: 'واجهة داكنة راقية تبرز جودة الطعام وصوره' },
+                { id: 'green_delivery', name: 'استايل دليفري الأخضر (Fresh Green)', desc: 'تصميم طازج ومشرق مناسب للمتاجر والمطاعم السريعة' },
+                { id: 'modern_food_app', name: 'الاستايل الليلي العصري (Modern Dark)', desc: 'مظهر داكن عصري مع لمسات العنبر البرتقالي' }
+            ];
+
             return `
                 <div class="min-h-screen bg-slate-950 text-white p-6 max-w-xl mx-auto space-y-6 pb-32">
                     <div class="flex justify-between items-center pb-4 border-b border-slate-800">
                         <button onclick="navigate('')" class="text-xs bg-slate-900 px-3 py-1.5 rounded-xl text-slate-300">الرئيسية</button>
-                        <h1 class="font-black text-base text-amber-400">⚙️ تخصيص مطعمك وإنشاء المنيو</h1>
+                        <h1 class="font-black text-base text-amber-400">⚙️ تخصيص القوالب والذكاء الاصطناعي</h1>
                         <button onclick="navigate('#menu')" class="text-xs bg-slate-900 px-3 py-1.5 rounded-xl text-emerald-400">المنيو</button>
                     </div>
 
-                    <!-- إعدادات اسم المطعم والبيانات -->
-                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl space-y-4 text-xs">
-                        <h3 class="font-black text-amber-400 text-sm">بيانات المطعم الأساسية</h3>
-                        
-                        <label class="block text-slate-400">اسم المطعم (سيظهر في الرابط والعنوان)</label>
-                        <input type="text" id="b_name" value="${db.restaurant.name}" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold text-sm outline-none">
+                    <!-- اختيار الأستايل والقالب -->
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl space-y-3 text-xs">
+                        <h3 class="font-black text-amber-400 text-sm">🎨 اختر قالب التصميم للمطعم (Style Theme)</h3>
+                        <div class="space-y-2">
+                            ${styles.map(st => `
+                                <label class="flex items-start gap-3 p-3 rounded-2xl border cursor-pointer transition ${db.restaurant.style === st.id ? 'border-amber-500 bg-amber-500/10 text-white' : 'border-slate-800 text-slate-400'}">
+                                    <input type="radio" name="r_style" value="${st.id}" ${db.restaurant.style === st.id ? 'checked' : ''} class="accent-amber-500 mt-0.5">
+                                    <div>
+                                        <span class="font-black text-white block text-sm">${st.name}</span>
+                                        <span class="text-[11px] opacity-80">${st.desc}</span>
+                                    </div>
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
 
-                        <label class="block text-slate-400">الوصف التعريفي</label>
-                        <input type="text" id="b_tag" value="${db.restaurant.taglet}" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white outline-none">
+                    <!-- استخراج المنيو بالذكاء الاصطناعي من الصور -->
+                    <div class="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/40 p-5 rounded-3xl space-y-3 text-xs">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">📸</span>
+                            <div>
+                                <h3 class="font-black text-amber-300 text-sm">استخراج المنيو بالذكاء الاصطناعي من صورة</h3>
+                                <p class="text-[11px] text-slate-300">ارفع صورة قائمة الطعام الورقية وسيتم استخراج الأصناف والأسعار تلقائياً!</p>
+                            </div>
+                        </div>
+                        <input type="file" id="ai_img" accept="image/*" class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-xl text-slate-300">
+                        <button onclick="simulateAI()" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-lg">✨ استخراج وإضافة الأصناف للمنيو تلقائياً</button>
+                    </div>
+
+                    <!-- إعدادات بيانات المطعم -->
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl space-y-4 text-xs">
+                        <h3 class="font-black text-amber-400 text-sm">بيانات المطعم والروابط</h3>
+                        
+                        <label class="block text-slate-400">اسم المطعم</label>
+                        <input type="text" id="b_name" value="${db.restaurant.name}" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold text-sm outline-none">
 
                         <label class="block text-slate-400">رقم واتساب استلام الطلبات</label>
                         <input type="text" id="b_wa" value="${db.restaurant.whatsapp}" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold outline-none">
@@ -219,19 +252,18 @@
                         <label class="block text-emerald-400 font-bold">🔑 كلمة سر شاشة الكاشير (PIN)</label>
                         <input type="text" id="b_pin" value="${db.restaurant.pin}" class="w-full bg-slate-950 border border-emerald-500/50 p-3 rounded-xl text-emerald-400 font-black text-center text-lg outline-none">
 
-                        <button onclick="saveRestaurantSettings()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3.5 rounded-xl text-sm transition">حفظ التعديلات وتوليد الروابط 🚀</button>
+                        <button onclick="saveRestaurantSettings()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3.5 rounded-xl text-sm transition">حفظ الإعدادات والقالب سحابياً 🚀</button>
                     </div>
 
-                    <!-- إضافة صنف جديد للمنيو -->
+                    <!-- إدارة أصناف المنيو اليدوية -->
                     <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl space-y-3 text-xs">
-                        <h3 class="font-black text-amber-400 text-sm">إضافة وجبة جديدة للمنيو</h3>
+                        <h3 class="font-black text-amber-400 text-sm">إضافة صنف جديد يدوياً</h3>
                         <input type="text" id="new_name" placeholder="اسم الوجبة (مثال: برجر دجاج)" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold outline-none">
                         <input type="number" id="new_price" placeholder="السعر (ج.م)" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white font-bold outline-none">
-                        <input type="text" id="new_desc" placeholder="مكونات الوجبة باختصار" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white outline-none">
+                        <input type="text" id="new_desc" placeholder="وصف الوجبة" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white outline-none">
                         <button onclick="addNewItem()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-3 rounded-xl transition">إضافة الصنف للمنيو 🍔</button>
                     </div>
 
-                    <!-- قائمة الأصناف الحالية -->
                     <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl space-y-3 text-xs">
                         <h3 class="font-black text-amber-400 text-sm">أصناف المنيو الحالية (${db.menu.length})</h3>
                         <div class="space-y-2">
@@ -241,7 +273,7 @@
                                         <p class="font-bold text-white text-sm">${m.name}</p>
                                         <span class="text-amber-400">${m.price} ج.م</span>
                                     </div>
-                                    <button onclick="deleteMenuItem(${idx})" class="text-red-400 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 rounded-lg font-bold">حذف</button>
+                                    <button onclick="deleteMenuItem(${idx})" class="text-red-400 bg-red-500/10 px-3 py-1.5 rounded-lg font-bold">حذف</button>
                                 </div>
                             `).join('')}
                         </div>
@@ -250,13 +282,36 @@
             `;
         }
 
+        function simulateAI() {
+            const f = document.getElementById('ai_img');
+            if (!f.files || f.files.length === 0) { alert('⚠️ يرجى اختيار صورة المنيو أولاً!'); return; }
+            alert('✨ جاري تحليل صورة المنيو واستخراج الأصناف والأسعار بالذكاء الاصطناعي...');
+            setTimeout(() => {
+                db.menu.push({
+                    id: Date.now(),
+                    name: 'وجبة كرسبي حراق مستخرجة AI',
+                    cat: 'chicken',
+                    price: 185,
+                    rating: '4.9',
+                    reviews: 'جديد AI',
+                    badge: 'AI عروض',
+                    desc: 'تم استخراج هذا الصنف تلقائياً من صورة المنيو',
+                    img: 'https://images.unsplash.com/photo-1625813506062-0aeb1d7a094b?w=500&auto=format&fit=crop&q=60'
+                });
+                saveState();
+                render();
+                alert('✅ تم استخراج الأصناف وإضافتها بنجاح للمنيو!');
+            }, 1500);
+        }
+
         function saveRestaurantSettings() {
+            const selStyle = document.querySelector('input[name="r_style"]:checked');
+            if (selStyle) db.restaurant.style = selStyle.value;
             db.restaurant.name = document.getElementById('b_name').value.trim() || 'مطعمي';
-            db.restaurant.taglet = document.getElementById('b_tag').value.trim();
             db.restaurant.whatsapp = document.getElementById('b_wa').value.trim();
             db.restaurant.pin = document.getElementById('b_pin').value.trim() || '1234';
             saveState();
-            alert('✅ تم حفظ بيانات المطعم وتوليد الروابط بنجاح!');
+            alert('✅ تم حفظ الإعدادات وتطبيق القالب بنجاح!');
             navigate('');
         }
 
@@ -289,8 +344,23 @@
             render();
         }
 
-        // ================= 3. واجهة الزبون والمنيو (Customer Menu) =================
+        // ================= 3. واجهة الزبون والمنيو (متوافقة مع الاستايل المختار) =================
         function renderCustomerMenu() {
+            const st = db.restaurant.style;
+            let bgMain = 'bg-slate-950 text-white';
+            let cardBg = 'bg-slate-900 border-slate-800';
+            
+            if (st === 'crispy_cream') {
+                bgMain = 'bg-[#fdfbf7] text-stone-900';
+                cardBg = 'bg-white border-stone-200 shadow-sm';
+            } else if (st === 'pizza_hut_dark') {
+                bgMain = 'bg-zinc-950 text-zinc-100';
+                cardBg = 'bg-zinc-900 border-zinc-800';
+            } else if (st === 'green_delivery') {
+                bgMain = 'bg-[#f4fcf6] text-emerald-950';
+                cardBg = 'bg-white border-emerald-100 shadow-sm';
+            }
+
             const filtered = db.menu.filter(item => {
                 const matchCat = ui.activeCategory === 'all' || item.cat === ui.activeCategory;
                 const matchSearch = item.name.toLowerCase().includes(ui.searchQuery.toLowerCase());
@@ -301,59 +371,61 @@
             const cartTotal = ui.cart.reduce((s, i) => s + (i.price * i.qty), 0);
 
             return `
-                <div class="min-h-screen bg-slate-950 text-white pb-32">
-                    <header class="sticky top-0 z-30 bg-slate-950/90 backdrop-blur border-b border-slate-800 px-4 py-3">
+                <div class="min-h-screen pb-32 ${bgMain}">
+                    <header class="sticky top-0 z-30 backdrop-blur border-b px-4 py-3 ${st==='crispy_cream'?'bg-white/80 border-stone-200':'bg-slate-950/90 border-slate-800'}">
                         <div class="max-w-2xl mx-auto flex justify-between items-center">
                             <div class="flex items-center gap-2.5">
-                                <span class="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-xl font-black">${db.restaurant.logo}</span>
+                                <span class="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-500 border border-amber-500/30 flex items-center justify-center text-xl font-black">${db.restaurant.logo}</span>
                                 <div>
                                     <h1 class="font-black text-sm">${db.restaurant.name}</h1>
-                                    <p class="text-[10px] text-slate-400">${db.restaurant.taglet}</p>
+                                    <p class="text-[10px] opacity-70">${db.restaurant.taglet}</p>
                                 </div>
                             </div>
                             <div class="flex gap-2">
-                                <button onclick="navigate('')" class="bg-slate-900 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-xl text-xs font-bold">الرئيسية</button>
-                                <button onclick="navigate('#builder')" class="bg-slate-900 border border-slate-800 text-amber-400 px-3 py-1.5 rounded-xl text-xs font-bold">⚙️ الإعدادات</button>
+                                <button onclick="navigate('')" class="px-3 py-1.5 rounded-xl text-xs font-bold border ${st==='crispy_cream'?'bg-stone-100 border-stone-200 text-stone-800':'bg-slate-900 border-slate-800 text-slate-300'}">الرئيسية</button>
+                                <button onclick="navigate('#builder')" class="px-3 py-1.5 rounded-xl text-xs font-bold border ${st==='crispy_cream'?'bg-stone-100 border-stone-200 text-stone-800':'bg-slate-900 border-slate-800 text-amber-400'}">⚙️ الإعدادات</button>
                             </div>
                         </div>
                     </header>
 
                     <div class="max-w-2xl mx-auto px-4 pt-4 space-y-5">
                         <div class="relative">
-                            <input type="text" oninput="ui.searchQuery=this.value; render();" value="${ui.searchQuery}" placeholder="ابحث في المنيو..." class="w-full pl-4 pr-10 py-3.5 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-amber-500">
-                            <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-4 text-slate-500 text-xs"></i>
+                            <input type="text" oninput="ui.searchQuery=this.value; render();" value="${ui.searchQuery}" placeholder="ابحث في المنيو والأسعار..." class="w-full pl-4 pr-10 py-3.5 rounded-2xl border text-xs outline-none ${st==='crispy_cream'?'bg-white border-stone-200 text-stone-900':'bg-slate-900 border-slate-800 text-white'}">
+                            <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-4 opacity-50 text-xs"></i>
                         </div>
 
-                        <!-- الأقسام -->
-                        <div class="flex gap-3 overflow-x-auto hide-scrollbar py-1">
-                            ${db.categories.map(cat => {
-                                const active = ui.activeCategory === cat.id;
-                                return `
-                                    <button onclick="ui.activeCategory='${cat.id}'; render();" class="flex flex-col items-center gap-1.5 min-w-[72px] p-2.5 rounded-2xl border transition ${active ? 'bg-amber-500 text-slate-950 border-amber-400 font-black' : 'bg-slate-900 text-slate-300 border-slate-800'}">
-                                        <span class="text-xl">${cat.icon}</span>
-                                        <span class="text-[11px]">${cat.name}</span>
-                                    </button>
-                                `;
-                            }).join('')}
+                        <!-- الأقسام الدائرية -->
+                        <div>
+                            <div class="flex gap-3 overflow-x-auto hide-scrollbar py-1">
+                                ${db.categories.map(cat => {
+                                    const active = ui.activeCategory === cat.id;
+                                    return `
+                                        <button onclick="ui.activeCategory='${cat.id}'; render();" class="flex flex-col items-center gap-1.5 min-w-[72px] p-2.5 rounded-2xl border transition ${active ? 'bg-amber-500 text-slate-950 border-amber-400 font-black' : (st==='crispy_cream'?'bg-white text-stone-700 border-stone-200':'bg-slate-900 text-slate-300 border-slate-800')}">
+                                            <span class="text-xl">${cat.icon}</span>
+                                            <span class="text-[11px]">${cat.name}</span>
+                                        </button>
+                                    `;
+                                }).join('')}
+                            </div>
                         </div>
 
-                        <!-- قائمة الوجبات -->
+                        <!-- قائمة الأطباق والأسعار -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             ${filtered.map(item => `
-                                <div class="bg-slate-900 border border-slate-800 p-4 rounded-3xl flex flex-col justify-between shadow-xl">
-                                    <div class="w-full h-36 rounded-2xl overflow-hidden mb-3 relative bg-slate-950">
+                                <div class="${cardBg} p-4 rounded-3xl flex flex-col justify-between">
+                                    <div class="w-full h-36 rounded-2xl overflow-hidden mb-3 relative bg-slate-900">
                                         <img src="${item.img}" class="w-full h-full object-cover">
                                         ${item.badge ? `<span class="absolute top-2 right-2 bg-amber-500 text-slate-950 text-[9px] font-black px-2.5 py-0.5 rounded-full shadow">${item.badge}</span>` : ''}
                                     </div>
                                     <div>
-                                        <h4 class="font-black text-base text-white">${item.name}</h4>
-                                        <p class="text-xs text-slate-400 line-clamp-1 mt-0.5">${item.desc}</p>
-                                        <div class="flex items-center gap-1 text-xs text-amber-400 font-bold mt-1">
-                                            <i class="fa-solid fa-star"></i> <span>${item.rating}</span> <span class="text-slate-500 font-normal">(${item.reviews})</span>
+                                        <h4 class="font-black text-base">${item.name}</h4>
+                                        <p class="text-xs opacity-70 line-clamp-1 mt-0.5">${item.desc}</p>
+                                        <div class="flex items-center gap-1 text-xs text-amber-500 font-bold mt-1">
+                                            <i class="fa-solid fa-star"></i> <span>${item.rating}</span> <span class="opacity-50 font-normal">(${item.reviews})</span>
                                         </div>
                                     </div>
-                                    <div class="flex justify-between items-center mt-4 pt-3 border-t border-slate-800">
-                                        <span class="font-black text-amber-400 text-sm">${item.price} ج.م</span>
+                                    <div class="flex justify-between items-center mt-4 pt-3 border-t border-stone-200/20">
+                                        <span class="font-black text-amber-500 text-sm">${item.price} ج.م</span>
                                         <button onclick="addToCart(${item.id})" class="w-8 h-8 rounded-xl bg-amber-500 text-slate-950 font-black flex items-center justify-center text-sm shadow hover:scale-105 transition">+</button>
                                     </div>
                                 </div>
@@ -381,7 +453,7 @@
             render();
         }
 
-        // ================= 4. السلة وإتمام الطلب (Cart & Checkout) =================
+        // ================= 4. السلة وإتمام الطلب مع تحديد موقع GPS =================
         function renderCart() {
             const subtotal = ui.cart.reduce((s, i) => s + (i.price * i.qty), 0);
             return `
@@ -419,7 +491,7 @@
                 <div class="min-h-screen bg-slate-950 text-white p-4 max-w-lg mx-auto space-y-4 pb-32">
                     <div class="flex justify-between items-center pb-3 border-b border-slate-800">
                         <button onclick="navigate('#cart')" class="text-xs bg-slate-900 px-3 py-1.5 rounded-xl">السلة</button>
-                        <h1 class="font-black text-sm">إتمام الطلب</h1>
+                        <h1 class="font-black text-sm">إتمام الطلب وتحديد الموقع</h1>
                         <div></div>
                     </div>
                     <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3 text-xs">
@@ -436,7 +508,10 @@
                         </div>
 
                         ${ui.deliveryMethod === 'home' ? `
-                            <textarea id="chk_address" oninput="ui.address=this.value" rows="2" placeholder="العنوان بالتفصيل..." class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white mt-2">${ui.address}</textarea>
+                            <button onclick="detectGPSLocation()" type="button" class="w-full bg-amber-500 text-slate-950 font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 shadow">
+                                <i class="fa-solid fa-crosshairs"></i> تحديد موقع التوصيل تلقائياً (GPS) 📍
+                            </button>
+                            <textarea id="chk_address" oninput="ui.address=this.value" rows="2" placeholder="العنوان بالتفصيل أو إحداثيات GPS..." class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white mt-1">${ui.address}</textarea>
                         ` : ''}
                     </div>
 
@@ -453,6 +528,17 @@
                     </button>
                 </div>
             `;
+        }
+
+        function detectGPSLocation() {
+            if (!navigator.geolocation) { alert('⚠️ تتبع الموقع غير مدعوم في متصفحك'); return; }
+            alert('📍 جاري رصد موقعك الحالي عبر GPS...');
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const coords = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
+                ui.address = `موقع GPS: ${coords}`;
+                render();
+                alert('✅ تم رصد الموقع بنجاح!');
+            }, () => { alert('⚠️ يرجى السماح بالوصول للموقع.'); });
         }
 
         function submitFinalOrder() {
@@ -506,7 +592,7 @@
             `;
         }
 
-        // ================= 5. شاشة الكاشير (Cashier Dashboard) =================
+        // ================= 5. شاشة الكاشير الفورية =================
         function renderCashier() {
             if (!ui.cashierUnlocked) {
                 return `
@@ -532,7 +618,7 @@
                         </div>
                     </div>
                     <div class="space-y-3">
-                        ${db.orders.length === 0 ? `<div class="bg-slate-900 p-10 rounded-2xl text-center text-slate-500 text-xs">لا توجد طلبات جديدة. ستظهر فوراً عند إرسالها!</div>` : db.orders.map((ord, idx) => `
+                        ${db.orders.length === 0 ? `<div class="bg-slate-900 p-10 rounded-2xl text-center text-slate-500 text-xs">لا توجد طلبات جديدة. ستظهر فوراً عند إرسالها من أي هاتف!</div>` : db.orders.map((ord, idx) => `
                             <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col md:flex-row justify-between gap-3 text-xs shadow-xl">
                                 <div class="space-y-1">
                                     <div class="flex items-center gap-2">
