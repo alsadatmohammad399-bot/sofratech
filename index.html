@@ -47,7 +47,7 @@
 
         let globalDB = { restaurants: {} };
         try {
-            const raw = localStorage.getItem('tablia_multitenant_2030_v55');
+            const raw = localStorage.getItem('tablia_multitenant_2030_v60');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) {}
 
@@ -78,17 +78,17 @@
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_multitenant_2030_v55', JSON.stringify(globalDB));
-                if (cloudDB) cloudDB.ref('tablia_multitenant_enterprise_2030_v55').set(globalDB).catch(() => {});
+                localStorage.setItem('tablia_multitenant_2030_v60', JSON.stringify(globalDB));
+                if (cloudDB) cloudDB.ref('tablia_multitenant_enterprise_2030_v60').set(globalDB).catch(() => {});
             } catch (e) {}
         }
 
         if (cloudDB) {
-            cloudDB.ref('tablia_multitenant_enterprise_2030_v55').on('value', (snap) => {
+            cloudDB.ref('tablia_multitenant_enterprise_2030_v60').on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.restaurants) {
                     globalDB = data;
-                    try { localStorage.setItem('tablia_multitenant_2030_v55', JSON.stringify(globalDB)); } catch(e){}
+                    try { localStorage.setItem('tablia_multitenant_2030_v60', JSON.stringify(globalDB)); } catch(e){}
                     render();
                 }
             });
@@ -225,12 +225,13 @@
         function renderBuilder(){
             const rest = globalDB.restaurants[currentRestId];
             if(!rest){ setPage('auth'); return ''; }
+            const customLink = location.origin + location.pathname + `?view=menu&rest=${rest.id}`;
             return `
                 <div class="max-w-3xl mx-auto px-4 py-6 pb-28 space-y-5 text-xs">
                     <div class="flex justify-between items-center bg-slate-900 p-4 rounded-2xl border border-slate-800">
                         <div>
                             <h1 class="font-black text-white text-sm">لوحة تحكم: ${rest.name}</h1>
-                            <span class="text-slate-400 text-[10px]">أنشئ مطعمك بسهولة بالصندوق السحري</span>
+                            <span class="text-slate-400 text-[10px]">أنشئ مطعمك بالصندوق السحري</span>
                         </div>
                         <button onclick="currentRestId=null; localStorage.removeItem('tablia_logged_rest_id'); setPage('auth');" class="bg-red-500/10 text-red-400 px-3 py-1.5 rounded-xl font-bold">خروج</button>
                     </div>
@@ -272,9 +273,9 @@
                     <!-- FINAL LINK -->
                     <div class="bg-slate-900 p-6 rounded-3xl space-y-4 border border-emerald-500/40 text-center shadow-2xl">
                         <h2 class="font-black text-emerald-400 text-sm">🎉 رابط مطعمك المخصص (بالاسم الإنجليزي)</h2>
-                        <input readonly value="${location.origin + location.pathname + `?view=menu&rest=${rest.id}`}" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-amber-400 font-mono text-center text-xs select-all">
+                        <input readonly value="${customLink}" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-amber-400 font-mono text-center text-xs select-all">
                         <div class="grid grid-cols-2 gap-2">
-                            <button onclick="navigator.clipboard.writeText('${location.origin + location.pathname + `?view=menu&rest=${rest.id}`}'); alert('تم نسخ اللينك بنجاح!');" class="bg-amber-500 text-slate-950 font-black py-3 rounded-xl">نسخ اللينك</button>
+                            <button onclick="navigator.clipboard.writeText('${customLink}'); alert('تم نسخ اللينك بنجاح!');" class="bg-amber-500 text-slate-950 font-black py-3 rounded-xl">نسخ اللينك</button>
                             <a href="?view=menu&rest=${rest.id}" target="_blank" class="bg-emerald-600 text-white font-black py-3 rounded-xl flex items-center justify-center gap-1">فتح المنيو كقالب ➔</a>
                         </div>
                     </div>
