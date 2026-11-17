@@ -50,34 +50,32 @@
 
         let globalDB = { restaurants: {} };
         try {
-            const raw = localStorage.getItem('tablia_multitenant_2030_v46');
+            const raw = localStorage.getItem('tablia_multitenant_2030_v47');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) {}
 
         if (!globalDB || !globalDB.restaurants || typeof globalDB.restaurants !== 'object') {
             globalDB = {
                 restaurants: {
-                    "rest_demo": {
-                        id: "rest_demo", ownerName: "محمد علي", name: "حواوشي الرفاعي", phone: "01015861991", pass: "1234",
-                        tablesCount: 20, deliveryFee: 37, deliveryTime: "30 دقيقة", taxPercent: 0, serviceFee: 0,
-                        address: "30 شارع أحمد حشمت، الزمالك، القاهرة", wifiName: "Elrefaeey_Free", wifiPass: "357159357",
+                    "kabdet-masr": {
+                        id: "kabdet-masr", ownerName: "محمد علي", name: "كبده مصر", phone: "01015861991", pass: "1234",
+                        tablesCount: 20, deliveryFee: 30, deliveryTime: "30 دقيقة",
+                        address: "30 شارع التحرير، القاهرة", wifiName: "KabdetMasr_Free", wifiPass: "357159",
                         coverImage: "https://images.unsplash.com/photo-1544025162-d76694265947?w=800",
                         logoImage: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300",
                         social: { facebook: "https://facebook.com", instagram: "https://instagram.com" },
-                        popupBanner: { enabled: true, image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600", title: "مهرجان الحواوشي والمشويات 🔥", subtitle: "عروض مينفعش تفوتك!" },
+                        popupBanner: { enabled: true, image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600", title: "مهرجان الكبده الإسكندراني 🔥", subtitle: "عروض مميزة لفترة محدودة" },
                         theme: { mode: 'light', primary: '#163882', accent: '#dc2626', cardStyle: 'rounded' },
-                        services: { waiterCall: true, wifiService: true, branchLocation: true, deliveryService: true },
                         subscription: { isActive: true, expiresAt: Date.now() + 30*24*60*60*1000 },
                         categories: [
-                            { id: 'cat_offers', name: 'خصومات', icon: '🔥' },
-                            { id: 'cat_hawawshi', name: 'حواوشي اللحوم', icon: '🥙' }
+                            { id: 'cat_offers', name: 'العروض', icon: '🔥' },
+                            { id: 'cat_main', name: 'السندوتشات', icon: '🥪' }
                         ],
                         menu_items: [
-                            { id: 'itm_1', category_id: 'cat_offers', name: 'عرض الخضراوات', description: 'حواوشي خضراوات + مخلل + ماكس كولا', price: 99, old_price: 155, image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400', is_featured: true, stock: 50, is_available: true }
+                            { id: 'itm_1', category_id: 'cat_main', name: 'سندوتش كبده إسكندراني', description: 'كبده طازجة بتتبيلة الحريف المميزة', price: 25, old_price: 35, image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400', is_featured: true, is_available: true }
                         ],
                         gallery: [
-                            { id: 'gal_1', title: 'وجبة المشاوي الملكية', image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600' },
-                            { id: 'gal_2', title: 'حواوشي إسكندراني طازج', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600' }
+                            { id: 'gal_1', title: 'سندوتشات الكبده الساخنة', image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600' }
                         ],
                         orders: [], employees: []
                     }
@@ -100,17 +98,17 @@
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_multitenant_2030_v46', JSON.stringify(globalDB));
-                if (cloudDB) cloudDB.ref('tablia_multitenant_enterprise_2030_v46').set(globalDB).catch(() => {});
+                localStorage.setItem('tablia_multitenant_2030_v47', JSON.stringify(globalDB));
+                if (cloudDB) cloudDB.ref('tablia_multitenant_enterprise_2030_v47').set(globalDB).catch(() => {});
             } catch (e) {}
         }
 
         if (cloudDB) {
-            cloudDB.ref('tablia_multitenant_enterprise_2030_v46').on('value', (snap) => {
+            cloudDB.ref('tablia_multitenant_enterprise_2030_v47').on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.restaurants) {
                     globalDB = data;
-                    try { localStorage.setItem('tablia_multitenant_2030_v46', JSON.stringify(globalDB)); } catch(e){}
+                    try { localStorage.setItem('tablia_multitenant_2030_v47', JSON.stringify(globalDB)); } catch(e){}
                     render();
                 }
             });
@@ -140,7 +138,6 @@
             modalType: null,
             promoPopupShown: false,
             addressModalOpen: false,
-            appliedDiscount: 0,
             paymentMethod: 'cash',
             transferRefInput: '',
             customerDetails: { name: '', phone: '', gpsLocation: '', area: '', street: '', building: '', floor: '', apt: '', landmark: '' }
@@ -189,7 +186,7 @@
             <div class="max-w-md mx-auto px-4 py-12 space-y-6">
                 <div class="text-center space-y-2"><h1 class="text-2xl font-black text-white">منصة طبلية | Tablia OS</h1><p class="text-xs text-slate-400">فترة تجريبية مجانية لمدة يومين 🎁</p></div>
                 <div class="bg-slate-900 p-6 rounded-3xl space-y-4 text-xs shadow-xl">
-                    <div><label class="block text-slate-300 mb-1 font-bold">اسم المطعم</label><input id="reg_name" placeholder="مطعم البرنس" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold"></div>
+                    <div><label class="block text-slate-300 mb-1 font-bold">اسم المطعم (مثال: كبده مصر)</label><input id="reg_name" placeholder="كبده مصر" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold"></div>
                     <div><label class="block text-slate-300 mb-1 font-bold">رقم الموبايل</label><input id="reg_phone" placeholder="010xxxxxxxx" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold"></div>
                     <div><label class="block text-slate-300 mb-1 font-bold">كلمة السر</label><input id="reg_pass" type="password" placeholder="••••" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold"></div>
                     <button onclick="handleRegister()" class="w-full bg-red-600 text-white font-black py-3.5 rounded-xl shadow">ابدأ التجربة المجانية 🚀</button>
@@ -202,24 +199,28 @@
             const phone = document.getElementById('reg_phone').value.trim(); 
             const pass = document.getElementById('reg_pass').value.trim();
             if(!name || !phone || !pass){ alert('يرجى استكمال البيانات'); return; }
-            const restId = 'rest_' + Date.now();
-            globalDB.restaurants[restId] = { 
-                id: restId, name, phone, pass, tablesCount: 20, deliveryFee: 30, deliveryTime: "30 دقيقة",
-                address: 'القاهرة، مصر', wifiName: name+'_Free', wifiPass: '357159',
+            
+            // توليد Slug إنجليزي فريد من اسم المطعم
+            let slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+            if(!slug || slug === '-') slug = 'restaurant-' + Date.now();
+            else slug = slug + '-' + Math.floor(100 + Math.random() * 900);
+
+            globalDB.restaurants[slug] = { 
+                id: slug, name, phone, pass, tablesCount: 20, deliveryFee: 30, deliveryTime: "30 دقيقة",
+                address: 'القاهرة، مصر', wifiName: slug+'_Free', wifiPass: '357159',
                 coverImage: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800',
                 logoImage: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300',
                 social: { facebook: '', instagram: '' },
                 popupBanner: { enabled: false, image: '', title: '', subtitle: '' },
                 theme: { mode: 'light', primary: '#163882', accent: '#dc2626', cardStyle: 'rounded' },
-                services: { waiterCall: true, wifiService: true, branchLocation: true, deliveryService: true },
                 subscription: { isActive: true, expiresAt: Date.now() + (2*24*60*60*1000) }, 
                 categories: [{ id: 'cat_1', name: 'الأصناف الرئيسية', icon: '🍽️' }], 
                 menu_items: [], gallery: [], orders: [], employees: []
             };
-            syncCloud(); currentRestId = restId; localStorage.setItem('tablia_logged_rest_id', restId); setPage('builder');
+            syncCloud(); currentRestId = slug; localStorage.setItem('tablia_logged_rest_id', slug); setPage('builder');
         }
 
-        // ================= BUILDER WITH GALLERY SECTION =================
+        // ================= BUILDER =================
         function renderBuilder(){
             const rest = globalDB.restaurants[currentRestId];
             if(!rest){ setPage('auth'); return ''; }
@@ -228,8 +229,8 @@
                 <div class="max-w-3xl mx-auto px-4 py-6 pb-24 space-y-5">
                     <div class="flex gap-1.5 bg-slate-900 p-1.5 rounded-2xl text-xs border border-slate-800">
                         <button onclick="appState.builderStep=1; render();" class="flex-1 py-2.5 rounded-xl ${appState.builderStep===1?'bg-red-600 text-white font-black':'text-slate-400'}">1. الهوية والألوان</button>
-                        <button onclick="appState.builderStep=2; render();" class="flex-1 py-2.5 rounded-xl ${appState.builderStep===2?'bg-red-600 text-white font-black':'text-slate-400'}">2. الأصناف والصور</button>
-                        <button onclick="appState.builderStep=3; render();" class="flex-1 py-2.5 rounded-xl ${appState.builderStep===3?'bg-red-600 text-white font-black':'text-slate-400'}">3. نشر اللينك والـ QR</button>
+                        <button onclick="appState.builderStep=2; render();" class="flex-1 py-2.5 rounded-xl ${appState.builderStep===2?'bg-red-600 text-white font-black':'text-slate-400'}">2. الأقسام والأصناف والصور</button>
+                        <button onclick="appState.builderStep=3; render();" class="flex-1 py-2.5 rounded-xl ${appState.builderStep===3?'bg-red-600 text-white font-black':'text-slate-400'}">3. نشر اللينك الخاص</button>
                     </div>
                     ${appState.builderStep===1 ? renderStep1(rest) : (appState.builderStep===2 ? renderStep2(rest) : renderStep3(rest))}
                 </div>
@@ -246,69 +247,72 @@
                     </div>
                     <div><label class="block text-slate-300 mb-1 font-bold">اسم المطعم</label><input id="r_name" value="${rest.name}" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-white font-bold"></div>
                     <div><label class="block text-slate-300 mb-1 font-bold">رقم الموبايل</label><input id="r_phone" value="${rest.phone}" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-white font-bold"></div>
-                    <button onclick="rest.name=document.getElementById('r_name').value; rest.phone=document.getElementById('r_phone').value; syncCloud(); appState.builderStep=2; render();" class="bg-amber-500 text-slate-950 font-black px-5 py-3.5 rounded-xl w-full">حفظ والانتقال للأصناف والصور ➔</button>
+                    <button onclick="rest.name=document.getElementById('r_name').value; rest.phone=document.getElementById('r_phone').value; syncCloud(); appState.builderStep=2; render();" class="bg-amber-500 text-slate-950 font-black px-5 py-3.5 rounded-xl w-full">حفظ والانتقال للأقسام والأصناف ➔</button>
                 </div>
             `;
         }
 
         function renderStep2(rest){
             if(!rest.gallery) rest.gallery = [];
+            if(!rest.categories) rest.categories = [{id:'cat_1', name:'الرئيسية', icon:'🍽️'}];
             return `
                 <div class="bg-slate-900 p-6 rounded-3xl space-y-6 text-xs border border-slate-800">
-                    <!-- Categories & Items -->
+                    <!-- Categories Management -->
                     <div class="space-y-3">
-                        <div class="flex justify-between items-center"><h3 class="font-black text-white text-sm">الأصناف</h3><button onclick="const c=prompt('اسم القسم:'); if(c) {rest.categories.push({id:'cat_'+Date.now(), name:c, icon:'🍽️'}); syncCloud(); render();}" class="bg-amber-500/20 text-amber-400 px-3 py-1.5 rounded-xl">+ قسم</button></div>
-                        <div class="bg-slate-950 p-4 rounded-2xl space-y-2">
-                            <input id="itm_name" placeholder="اسم الوجبة (مثال: حواوشي لحم)" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold">
+                        <div class="flex justify-between items-center"><h3 class="font-black text-white text-sm">📁 الأقسام</h3><button onclick="const c=prompt('اسم القسم الجديد (مثال: سندوتشات، مشروبات):'); if(c) {rest.categories.push({id:'cat_'+Date.now(), name:c, icon:'🍽️'}); syncCloud(); render();}" class="bg-amber-500/20 text-amber-400 px-3 py-1.5 rounded-xl font-bold">+ إضافة قسم</button></div>
+                        <div class="flex gap-2 overflow-x-auto pb-2">
+                            ${rest.categories.map(cat => `<div class="bg-slate-950 border border-slate-800 px-3 py-2 rounded-xl flex items-center gap-2"><span class="font-bold text-white">${cat.name}</span><button onclick="rest.categories=rest.categories.filter(c=>c.id!='${cat.id}'); syncCloud(); render();" class="text-red-400"><i class="fa-solid fa-xmark"></i></button></div>`).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Items Management -->
+                    <div class="space-y-3 pt-3 border-t border-slate-800">
+                        <h3 class="font-black text-white text-sm">🍔 إضافة أصناف للأقسام</h3>
+                        <div class="bg-slate-950 p-4 rounded-2xl space-y-2.5">
+                            <select id="itm_cat" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold">
+                                ${rest.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                            </select>
+                            <input id="itm_name" placeholder="اسم الوجبة (مثال: سندوتش كبده)" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold">
                             <input id="itm_price" type="number" placeholder="السعر" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold">
                             <input id="itm_img" placeholder="رابط صورة الوجبة (URL) أو اتركها افتراضية" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold">
-                            <button onclick="const n=document.getElementById('itm_name').value; const p=document.getElementById('itm_price').value; const img=document.getElementById('itm_img').value; if(n&&p){ rest.menu_items.push({id:'itm_'+Date.now(), category_id:rest.categories[0].id, name:n, price:Number(p), description:'معد بعناية فائقة', image:img||'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400', is_available:true}); syncCloud(); render(); }" class="w-full bg-emerald-600 text-white font-black py-3 rounded-xl">إضافة صنف ✓</button>
+                            <button onclick="const catId=document.getElementById('itm_cat').value; const n=document.getElementById('itm_name').value; const p=document.getElementById('itm_price').value; const img=document.getElementById('itm_img').value; if(n&&p){ rest.menu_items.push({id:'itm_'+Date.now(), category_id:catId, name:n, price:Number(p), description:'معد بعناية فائقة', image:img||'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400', is_available:true}); syncCloud(); render(); }" class="w-full bg-emerald-600 text-white font-black py-3 rounded-xl">إضافة الصنف للقائمة ✓</button>
+                        </div>
+                        <div class="space-y-2 max-h-48 overflow-y-auto">
+                            ${(rest.menu_items||[]).map((item, i) => `<div class="bg-slate-950 p-3 rounded-xl flex justify-between items-center border border-slate-800"><div><span class="font-black text-white">${item.name}</span><span class="text-amber-400 block">${item.price} جنيه</span></div><button onclick="rest.menu_items.splice(${i},1); syncCloud(); render();" class="text-red-400"><i class="fa-solid fa-trash"></i></button></div>`).join('')}
                         </div>
                     </div>
 
-                    <!-- GALLERY / PHOTO SECTION (New Requirement) -->
+                    <!-- GALLERY SECTION -->
                     <div class="space-y-3 pt-4 border-t border-slate-800">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h3 class="font-black text-amber-400 text-sm">🖼️ قسم معرض الصور (Gallery)</h3>
-                                <p class="text-[10px] text-slate-400">أضف صور الأطباق والجو العام، وستظهر مرتبة في آخر المنيو!</p>
-                            </div>
-                        </div>
+                        <h3 class="font-black text-amber-400 text-sm">🖼️ معرض الصور (تظهر مرتبة في آخر المنيو)</h3>
                         <div class="bg-slate-950 p-4 rounded-2xl space-y-2">
-                            <input id="gal_title" placeholder="عنوان الصورة (مثال: وجبة المشاوي الملكية)" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold">
+                            <input id="gal_title" placeholder="عنوان الصورة (مثال: صالة المطعم)" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold">
                             <input id="gal_url" placeholder="رابط الصورة (URL)" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold">
-                            <button onclick="const t=document.getElementById('gal_title').value; const u=document.getElementById('gal_url').value; if(t&&u){ rest.gallery.push({id:'gal_'+Date.now(), title:t, image:u}); syncCloud(); render(); }" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl">إضافة الصورة لمعرض الصور ➔</button>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            ${rest.gallery.map((g, i) => `
-                                <div class="bg-slate-950 p-2 rounded-xl flex items-center justify-between border border-slate-800">
-                                    <div class="flex items-center gap-2">
-                                        <img src="${g.image}" class="w-10 h-10 rounded-lg object-cover">
-                                        <span class="font-bold text-[11px] line-clamp-1">${g.title}</span>
-                                    </div>
-                                    <button onclick="rest.gallery.splice(${i},1); syncCloud(); render();" class="text-red-400 p-1"><i class="fa-solid fa-trash"></i></button>
-                                </div>
-                            `).join('')}
+                            <button onclick="const t=document.getElementById('gal_title').value; const u=document.getElementById('gal_url').value; if(t&&u){ rest.gallery.push({id:'gal_'+Date.now(), title:t, image:u}); syncCloud(); render(); }" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl">إضافة الصورة للمعرض ➔</button>
                         </div>
                     </div>
 
-                    <button onclick="appState.builderStep=3; render();" class="bg-amber-500 text-slate-950 font-black px-4 py-3.5 rounded-xl w-full">التالي: نشر اللينك ➔</button>
+                    <button onclick="appState.builderStep=3; render();" class="bg-amber-500 text-slate-950 font-black px-4 py-3.5 rounded-xl w-full">التالي: الحصول على اللينك المخصص ➔</button>
                 </div>
             `;
         }
 
         function renderStep3(rest){
+            // اللينك يظهر باسم المطعم الإنجليزي (Slug) كما طلبت
             const url = location.origin + location.pathname + `?view=menu&rest=${rest.id}`;
             return `
-                <div class="bg-slate-900 p-6 rounded-3xl space-y-4 text-xs border border-slate-800 text-center">
-                    <h2 class="font-black text-white text-sm">🎉 منيو مطعمك جاهز بكل الأصناف ومعرض الصور!</h2>
-                    <input readonly value="${url}" class="w-full bg-slate-950 border border-slate-700 p-3 rounded-xl text-white text-center select-all">
-                    <a href="${url}" target="_blank" class="block w-full bg-emerald-600 text-white font-black py-3.5 rounded-xl">فتح المنيو الآن ومعاينة الصور المرتبة ➔</a>
+                <div class="bg-slate-900 p-6 rounded-3xl space-y-5 text-xs border border-slate-800 text-center">
+                    <h2 class="font-black text-white text-sm">🎉 جاهز! تم تخصيص رابط مطعمك ( ${rest.name} ) بالاسم الإنجليزي</h2>
+                    <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+                        <input readonly value="${url}" class="w-full bg-slate-900 border border-slate-700 p-3.5 rounded-xl text-amber-400 font-mono text-center text-xs select-all">
+                        <button onclick="navigator.clipboard.writeText('${url}'); alert('تم نسخ رابط المطعم!');" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl">نسخ الرابط المخصص</button>
+                    </div>
+                    <a href="${url}" target="_blank" class="block w-full bg-emerald-600 text-white font-black py-3.5 rounded-xl shadow-lg">فتح المنيو ومعاينة الأصناف والصور الآن ➔</a>
                 </div>
             `;
         }
 
-        // ================= CUSTOMER STOREFRONT WITH GALLERY AT THE END =================
+        // ================= CUSTOMER STOREFRONT =================
         function renderStorefront(){
             const restId = targetRestSlug || Object.keys(globalDB.restaurants)[0];
             const rest = globalDB.restaurants[restId];
@@ -332,34 +336,40 @@
                     </div>
 
                     <div class="max-w-2xl mx-auto px-3 pt-4 space-y-6">
-                        <!-- Menu Items -->
-                        <div class="space-y-4">
-                            <h2 class="font-black text-sm px-1">قائمة الطعام</h2>
-                            <div class="space-y-3">
-                                ${(rest.menu_items || []).map(item => `
-                                    <div class="${cardBg} border rounded-2xl p-3 flex items-center justify-between gap-3 shadow-sm">
-                                        <div class="flex-1">
-                                            <h3 class="font-black text-sm">${item.name}</h3>
-                                            <p class="text-[11px] text-slate-500">${item.description}</p>
-                                            <span class="font-black text-xs block mt-1" style="color:${theme.primary}">${item.price} جنيه</span>
-                                        </div>
-                                        <img src="${item.image}" class="w-20 h-20 rounded-xl object-cover">
+                        <!-- Categorized Menu Items -->
+                        ${(rest.categories || []).map(cat => {
+                            const items = (rest.menu_items || []).filter(i => i.category_id === cat.id);
+                            if(items.length === 0) return '';
+                            return `
+                                <div class="space-y-2">
+                                    <h2 class="font-black text-sm px-1 text-amber-500">${cat.icon || '🍽️'} ${cat.name}</h2>
+                                    <div class="space-y-3">
+                                        ${items.map(item => `
+                                            <div class="${cardBg} border rounded-2xl p-3 flex items-center justify-between gap-3 shadow-sm">
+                                                <div class="flex-1">
+                                                    <h3 class="font-black text-sm">${item.name}</h3>
+                                                    <p class="text-[11px] text-slate-500">${item.description}</p>
+                                                    <span class="font-black text-xs block mt-1" style="color:${theme.primary}">${item.price} جنيه</span>
+                                                </div>
+                                                <img src="${item.image}" class="w-20 h-20 rounded-xl object-cover">
+                                            </div>
+                                        `).join('')}
                                     </div>
-                                `).join('')}
-                            </div>
-                        </div>
+                                </div>
+                            `;
+                        }).join('')}
 
-                        <!-- GALLERY SECTION AT THE VERY END (As Requested) -->
+                        <!-- GALLERY SECTION AT THE VERY END -->
                         ${rest.gallery && rest.gallery.length > 0 ? `
                             <div class="space-y-3 pt-6 border-t border-slate-300 dark:border-slate-800">
                                 <div class="text-center space-y-1">
                                     <h2 class="font-black text-base uppercase tracking-wider" style="color:${theme.primary}">معرض الصور والأطباق</h2>
-                                    <p class="text-[11px] text-slate-500">لقطات حية من أطباقنا المميزة</p>
+                                    <p class="text-[11px] text-slate-500">لقطات حية من مطعمنا</p>
                                 </div>
                                 <div class="grid grid-cols-2 gap-3">
                                     ${rest.gallery.map(g => `
                                         <div class="${cardBg} border rounded-2xl overflow-hidden shadow-md">
-                                            <img src="${g.image}" class="w-full h-36 object-cover hover:scale-105 transition duration-300">
+                                            <img src="${g.image}" class="w-full h-36 object-cover">
                                             <div class="p-2 text-center">
                                                 <span class="font-black text-xs block truncate">${g.title}</span>
                                             </div>
@@ -373,7 +383,6 @@
             `;
         }
 
-        // Basic Cashier/Dashboard stubs for platform completeness
         function renderCashier(){ return `${renderNav()}<div class="p-6 text-center text-xs">شاشة الكاشير</div>`; }
         function renderInventory(){ return `${renderNav()}<div class="p-6 text-center text-xs">المخزن</div>`; }
         function renderAttendance(){ return `${renderNav()}<div class="p-6 text-center text-xs">الموظفين</div>`; }
