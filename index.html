@@ -16,6 +16,11 @@
         body { font-family: 'Cairo', sans-serif; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @media print {
+            body * { visibility: hidden; }
+            #printable-area, #printable-area * { visibility: visible; }
+            #printable-area { position: absolute; left: 0; top: 0; width: 100%; }
+        }
     </style>
 </head>
 <body class="antialiased min-h-screen bg-[#0b0f19] text-slate-100 selection:bg-red-600 selection:text-white">
@@ -42,7 +47,7 @@
 
         let globalDB = { restaurants: {} };
         try {
-            const raw = localStorage.getItem('tablia_multitenant_2030_v50');
+            const raw = localStorage.getItem('tablia_multitenant_2030_v55');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) {}
 
@@ -51,7 +56,7 @@
                 restaurants: {
                     "kabdet-masr": {
                         id: "kabdet-masr", name: "كبده مصر", phone: "01015861991", pass: "1234",
-                        address: "30 شارع التحرير، القاهرة",
+                        address: "30 شارع التحرير، القاهرة", tablesCount: 20,
                         coverImage: "https://images.unsplash.com/photo-1544025162-d76694265947?w=800",
                         logoImage: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300",
                         theme: { primary: '#163882', accent: '#dc2626' },
@@ -60,11 +65,12 @@
                             { id: 'cat_2', name: 'السندوتشات 🥪' }
                         ],
                         menu_items: [
-                            { id: 'itm_1', category_id: 'cat_2', name: 'سندوتش كبده إسكندراني', description: 'كبده طازجة بتتبيلة الحريف المميزة', price: 25, old_price: 35, image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400' }
+                            { id: 'itm_1', category_id: 'cat_2', name: 'سندوتش كبده إسكندراني', description: 'كبده طازجة بتتبيلة الحريف المميزة', price: 25, old_price: 35, image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400', stock: 50, is_available: true }
                         ],
                         gallery: [
                             { id: 'gal_1', title: 'صالة المطعم', image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600' }
-                        ]
+                        ],
+                        orders: [], employees: []
                     }
                 }
             };
@@ -72,9 +78,28 @@
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_multitenant_2030_v50', JSON.stringify(globalDB));
-                if (cloudDB) cloudDB.ref('tablia_multitenant_enterprise_2030_v50').set(globalDB).catch(() => {});
+                localStorage.setItem('tablia_multitenant_2030_v55', JSON.stringify(globalDB));
+                if (cloudDB) cloudDB.ref('tablia_multitenant_enterprise_2030_v55').set(globalDB).catch(() => {});
             } catch (e) {}
+        }
+
+        if (cloudDB) {
+            cloudDB.ref('tablia_multitenant_enterprise_2030_v55').on('value', (snap) => {
+                const data = snap.val();
+                if (data && data.restaurants) {
+                    globalDB = data;
+                    try { localStorage.setItem('tablia_multitenant_2030_v55', JSON.stringify(globalDB)); } catch(e){}
+                    render();
+                }
+            });
+        }
+
+        function playBell(){
+            try {
+                const a = document.getElementById('cloud-bell');
+                if(a){ a.currentTime = 0; a.play().catch(()=>{}); }
+                if('vibrate' in navigator) navigator.vibrate([400, 200, 400]);
+            } catch(e){}
         }
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -85,11 +110,11 @@
 
         const appState = { 
             page: isCustomerMode ? 'storefront' : (currentRestId ? 'builder' : 'auth'), 
-            builderStep: 1, 
             activeCat: 'all', 
             cart: [],
             customerView: 'menu',
-            orderType: 'dine-in'
+            orderType: urlParams.get('t') ? 'dine-in' : 'delivery',
+            tableNumber: urlParams.get('t') || 'طاولة 1'
         };
 
         function setPage(p){ appState.page = p; render(); window.scrollTo(0,0); }
@@ -109,12 +134,40 @@
                         localStorage.removeItem('tablia_logged_rest_id');
                         appState.page = 'auth'; 
                         content = renderAuthScreen(); 
+                    } else if(appState.page === 'builder') {
+                        content = renderBuilder();
+                    } else if(appState.page === 'cashier') {
+                        content = renderCashier();
+                    } else if(appState.page === 'inventory') {
+                        content = renderInventory();
+                    } else if(appState.page === 'attendance') {
+                        content = renderAttendance();
+                    } else if(appState.page === 'dashboard') {
+                        content = renderDashboard();
+                    } else if(appState.page === 'qr_print') {
+                        content = renderQRPrint();
                     } else {
                         content = renderBuilder();
                     }
                 }
-                root.innerHTML = content;
+                const bottomNav = (isCustomerMode || !currentRestId) ? '' : renderBottomNav();
+                root.innerHTML = content + bottomNav;
             } catch(err) { console.error("Render Error:", err); }
+        }
+
+        function renderBottomNav(){
+            return `
+                <div class="fixed bottom-0 left-0 right-0 z-50 bg-slate-900 border-t border-slate-800 px-1 py-2">
+                    <div class="max-w-md mx-auto grid grid-cols-6 gap-0.5 text-center text-slate-400">
+                        <button onclick="setPage('builder')" class="flex flex-col items-center py-1 ${appState.page==='builder'?'text-red-500 font-black':''}"><i class="fa-solid fa-wand-magic-sparkles text-xs mb-0.5"></i><span class="text-[9px]">المنشئ</span></button>
+                        <button onclick="setPage('cashier')" class="flex flex-col items-center py-1 ${appState.page==='cashier'?'text-red-500 font-black':''}"><i class="fa-solid fa-bell text-xs mb-0.5 text-amber-400"></i><span class="text-[9px]">الطلبات</span></button>
+                        <button onclick="setPage('inventory')" class="flex flex-col items-center py-1 ${appState.page==='inventory'?'text-red-500 font-black':''}"><i class="fa-solid fa-boxes-stacked text-xs mb-0.5"></i><span class="text-[9px]">المخزن</span></button>
+                        <button onclick="setPage('attendance')" class="flex flex-col items-center py-1 ${appState.page==='attendance'?'text-red-500 font-black':''}"><i class="fa-solid fa-users-gear text-xs mb-0.5"></i><span class="text-[9px]">الموظفين</span></button>
+                        <button onclick="setPage('dashboard')" class="flex flex-col items-center py-1 ${appState.page==='dashboard'?'text-red-500 font-black':''}"><i class="fa-solid fa-chart-line text-xs mb-0.5"></i><span class="text-[9px]">الباقات</span></button>
+                        <button onclick="setPage('qr_print')" class="flex flex-col items-center py-1 ${appState.page==='qr_print'?'text-red-500 font-black':''}"><i class="fa-solid fa-qrcode text-xs mb-0.5"></i><span class="text-[9px]">QR</span></button>
+                    </div>
+                </div>
+            `;
         }
 
         function renderAuthScreen(){
@@ -154,27 +207,26 @@
             else slug = slug + '-' + Math.floor(100 + Math.random() * 900);
 
             globalDB.restaurants[slug] = { 
-                id: slug, name, phone, pass,
+                id: slug, name, phone, pass, tablesCount: 20,
                 address: 'القاهرة، مصر',
                 coverImage: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800',
                 logoImage: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300',
                 theme: { primary: '#163882', accent: '#dc2626' },
                 categories: [{ id: 'cat_1', name: 'الرئيسية 🍽️' }],
-                menu_items: [], gallery: []
+                menu_items: [], gallery: [], orders: [], employees: []
             };
             syncCloud(); 
             currentRestId = slug; 
             localStorage.setItem('tablia_logged_rest_id', slug); 
-            appState.builderStep = 1;
-            render();
+            setPage('builder');
         }
 
-        // ================= BUILDER WITH MAGIC BOX =================
+        // ================= BUILDER WITH MAGIC BOX & LINK =================
         function renderBuilder(){
             const rest = globalDB.restaurants[currentRestId];
             if(!rest){ setPage('auth'); return ''; }
             return `
-                <div class="max-w-3xl mx-auto px-4 py-6 pb-24 space-y-5 text-xs">
+                <div class="max-w-3xl mx-auto px-4 py-6 pb-28 space-y-5 text-xs">
                     <div class="flex justify-between items-center bg-slate-900 p-4 rounded-2xl border border-slate-800">
                         <div>
                             <h1 class="font-black text-white text-sm">لوحة تحكم: ${rest.name}</h1>
@@ -183,19 +235,13 @@
                         <button onclick="currentRestId=null; localStorage.removeItem('tablia_logged_rest_id'); setPage('auth');" class="bg-red-500/10 text-red-400 px-3 py-1.5 rounded-xl font-bold">خروج</button>
                     </div>
 
-                    <!-- MAGIC BOX (الصندوق السحري لإضافة المنيو كامل بضغطة) -->
+                    <!-- MAGIC BOX -->
                     <div class="bg-slate-900 p-5 rounded-3xl border border-amber-500/30 space-y-3 shadow-xl">
                         <div class="flex items-center gap-2">
                             <span class="text-amber-400 text-base">🪄</span>
                             <h2 class="font-black text-amber-400 text-sm">الصندوق السحري لإضافة المنيو دفعة واحدة</h2>
                         </div>
-                        <p class="text-slate-400 text-[11px] leading-relaxed">
-                            اكتب القسم ثم الأصناف وأسعارها بالعربي، والصندوق السحري هيضيفهم لوحدهم فوراً! (مثال:<br>
-                            <b>السندوتشات:</b><br>
-                            سندوتش كبده 25<br>
-                            سندوتش سجق 30)
-                        </p>
-                        <textarea id="magic_input" placeholder="اكتب أو الصق المنيو هنا..." class="w-full h-32 bg-slate-950 border border-slate-800 p-3 rounded-2xl text-white font-mono text-xs outline-none focus:border-amber-500"></textarea>
+                        <textarea id="magic_input" placeholder="اكتب القسم (مثال: السندوتشات:) وتحته الأصناف وأسعارها (سندوتش كبده 25)..." class="w-full h-32 bg-slate-950 border border-slate-800 p-3 rounded-2xl text-white font-mono text-xs outline-none focus:border-amber-500"></textarea>
                         <button onclick="parseMagicBox('${rest.id}')" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl shadow transition">توليد وإضافة المنيو بالكامل بالسحر ✨</button>
                     </div>
 
@@ -215,15 +261,15 @@
                         </div>
                     </div>
 
-                    <!-- GALLERY UPLOAD -->
+                    <!-- GALLERY -->
                     <div class="bg-slate-900 p-5 rounded-3xl space-y-3 border border-slate-800">
-                        <h2 class="font-black text-amber-400 text-sm">🖼️ قسم معرض الصور (تظهر في آخر المنيو)</h2>
+                        <h2 class="font-black text-amber-400 text-sm">🖼️ معرض الصور (تظهر في آخر المنيو)</h2>
                         <input id="gal_title" placeholder="عنوان الصورة (مثال: صالة المطعم)" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-white font-bold outline-none">
                         <input id="gal_url" placeholder="رابط الصورة (URL)" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-white font-bold outline-none">
                         <button onclick="addGallery('${rest.id}')" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-black py-3 rounded-xl shadow transition">إضافة الصورة للمعرض ➔</button>
                     </div>
 
-                    <!-- FINAL LINK (النهاية: اللينك المخصص بأس الانجليزي للمطعم) -->
+                    <!-- FINAL LINK -->
                     <div class="bg-slate-900 p-6 rounded-3xl space-y-4 border border-emerald-500/40 text-center shadow-2xl">
                         <h2 class="font-black text-emerald-400 text-sm">🎉 رابط مطعمك المخصص (بالاسم الإنجليزي)</h2>
                         <input readonly value="${location.origin + location.pathname + `?view=menu&rest=${rest.id}`}" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-amber-400 font-mono text-center text-xs select-all">
@@ -239,13 +285,13 @@
         function parseMagicBox(restId){
             const rest = globalDB.restaurants[restId];
             const text = document.getElementById('magic_input').value.trim();
-            if(!text) { alert('يرجى كتابة أو لصق المنيو في الصندوق السحري أولاً!'); return; }
+            if(!text) { alert('يرجى كتابة المنيو أولاً!'); return; }
 
             let currentCatId = rest.categories[0]?.id || 'cat_1';
             text.split('\n').forEach(line => {
                 line = line.trim();
                 if(!line) return;
-                if(line.includes(':') || line.endsWith('ء') || line.endsWith('ات') || line.length < 15) {
+                if(line.includes(':') || line.length < 15) {
                     const catName = line.replace(':', '').trim();
                     currentCatId = 'cat_' + Date.now() + Math.random();
                     rest.categories.push({ id: currentCatId, name: catName });
@@ -259,7 +305,7 @@
                             category_id: currentCatId,
                             name: name || 'وجبة مميزة',
                             price: price,
-                            description: 'معد بعناية فائقة من أجود المكونات',
+                            description: 'معد بعناية فائقة',
                             image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'
                         });
                     }
@@ -287,19 +333,60 @@
             render();
         }
 
+        // ================= CASHIER & ORDERS (شاشة الطلبات الحية) =================
+        function renderCashier(){
+            const rest = globalDB.restaurants[currentRestId];
+            if(!rest){ setPage('auth'); return ''; }
+            if(!rest.orders) rest.orders = [];
+            return `
+                <div class="max-w-3xl mx-auto px-4 py-6 pb-28 space-y-4 text-xs">
+                    <div class="flex justify-between items-center bg-slate-900 p-4 rounded-2xl border border-slate-800">
+                        <h1 class="font-black text-white text-sm">🔔 شاشة الكاشير والطلبات الواردة</h1>
+                        <span class="bg-amber-500/20 text-amber-400 font-bold px-3 py-1 rounded-full">الطلبات: ${rest.orders.length}</span>
+                    </div>
+                    <div class="space-y-3">
+                        ${rest.orders.length === 0 ? `<div class="bg-slate-900 p-12 text-center text-slate-500 rounded-3xl border border-slate-800">لا توجد طلبات جديدة حالياً..</div>` : rest.orders.map((ord, i) => `
+                            <div class="bg-slate-900 p-4 rounded-3xl space-y-3 border border-slate-800">
+                                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                                    <div><span class="font-black text-white text-sm">${ord.customer_name}</span><span class="text-slate-400 text-[10px] block">${ord.phone} | ${ord.order_type}</span></div>
+                                    <div class="text-left"><span class="text-amber-400 font-black text-sm">${ord.total} جنيه</span></div>
+                                </div>
+                                <div class="text-slate-300 text-[11px] bg-slate-950 p-2.5 rounded-xl">
+                                    <div>${(ord.items||[]).map(x => `• ${x.qty}x ${x.name} (${x.price * x.qty} ج)`).join('<br>')}</div>
+                                </div>
+                                <button onclick="globalDB.restaurants['${currentRestId}'].orders.splice(${i},1); syncCloud(); render();" class="w-full bg-red-500/20 text-red-400 py-2 rounded-xl font-bold">حذف الطلب</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // ================= OTHER DASHBOARD TABS =================
+        function renderInventory(){
+            const rest = globalDB.restaurants[currentRestId];
+            return `<div class="max-w-3xl mx-auto px-4 py-6 pb-28 space-y-3 text-xs"><h1 class="font-black text-sm bg-slate-900 p-4 rounded-2xl">المخزن - ${rest.name}</h1>${(rest.menu_items||[]).map(i=>`<div class="bg-slate-900 p-4 rounded-2xl flex justify-between"><span>${i.name}</span><span class="text-amber-400 font-bold">متوفر</span></div>`).join('')}</div>`;
+        }
+        function renderAttendance(){ return `<div class="max-w-3xl mx-auto px-4 py-6 pb-28 text-center text-xs text-white">إدارة الموظفين والحضور</div>`; }
+        function renderDashboard(){ return `<div class="max-w-3xl mx-auto px-4 py-6 pb-28 text-center text-xs text-white">الباقات والاشتراكات</div>`; }
+        function renderQRPrint(){ 
+            const rest = globalDB.restaurants[currentRestId];
+            const base = location.origin + location.pathname + `?view=menu&rest=${rest.id}&t=`;
+            return `<div class="max-w-3xl mx-auto px-4 py-6 pb-28 space-y-4 text-xs"><h1 class="font-black text-amber-400 bg-slate-900 p-4 rounded-2xl">طباعة أكواد QR</h1><div class="grid grid-cols-2 gap-3">${Array.from({length:20},(_,i)=>i+1).map(n=>`<div class="bg-slate-900 p-4 rounded-2xl text-center space-y-2"><div class="font-bold">طاولة ${n}</div><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(base+'طاولة '+n)}" class="mx-auto rounded bg-white p-1"></div>`).join('')}</div></div>`; 
+        }
+
         // ================= CUSTOMER STOREFRONT (AKLEH STYLE TEMPLATE) =================
         function renderStorefront(){
             const restId = targetRestSlug || Object.keys(globalDB.restaurants)[0];
             const rest = globalDB.restaurants[restId];
             if(!rest) return `<div class="min-h-screen flex items-center justify-center text-white">المطعم غير موجود</div>`;
 
-            const theme = rest.theme || { primary: '#163882', accent: '#dc2626' };
             const cartCount = appState.cart.reduce((s,i)=>s+i.qty, 0);
             const cartTotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty), 0);
 
             return `
                 <div class="min-h-screen bg-[#f8fafc] text-slate-900 pb-28">
-                    <!-- Top Bar (Akleh Style Template) -->
+                    <!-- Top Bar -->
                     <header class="bg-white sticky top-0 z-50 border-b border-slate-200 px-4 py-3 shadow-xs">
                         <div class="max-w-xl mx-auto flex justify-between items-center">
                             <div class="flex items-center gap-2">
@@ -354,7 +441,7 @@
                                                 </div>
                                                 <div class="relative shrink-0">
                                                     <img src="${item.image}" class="w-20 h-20 rounded-xl object-cover bg-slate-100">
-                                                    <span style="background:${theme.primary}" class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full text-white flex items-center justify-center text-xs font-black shadow">+</span>
+                                                    <span class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-black shadow">+</span>
                                                 </div>
                                             </div>
                                         `).join('')}
@@ -382,7 +469,7 @@
                     <!-- Bottom Floating Cart Bar -->
                     ${cartCount > 0 ? `
                         <div class="fixed bottom-3 left-3 right-3 max-w-xl mx-auto z-50">
-                            <button onclick="alert('تم استلام طلبك بنجاح!'); appState.cart=[]; render();" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3.5 px-5 rounded-2xl shadow-xl flex items-center justify-between font-black text-xs transition">
+                            <button onclick="submitOrder('${rest.id}')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3.5 px-5 rounded-2xl shadow-xl flex items-center justify-between font-black text-xs transition">
                                 <div class="flex items-center gap-2">
                                     <span class="bg-white/20 px-2 py-0.5 rounded-lg text-xs">${cartCount}</span>
                                     <span>إتمام الطلب (${cartTotal} جنيه)</span>
@@ -401,6 +488,26 @@
             if(!item) return;
             const found = appState.cart.find(c => c.id === itemId);
             if(found) found.qty++; else appState.cart.push({...item, qty: 1});
+            render();
+        }
+
+        function submitOrder(restId){
+            const rest = globalDB.restaurants[restId];
+            if(!rest.orders) rest.orders = [];
+            const total = appState.cart.reduce((s,i)=>s+(i.price*i.qty), 0);
+            rest.orders.unshift({
+                id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
+                customer_name: 'عميل المنيو',
+                phone: '01000000000',
+                order_type: appState.orderType === 'dine-in' ? '🍽️ صالة' : '🛵 دليفري',
+                items: JSON.parse(JSON.stringify(appState.cart)),
+                total: total,
+                created_at: new Date().toLocaleTimeString('ar-EG')
+            });
+            appState.cart = [];
+            syncCloud();
+            playBell();
+            alert('🎉 تم إرسال طلبك بنجاح للمطعم!');
             render();
         }
 
