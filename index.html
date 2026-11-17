@@ -49,7 +49,7 @@
 
         let globalDB = { restaurants: {} };
         try {
-            const raw = localStorage.getItem('tablia_multitenant_2030_v35');
+            const raw = localStorage.getItem('tablia_multitenant_2030_v36');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) {}
 
@@ -71,6 +71,7 @@
                             { id: 'itm_2', category_id: 'cat_1', name: 'مشاوي مشكلة', description: 'تشكيلة مشاوي لحم ودجاج مع خضار مشوية', price: 125, stock: 40, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500', is_available: true, discount: 'Popular' },
                             { id: 'itm_3', category_id: 'cat_2', name: 'حمص بالصنوبر', description: 'حمص كريمي مغطى بالصنوبر وزيت الزيتون', price: 32, stock: 60, image: 'https://images.unsplash.com/photo-1577805947697-89e18249d767?w=500', is_available: true, discount: 'Vegetarian' }
                         ],
+                        uploaded_gallery: [],
                         orders: [],
                         employees: []
                     }
@@ -95,15 +96,15 @@
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_multitenant_2030_v35', JSON.stringify(globalDB));
+                localStorage.setItem('tablia_multitenant_2030_v36', JSON.stringify(globalDB));
                 if (cloudDB) {
-                    cloudDB.ref('tablia_multitenant_enterprise_2030_v35').set(globalDB).catch(() => {});
+                    cloudDB.ref('tablia_multitenant_enterprise_2030_v36').set(globalDB).catch(() => {});
                 }
             } catch (e) {}
         }
 
         if (cloudDB) {
-            cloudDB.ref('tablia_multitenant_enterprise_2030_v35').on('value', (snap) => {
+            cloudDB.ref('tablia_multitenant_enterprise_2030_v36').on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.restaurants) {
                     if (currentRestId && data.restaurants[currentRestId]) {
@@ -117,7 +118,7 @@
                     }
                     globalDB = data;
                     try {
-                        localStorage.setItem('tablia_multitenant_2030_v35', JSON.stringify(globalDB));
+                        localStorage.setItem('tablia_multitenant_2030_v36', JSON.stringify(globalDB));
                     } catch(e){}
                     render();
                 }
@@ -160,8 +161,7 @@
             modalType: null,
             previewTpl: null,
             paymentMethod: 'cash',
-            transferRefInput: '',
-            tempBase64Img: ''
+            transferRefInput: ''
         };
 
         function setPage(p){ appState.page = p; render(); window.scrollTo(0,0); }
@@ -276,7 +276,7 @@
             <div class="max-w-md mx-auto px-4 py-12 space-y-6">
                 <div class="text-center space-y-2">
                     <h1 class="text-2xl font-black text-white">منصة طبلية | Tablia OS</h1>
-                    <p class="text-xs text-slate-400">صالة، دليفري، استلام، رفع صور بلا حدود، وتوليد ذكي للمنيو</p>
+                    <p class="text-xs text-slate-400">صالة، دليفري، استلام، معرض صور ذكي، وربط تلقائي بالمنيو</p>
                 </div>
                 <div class="flex bg-slate-900 p-1.5 rounded-2xl text-xs border border-slate-800">
                     <button onclick="appState.authTab='login'; render();" class="flex-1 py-3 rounded-xl font-bold transition ${appState.authTab==='login'?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">تسجيل دخول</button>
@@ -324,11 +324,11 @@
             if(!phone || !pass) { alert('يرجى إدخال رقم الموبايل وكلمة السر'); return; }
 
             if(cloudDB) {
-                cloudDB.ref('tablia_multitenant_enterprise_2030_v35').once('value').then(snap => {
+                cloudDB.ref('tablia_multitenant_enterprise_2030_v36').once('value').then(snap => {
                     const data = snap.val();
                     if(data && data.restaurants) {
                         globalDB = data;
-                        localStorage.setItem('tablia_multitenant_2030_v35', JSON.stringify(globalDB));
+                        localStorage.setItem('tablia_multitenant_2030_v36', JSON.stringify(globalDB));
                     }
                     verifyLoginData(phone, pass);
                 }).catch(() => { verifyLoginData(phone, pass); });
@@ -372,6 +372,7 @@
                     { id: 'cat_1', name: 'الرئيسية', icon: '🍽️' }
                 ], 
                 menu_items: [], 
+                uploaded_gallery: [],
                 orders: [],
                 employees: []
             };
@@ -389,7 +390,7 @@
                 <div class="max-w-3xl mx-auto px-4 py-6 space-y-5">
                     <div class="flex gap-1.5 bg-slate-900 p-1.5 rounded-2xl text-xs border border-slate-800 shadow-sm">
                         <button onclick="appState.builderStep=1; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===1?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">1. القوالب والمعاينة</button>
-                        <button onclick="appState.builderStep=2; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===2?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">2. الأقسام والصندوق السحري ورفع الصور</button>
+                        <button onclick="appState.builderStep=2; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===2?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">2. معرض الصور الذكي والمنيو</button>
                         <button onclick="appState.builderStep=4; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===4?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">3. نشر اللينك والـ QR</button>
                     </div>
                     ${appState.builderStep===1 ? renderStep1(rest) : (appState.builderStep===2 ? renderStep2(rest) : renderStep4(rest))}
@@ -444,7 +445,7 @@
                             `).join('')}
                         </div>
                     </div>
-                    <button onclick="saveStep1()" class="bg-red-600 text-white font-black px-5 py-3.5 rounded-xl w-full text-xs shadow-lg hover:bg-red-700 transition">حفظ والانتقال لإدارة الأقسام والمنيو ➔</button>
+                    <button onclick="saveStep1()" class="bg-red-600 text-white font-black px-5 py-3.5 rounded-xl w-full text-xs shadow-lg hover:bg-red-700 transition">حفظ والانتقال لمعرض الصور والمنيو ➔</button>
                 </div>
             `;
         }
@@ -550,12 +551,40 @@
         function renderStep2(rest){
             if(!rest.menu_items) rest.menu_items = [];
             if(!rest.categories) rest.categories = [{id:'cat_1', name:'المشاوي', icon:'🍢'}, {id:'cat_2', name:'المقبلات', icon:'🥗'}];
+            if(!rest.uploaded_gallery) rest.uploaded_gallery = [];
 
             return `
                 <div class="bg-slate-900 p-6 rounded-3xl space-y-5 text-xs border border-slate-800 shadow-xl text-slate-100">
+                    
+                    <!-- Dedicated Smart Image Gallery & Bulk Uploader -->
+                    <div class="bg-indigo-950/40 border border-indigo-900 p-4 rounded-2xl space-y-3">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-black text-indigo-300 text-sm">📸 معرض الصور الذكي (رفع جماعي لعدد لا نهائي من الصور)</h3>
+                            <span class="bg-indigo-500/20 text-indigo-300 px-2.5 py-1 rounded-full text-[10px] font-bold">الصور المرفوعة: ${rest.uploaded_gallery.length}</span>
+                        </div>
+                        <p class="text-[11px] text-slate-300">ارفع مجموعة صور كثيرة دفعة واحدة (يفضل تسمية كل صورة باسم الصنف مثل <code>كباب لحم.jpg</code>). ثم اضغط <b>"الربط الذكي بالمنيو"</b> ليقوم الـ AI بتوزيع الصور تلقائياً على الأصناف الصحيحة!</p>
+                        
+                        <div class="flex flex-col sm:flex-row gap-2 items-center">
+                            <input type="file" id="bulkImageInput" multiple accept="image/*" onchange="handleBulkImageUpload(event)" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-white text-xs file:bg-indigo-600 file:text-white file:border-0 file:rounded-lg file:px-3 file:py-1 file:font-bold">
+                            <button onclick="aiSmartMatchGallery()" class="w-full sm:w-auto bg-indigo-600 text-white font-black px-5 py-3 rounded-xl shadow hover:bg-indigo-500 transition shrink-0">✨ الربط الذكي للصور بالمنيو</button>
+                        </div>
+
+                        ${rest.uploaded_gallery.length > 0 ? `
+                            <div class="grid grid-cols-4 sm:grid-cols-6 gap-2 pt-2 max-h-36 overflow-y-auto">
+                                ${rest.uploaded_gallery.map((img, idx) => `
+                                    <div class="relative group bg-slate-950 p-1 rounded-xl border border-slate-800 text-center">
+                                        <img src="${img.url}" class="w-full h-16 object-cover rounded-lg">
+                                        <span class="text-[9px] text-slate-300 truncate block mt-1">${img.name}</span>
+                                        <button onclick="rest.uploaded_gallery.splice(${idx},1); syncCloud(); render();" class="absolute top-0 left-0 bg-red-600 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition">✕</button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+
                     <div class="space-y-3">
                         <div class="flex justify-between items-center">
-                            <h3 class="font-black text-white text-sm">📁 إدارة الأقسام (تظهر كعناوين رئيسية في المنيو)</h3>
+                            <h3 class="font-black text-white text-sm">📁 الأقسام الرئيسية في المنيو</h3>
                             <button onclick="addCategoryPrompt()" class="bg-red-500/10 text-red-400 font-black px-3 py-1.5 rounded-xl hover:bg-red-500/20 transition">+ إضافة قسم رئيسي</button>
                         </div>
                         <div class="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
@@ -570,31 +599,10 @@
                     </div>
 
                     <div class="bg-emerald-950/30 border border-emerald-900 p-4 rounded-2xl space-y-3">
-                        <label class="block text-emerald-400 font-black">🪄 الصندوق السحري الذكي (يولد الأصناف مع صورها تلقائياً):</label>
-                        <p class="text-[11px] text-slate-300">اكتب الأقسام عناوين رئيسية وتحتها الأصناف مع الأسعار (النظام سيولد لكل صنف صورتة التلقائية الشهية):</p>
+                        <label class="block text-emerald-400 font-black">🪄 لصق المنيو الكامل دفعة واحدة (الصندوق السحري):</label>
+                        <p class="text-[11px] text-slate-300">الصق المنيو الكامل هنا مع الأقسام والأسعار (النظام سيولد الأصناف ويربطها بالصور الذكية فوراً):</p>
                         <textarea id="magic_box" placeholder="قسم المشويات: كباب لحم 68, مشاوي مشكلة 125&#10;قسم المقبلات: حمص بالصنوبر 32" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-white outline-none focus:border-emerald-600 font-mono" rows="4"></textarea>
-                        <button onclick="parseSmartMagicText()" class="w-full bg-emerald-600 text-white font-black py-3 rounded-xl shadow hover:bg-emerald-500 transition">توليد الأقسام والأصناف بالصور تلقائياً ✓</button>
-                    </div>
-
-                    <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
-                        <h3 class="font-black text-white text-xs">➕ إضافة صنف جديد مع رفع صورة من جهازك (عدد لا نهائي):</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <input id="newItemName" placeholder="اسم الصنف (مثال: شيش طاووق)" class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold outline-none">
-                            <input id="newItemPrice" type="number" placeholder="السعر (ج.م / ر.س)" class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold outline-none">
-                            <select id="newItemCat" class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold outline-none">
-                                ${rest.categories.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}
-                            </select>
-                            <div>
-                                <label class="block text-slate-400 text-[10px] mb-1">اختر صورة من الموبايل / الكمبيوتر:</label>
-                                <input type="file" id="newItemFile" accept="image/*" onchange="previewUploadedImage(event)" class="w-full bg-slate-900 border border-slate-700 p-2 rounded-xl text-white text-[10px]">
-                            </div>
-                        </div>
-                        <div id="img_preview_box" class="hidden flex items-center gap-2">
-                            <img id="preview_thumb" class="w-12 h-12 object-cover rounded-xl border">
-                            <span class="text-emerald-400 text-[10px]">تم اختيار الصورة بنجاح ✓</span>
-                        </div>
-                        <textarea id="newItemDesc" placeholder="وصف الصنف..." class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white outline-none" rows="2"></textarea>
-                        <button onclick="addNewManualItem()" class="w-full bg-red-600 text-white font-black py-3 rounded-xl shadow hover:bg-red-700 transition">إضافة الصنف للمنيو بالصورة المرفوعة ➔</button>
+                        <button onclick="parseSmartMagicText()" class="w-full bg-emerald-600 text-white font-black py-3 rounded-xl shadow hover:bg-emerald-500 transition">توليد المنيو الكامل وترتيبه بالذكاء الاصطناعي ✓</button>
                     </div>
 
                     <div class="space-y-3">
@@ -625,20 +633,52 @@
             `;
         }
 
-        function previewUploadedImage(event){
-            const file = event.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e){
-                appState.tempBase64Img = e.target.result;
-                const thumb = document.getElementById('preview_thumb');
-                const box = document.getElementById('img_preview_box');
-                if(thumb && box) {
-                    thumb.src = appState.tempBase64Img;
-                    box.classList.remove('hidden');
+        function handleBulkImageUpload(event){
+            const files = event.target.files;
+            if(!files || files.length === 0) return;
+            const rest = globalDB.restaurants[currentRestId];
+            if(!rest.uploaded_gallery) rest.uploaded_gallery = [];
+
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e){
+                    const base64 = e.target.result;
+                    let cleanName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                    rest.uploaded_gallery.push({ id: 'img_' + Math.random(), name: cleanName.trim(), url: base64 });
+                    syncCloud();
+                    render();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function aiSmartMatchGallery(){
+            const rest = globalDB.restaurants[currentRestId];
+            if(!rest || !rest.uploaded_gallery || rest.uploaded_gallery.length === 0) {
+                alert('يرجى رفع صور في المعرض أولاً!');
+                return;
+            }
+            if(!rest.menu_items || rest.menu_items.length === 0) {
+                alert('يرجى إضافة أصناف المنيو أولاً ليقوم النظام بربط الصور بها.');
+                return;
+            }
+
+            let matchedCount = 0;
+            rest.menu_items.forEach(item => {
+                const itemName = item.name.toLowerCase();
+                const foundImg = rest.uploaded_gallery.find(img => {
+                    const imgName = img.name.toLowerCase();
+                    return itemName.includes(imgName) || imgName.includes(itemName);
+                });
+                if(foundImg) {
+                    item.image = foundImg.url;
+                    matchedCount++;
                 }
-            };
-            reader.readAsDataURL(file);
+            });
+
+            syncCloud();
+            alert(`تم ربط ${matchedCount} صورة بأصناف المنيو بنجاح باحترافية تامة! ✓`);
+            render();
         }
 
         function addCategoryPrompt(){
@@ -655,34 +695,6 @@
             const rest = globalDB.restaurants[currentRestId];
             if(rest.categories.length <= 1) { alert('يجب أن يكون هناك قسم رئيسي واحد على الأقل.'); return; }
             rest.categories = rest.categories.filter(c => c.id !== catId);
-            syncCloud();
-            render();
-        }
-
-        function addNewManualItem(){
-            const rest = globalDB.restaurants[currentRestId];
-            const name = document.getElementById('newItemName').value.trim();
-            const price = Number(document.getElementById('newItemPrice').value);
-            const catId = document.getElementById('newItemCat').value;
-            const desc = document.getElementById('newItemDesc').value.trim() || 'طازج ومعد بإتقان';
-            const image = appState.tempBase64Img || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500';
-
-            if(!name || !price) { alert('يرجى إدخال اسم الصنف والسعر على الأقل.'); return; }
-            if(!rest.menu_items) rest.menu_items = [];
-
-            rest.menu_items.push({
-                id: 'itm_' + Date.now(),
-                category_id: catId,
-                name,
-                description: desc,
-                price,
-                stock: 50,
-                image,
-                is_available: true,
-                discount: 'موصى به'
-            });
-
-            appState.tempBase64Img = '';
             syncCloud();
             render();
         }
@@ -745,7 +757,16 @@
             const price = Number(m[0]);
             const name = str.replace(m[0], '').replace(/ج/g, '').replace(/جنيه/g, '').replace(/ر.س/g, '').trim();
             if(name) {
-                const image = getSmartFoodImage(name);
+                // Check if user uploaded a gallery image that matches this item name
+                let image = getSmartFoodImage(name);
+                if(rest.uploaded_gallery && rest.uploaded_gallery.length > 0) {
+                    const found = rest.uploaded_gallery.find(img => {
+                        const imgName = img.name.toLowerCase();
+                        return name.toLowerCase().includes(imgName) || imgName.includes(name.toLowerCase());
+                    });
+                    if(found) image = found.url;
+                }
+
                 rest.menu_items.push({
                     id: 'itm_' + Date.now() + Math.random(),
                     category_id: catId,
