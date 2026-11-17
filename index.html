@@ -49,7 +49,7 @@
 
         let globalDB = { restaurants: {} };
         try {
-            const raw = localStorage.getItem('tablia_multitenant_2030_v38');
+            const raw = localStorage.getItem('tablia_multitenant_2030_v39');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) {}
 
@@ -60,6 +60,7 @@
                         id: "rest_demo", ownerName: "محمد علي", name: "شواء الذهب الفاخر", phone: "01015861991", pass: "1234",
                         template_id: "gold-luxury", tablesCount: 20, deliveryFee: 30,
                         address: "الرياض، المملكة العربية السعودية", wifiName: "Gold_Grill_Free", wifiPass: "357159357", lang: "ar",
+                        services: { waiterCall: true, wifiService: true, branchLocation: true, deliveryService: true },
                         subscription: { isActive: true, expiresAt: Date.now() + 30*24*60*60*1000 },
                         theme: { primary: '#d4af37', bg: '#0a0a0a', accent: '#f59e0b' },
                         categories: [
@@ -97,15 +98,15 @@
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_multitenant_2030_v38', JSON.stringify(globalDB));
+                localStorage.setItem('tablia_multitenant_2030_v39', JSON.stringify(globalDB));
                 if (cloudDB) {
-                    cloudDB.ref('tablia_multitenant_enterprise_2030_v38').set(globalDB).catch(() => {});
+                    cloudDB.ref('tablia_multitenant_enterprise_2030_v39').set(globalDB).catch(() => {});
                 }
             } catch (e) {}
         }
 
         if (cloudDB) {
-            cloudDB.ref('tablia_multitenant_enterprise_2030_v38').on('value', (snap) => {
+            cloudDB.ref('tablia_multitenant_enterprise_2030_v39').on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.restaurants) {
                     if (currentRestId && data.restaurants[currentRestId]) {
@@ -119,7 +120,7 @@
                     }
                     globalDB = data;
                     try {
-                        localStorage.setItem('tablia_multitenant_2030_v38', JSON.stringify(globalDB));
+                        localStorage.setItem('tablia_multitenant_2030_v39', JSON.stringify(globalDB));
                     } catch(e){}
                     render();
                 }
@@ -277,7 +278,7 @@
             <div class="max-w-md mx-auto px-4 py-12 space-y-6">
                 <div class="text-center space-y-2">
                     <h1 class="text-2xl font-black text-white">منصة طبلية | Tablia OS</h1>
-                    <p class="text-xs text-slate-400">صالة، دليفري، فحص عميق للمنيو المزدحم، ومعرض الصور</p>
+                    <p class="text-xs text-slate-400">صالة، دليفري، فحص عميق للمنيو المزدحم، وتعديل خدمات المطعم</p>
                 </div>
                 <div class="flex bg-slate-900 p-1.5 rounded-2xl text-xs border border-slate-800">
                     <button onclick="appState.authTab='login'; render();" class="flex-1 py-3 rounded-xl font-bold transition ${appState.authTab==='login'?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">تسجيل دخول</button>
@@ -325,11 +326,11 @@
             if(!phone || !pass) { alert('يرجى إدخال رقم الموبايل وكلمة السر'); return; }
 
             if(cloudDB) {
-                cloudDB.ref('tablia_multitenant_enterprise_2030_v38').once('value').then(snap => {
+                cloudDB.ref('tablia_multitenant_enterprise_2030_v39').once('value').then(snap => {
                     const data = snap.val();
                     if(data && data.restaurants) {
                         globalDB = data;
-                        localStorage.setItem('tablia_multitenant_2030_v38', JSON.stringify(globalDB));
+                        localStorage.setItem('tablia_multitenant_2030_v39', JSON.stringify(globalDB));
                     }
                     verifyLoginData(phone, pass);
                 }).catch(() => { verifyLoginData(phone, pass); });
@@ -368,6 +369,7 @@
                 id: restId, ownerName: owner, name: name, phone: phone, pass: pass, 
                 template_id: 'gold-luxury', theme: TEMPLATES_CATALOG[0].theme, tablesCount: 20, deliveryFee: 30,
                 address: 'الرياض، المملكة العربية السعودية', wifiName: name + '_Free', wifiPass: '357159357', lang: 'ar',
+                services: { waiterCall: true, wifiService: true, branchLocation: true, deliveryService: true },
                 subscription: { isActive: false, expiresAt: null }, 
                 categories: [
                     { id: 'cat_1', name: 'الرئيسية', icon: '🍽️' }
@@ -391,7 +393,7 @@
                 ${renderNav()}
                 <div class="max-w-3xl mx-auto px-4 py-6 space-y-5">
                     <div class="flex gap-1.5 bg-slate-900 p-1.5 rounded-2xl text-xs border border-slate-800 shadow-sm">
-                        <button onclick="appState.builderStep=1; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===1?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">1. القوالب والمعاينة</button>
+                        <button onclick="appState.builderStep=1; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===1?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">1. إعدادات وقوالب المطعم</button>
                         <button onclick="appState.builderStep=2; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===2?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">2. الماسح العميق والمنيو</button>
                         <button onclick="appState.builderStep=4; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===4?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">3. نشر اللينك والـ QR</button>
                     </div>
@@ -401,9 +403,12 @@
         }
 
         function renderStep1(rest){
+            if(!rest.services) rest.services = { waiterCall: true, wifiService: true, branchLocation: true, deliveryService: true };
+
             return `
                 <div class="bg-slate-900 p-6 rounded-3xl space-y-5 text-xs border border-slate-800 shadow-xl text-slate-100">
-                    <h2 class="font-black text-white text-sm">🎨 اختر القالب الاحترافي لمطعمك (يُطبق فوراً على بياناتك وأقسامك)</h2>
+                    <h2 class="font-black text-white text-sm">⚙️ إعدادات وتخصيص خدمات المطعم</h2>
+                    
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-slate-300 font-bold mb-1.5">اسم المطعم</label>
@@ -421,7 +426,35 @@
                             <label class="block text-slate-300 font-bold mb-1.5">باسورد الواي فاي</label>
                             <input id="r_wifipass" value="${rest.wifiPass || ''}" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold outline-none focus:border-red-600">
                         </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-slate-300 font-bold mb-1.5">عنوان الفرع بالتفصيل</label>
+                            <input id="r_address" value="${rest.address || ''}" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold outline-none focus:border-red-600">
+                        </div>
                     </div>
+
+                    <!-- Services Customizer Box -->
+                    <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+                        <h3 class="font-black text-amber-400 text-sm">🛠️ تخصيص خدمات القائمة (تفعيل أو إلغاء ظهورها للعميل)</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <label class="flex items-center justify-between p-3 bg-slate-900 rounded-xl border border-slate-800 cursor-pointer">
+                                <span>خدمة استدعاء الويتر 🛎️</span>
+                                <input type="checkbox" id="srv_waiter" ${rest.services.waiterCall !== false ? 'checked' : ''} class="w-4 h-4 accent-red-600">
+                            </label>
+                            <label class="flex items-center justify-between p-3 bg-slate-900 rounded-xl border border-slate-800 cursor-pointer">
+                                <span>خدمة معلومات الواي فاي 📶</span>
+                                <input type="checkbox" id="srv_wifi" ${rest.services.wifiService !== false ? 'checked' : ''} class="w-4 h-4 accent-red-600">
+                            </label>
+                            <label class="flex items-center justify-between p-3 bg-slate-900 rounded-xl border border-slate-800 cursor-pointer">
+                                <span>عنوان الفرع والخرائط 📍</span>
+                                <input type="checkbox" id="srv_branch" ${rest.services.branchLocation !== false ? 'checked' : ''} class="w-4 h-4 accent-red-600">
+                            </label>
+                            <label class="flex items-center justify-between p-3 bg-slate-900 rounded-xl border border-slate-800 cursor-pointer">
+                                <span>خدمة توصيل الدليفري 🛵</span>
+                                <input type="checkbox" id="srv_delivery" ${rest.services.deliveryService !== false ? 'checked' : ''} class="w-4 h-4 accent-red-600">
+                            </label>
+                        </div>
+                    </div>
+
                     <div>
                         <label class="block text-slate-300 font-bold mb-2">القوالب الاحترافية المتاحة:</label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -447,7 +480,7 @@
                             `).join('')}
                         </div>
                     </div>
-                    <button onclick="saveStep1()" class="bg-red-600 text-white font-black px-5 py-3.5 rounded-xl w-full text-xs shadow-lg hover:bg-red-700 transition">حفظ والانتقال للماسح العميق والمنيو ➔</button>
+                    <button onclick="saveStep1()" class="bg-red-600 text-white font-black px-5 py-3.5 rounded-xl w-full text-xs shadow-lg hover:bg-red-700 transition">حفظ إعدادات وتعديلات الخدمات والانتقال للماسح العميق ➔</button>
                 </div>
             `;
         }
@@ -540,11 +573,26 @@
             const deliveryInput = document.getElementById('r_delivery');
             const wifiNameInput = document.getElementById('r_wifiname');
             const wifiPassInput = document.getElementById('r_wifipass');
+            const addressInput = document.getElementById('r_address');
+            
+            const srvWaiter = document.getElementById('srv_waiter');
+            const srvWifi = document.getElementById('srv_wifi');
+            const srvBranch = document.getElementById('srv_branch');
+            const srvDelivery = document.getElementById('srv_delivery');
+
             const r = globalDB.restaurants[currentRestId];
             if(nameInput) r.name = nameInput.value.trim();
             if(deliveryInput) r.deliveryFee = Number(deliveryInput.value) || 25;
             if(wifiNameInput) r.wifiName = wifiNameInput.value.trim();
             if(wifiPassInput) r.wifiPass = wifiPassInput.value.trim();
+            if(addressInput) r.address = addressInput.value.trim();
+
+            if(!r.services) r.services = {};
+            if(srvWaiter) r.services.waiterCall = srvWaiter.checked;
+            if(srvWifi) r.services.wifiService = srvWifi.checked;
+            if(srvBranch) r.services.branchLocation = srvBranch.checked;
+            if(srvDelivery) r.services.deliveryService = srvDelivery.checked;
+
             syncCloud(); 
             appState.builderStep = 2; 
             render(); 
@@ -678,7 +726,6 @@
                 return;
             }
 
-            // Expanded Deep Extraction for Busy / Complex Menus
             const deepCategories = [
                 { id: 'cat_deep_1', name: 'الوجبات الرئيسية والمشاوي', icon: '🥩' },
                 { id: 'cat_deep_2', name: 'السندوتشات والوجبات السريعة', icon: '🍔' },
@@ -1067,6 +1114,7 @@
             if(!rest) return `<div class="min-h-screen flex items-center justify-center text-white">المطعم غير موجود</div>`;
             if(!rest.menu_items) rest.menu_items = [];
             if(!rest.categories) rest.categories = [];
+            if(!rest.services) rest.services = { waiterCall: true, wifiService: true, branchLocation: true, deliveryService: true };
 
             const isSub = checkSubscription(rest);
             const theme = rest.theme || TEMPLATES_CATALOG[0].theme;
@@ -1092,9 +1140,9 @@
                                     <button onclick="appState.drawerOpen=false; render();"><i class="fa-solid fa-xmark text-lg"></i></button>
                                 </div>
                                 <div class="space-y-2 text-xs font-bold">
-                                    <button onclick="appState.drawerOpen=false; appState.modalType='waiter'; render();" class="w-full bg-slate-950 p-3 rounded-xl flex justify-between items-center border border-slate-800"><span>استدعاء الويتر فوراً 🛎️</span><i class="fa-solid fa-chevron-left"></i></button>
-                                    <button onclick="appState.drawerOpen=false; appState.modalType='wifi'; render();" class="w-full bg-slate-950 p-3 rounded-xl flex justify-between items-center border border-slate-800"><span>معلومات الواي فاي 📶</span><i class="fa-solid fa-chevron-left"></i></button>
-                                    <button onclick="appState.drawerOpen=false; appState.modalType='branch'; render();" class="w-full bg-slate-950 p-3 rounded-xl flex justify-between items-center border border-slate-800"><span>عنوان الفرع والخرائط 📍</span><i class="fa-solid fa-chevron-left"></i></button>
+                                    ${rest.services.waiterCall !== false ? `<button onclick="appState.drawerOpen=false; appState.modalType='waiter'; render();" class="w-full bg-slate-950 p-3 rounded-xl flex justify-between items-center border border-slate-800"><span>استدعاء الويتر فوراً 🛎️</span><i class="fa-solid fa-chevron-left"></i></button>` : ''}
+                                    ${rest.services.wifiService !== false ? `<button onclick="appState.drawerOpen=false; appState.modalType='wifi'; render();" class="w-full bg-slate-950 p-3 rounded-xl flex justify-between items-center border border-slate-800"><span>معلومات الواي فاي 📶</span><i class="fa-solid fa-chevron-left"></i></button>` : ''}
+                                    ${rest.services.branchLocation !== false ? `<button onclick="appState.drawerOpen=false; appState.modalType='branch'; render();" class="w-full bg-slate-950 p-3 rounded-xl flex justify-between items-center border border-slate-800"><span>عنوان الفرع والخرائط 📍</span><i class="fa-solid fa-chevron-left"></i></button>` : ''}
                                 </div>
                             </div>
                         </div>
@@ -1154,7 +1202,7 @@
                         <!-- Order Type Selection Buttons -->
                         <div class="grid grid-cols-3 gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 text-xs">
                             <button onclick="appState.orderType='dine-in'; render();" class="py-2.5 rounded-xl font-black transition ${appState.orderType==='dine-in'?'bg-red-600 text-white shadow':'text-slate-400 hover:text-white'}">🍽️ صالة المطعم</button>
-                            <button onclick="appState.orderType='delivery'; render();" class="py-2.5 rounded-xl font-black transition ${appState.orderType==='delivery'?'bg-red-600 text-white shadow':'text-slate-400 hover:text-white'}">🛵 دليفري</button>
+                            ${rest.services.deliveryService !== false ? `<button onclick="appState.orderType='delivery'; render();" class="py-2.5 rounded-xl font-black transition ${appState.orderType==='delivery'?'bg-red-600 text-white shadow':'text-slate-400 hover:text-white'}">🛵 دليفري</button>` : ''}
                             <button onclick="appState.orderType='pickup'; render();" class="py-2.5 rounded-xl font-black transition ${appState.orderType==='pickup'?'bg-red-600 text-white shadow':'text-slate-400 hover:text-white'}">🏪 استلام فرع</button>
                         </div>
 
