@@ -50,7 +50,7 @@
 
         let globalDB = { restaurants: {} };
         try {
-            const raw = localStorage.getItem('tablia_multitenant_2030_v47');
+            const raw = localStorage.getItem('tablia_multitenant_2030_v48');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) {}
 
@@ -98,17 +98,17 @@
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_multitenant_2030_v47', JSON.stringify(globalDB));
-                if (cloudDB) cloudDB.ref('tablia_multitenant_enterprise_2030_v47').set(globalDB).catch(() => {});
+                localStorage.setItem('tablia_multitenant_2030_v48', JSON.stringify(globalDB));
+                if (cloudDB) cloudDB.ref('tablia_multitenant_enterprise_2030_v48').set(globalDB).catch(() => {});
             } catch (e) {}
         }
 
         if (cloudDB) {
-            cloudDB.ref('tablia_multitenant_enterprise_2030_v47').on('value', (snap) => {
+            cloudDB.ref('tablia_multitenant_enterprise_2030_v48').on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.restaurants) {
                     globalDB = data;
-                    try { localStorage.setItem('tablia_multitenant_2030_v47', JSON.stringify(globalDB)); } catch(e){}
+                    try { localStorage.setItem('tablia_multitenant_2030_v48', JSON.stringify(globalDB)); } catch(e){}
                     render();
                 }
             });
@@ -200,7 +200,6 @@
             const pass = document.getElementById('reg_pass').value.trim();
             if(!name || !phone || !pass){ alert('يرجى استكمال البيانات'); return; }
             
-            // توليد Slug إنجليزي فريد من اسم المطعم
             let slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
             if(!slug || slug === '-') slug = 'restaurant-' + Date.now();
             else slug = slug + '-' + Math.floor(100 + Math.random() * 900);
@@ -220,7 +219,6 @@
             syncCloud(); currentRestId = slug; localStorage.setItem('tablia_logged_rest_id', slug); setPage('builder');
         }
 
-        // ================= BUILDER =================
         function renderBuilder(){
             const rest = globalDB.restaurants[currentRestId];
             if(!rest){ setPage('auth'); return ''; }
@@ -257,38 +255,35 @@
             if(!rest.categories) rest.categories = [{id:'cat_1', name:'الرئيسية', icon:'🍽️'}];
             return `
                 <div class="bg-slate-900 p-6 rounded-3xl space-y-6 text-xs border border-slate-800">
-                    <!-- Categories Management -->
                     <div class="space-y-3">
-                        <div class="flex justify-between items-center"><h3 class="font-black text-white text-sm">📁 الأقسام</h3><button onclick="const c=prompt('اسم القسم الجديد (مثال: سندوتشات، مشروبات):'); if(c) {rest.categories.push({id:'cat_'+Date.now(), name:c, icon:'🍽️'}); syncCloud(); render();}" class="bg-amber-500/20 text-amber-400 px-3 py-1.5 rounded-xl font-bold">+ إضافة قسم</button></div>
+                        <div class="flex justify-between items-center"><h3 class="font-black text-white text-sm">📁 الأقسام</h3><button onclick="const c=prompt('اسم القسم الجديد:'); if(c) {rest.categories.push({id:'cat_'+Date.now(), name:c, icon:'🍽️'}); syncCloud(); render();}" class="bg-amber-500/20 text-amber-400 px-3 py-1.5 rounded-xl font-bold">+ إضافة قسم</button></div>
                         <div class="flex gap-2 overflow-x-auto pb-2">
                             ${rest.categories.map(cat => `<div class="bg-slate-950 border border-slate-800 px-3 py-2 rounded-xl flex items-center gap-2"><span class="font-bold text-white">${cat.name}</span><button onclick="rest.categories=rest.categories.filter(c=>c.id!='${cat.id}'); syncCloud(); render();" class="text-red-400"><i class="fa-solid fa-xmark"></i></button></div>`).join('')}
                         </div>
                     </div>
 
-                    <!-- Items Management -->
                     <div class="space-y-3 pt-3 border-t border-slate-800">
                         <h3 class="font-black text-white text-sm">🍔 إضافة أصناف للأقسام</h3>
                         <div class="bg-slate-950 p-4 rounded-2xl space-y-2.5">
                             <select id="itm_cat" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold">
                                 ${rest.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
                             </select>
-                            <input id="itm_name" placeholder="اسم الوجبة (مثال: سندوتش كبده)" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold">
+                            <input id="itm_name" placeholder="اسم الوجبة" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold">
                             <input id="itm_price" type="number" placeholder="السعر" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold">
-                            <input id="itm_img" placeholder="رابط صورة الوجبة (URL) أو اتركها افتراضية" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold">
-                            <button onclick="const catId=document.getElementById('itm_cat').value; const n=document.getElementById('itm_name').value; const p=document.getElementById('itm_price').value; const img=document.getElementById('itm_img').value; if(n&&p){ rest.menu_items.push({id:'itm_'+Date.now(), category_id:catId, name:n, price:Number(p), description:'معد بعناية فائقة', image:img||'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400', is_available:true}); syncCloud(); render(); }" class="w-full bg-emerald-600 text-white font-black py-3 rounded-xl">إضافة الصنف للقائمة ✓</button>
+                            <input id="itm_img" placeholder="رابط صورة الوجبة (URL)" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold">
+                            <button onclick="const catId=document.getElementById('itm_cat').value; const n=document.getElementById('itm_name').value; const p=document.getElementById('itm_price').value; const img=document.getElementById('itm_img').value; if(n&&p){ rest.menu_items.push({id:'itm_'+Date.now(), category_id:catId, name:n, price:Number(p), description:'معد بعناية فائقة', image:img||'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400', is_available:true}); syncCloud(); render(); }" class="w-full bg-emerald-600 text-white font-black py-3 rounded-xl">إضافة الصنف ✓</button>
                         </div>
                         <div class="space-y-2 max-h-48 overflow-y-auto">
                             ${(rest.menu_items||[]).map((item, i) => `<div class="bg-slate-950 p-3 rounded-xl flex justify-between items-center border border-slate-800"><div><span class="font-black text-white">${item.name}</span><span class="text-amber-400 block">${item.price} جنيه</span></div><button onclick="rest.menu_items.splice(${i},1); syncCloud(); render();" class="text-red-400"><i class="fa-solid fa-trash"></i></button></div>`).join('')}
                         </div>
                     </div>
 
-                    <!-- GALLERY SECTION -->
                     <div class="space-y-3 pt-4 border-t border-slate-800">
                         <h3 class="font-black text-amber-400 text-sm">🖼️ معرض الصور (تظهر مرتبة في آخر المنيو)</h3>
                         <div class="bg-slate-950 p-4 rounded-2xl space-y-2">
-                            <input id="gal_title" placeholder="عنوان الصورة (مثال: صالة المطعم)" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold">
+                            <input id="gal_title" placeholder="عنوان الصورة" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold">
                             <input id="gal_url" placeholder="رابط الصورة (URL)" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold">
-                            <button onclick="const t=document.getElementById('gal_title').value; const u=document.getElementById('gal_url').value; if(t&&u){ rest.gallery.push({id:'gal_'+Date.now(), title:t, image:u}); syncCloud(); render(); }" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl">إضافة الصورة للمعرض ➔</button>
+                            <button onclick="const t=document.getElementById('gal_title').value; const u=document.getElementById('gal_url').value; if(t&&u){ rest.gallery.push({id:'gal_'+Date.now(), title:t, image:u}); syncCloud(); render(); }" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl">إضافة للمعرض ➔</button>
                         </div>
                     </div>
 
@@ -298,21 +293,19 @@
         }
 
         function renderStep3(rest){
-            // اللينك يظهر باسم المطعم الإنجليزي (Slug) كما طلبت
             const url = location.origin + location.pathname + `?view=menu&rest=${rest.id}`;
             return `
                 <div class="bg-slate-900 p-6 rounded-3xl space-y-5 text-xs border border-slate-800 text-center">
-                    <h2 class="font-black text-white text-sm">🎉 جاهز! تم تخصيص رابط مطعمك ( ${rest.name} ) بالاسم الإنجليزي</h2>
+                    <h2 class="font-black text-white text-sm">🎉 مبروك! تم تخصيص رابط مطعمك ( ${rest.name} ) بالاسم الإنجليزي</h2>
                     <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
                         <input readonly value="${url}" class="w-full bg-slate-900 border border-slate-700 p-3.5 rounded-xl text-amber-400 font-mono text-center text-xs select-all">
                         <button onclick="navigator.clipboard.writeText('${url}'); alert('تم نسخ رابط المطعم!');" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl">نسخ الرابط المخصص</button>
                     </div>
-                    <a href="${url}" target="_blank" class="block w-full bg-emerald-600 text-white font-black py-3.5 rounded-xl shadow-lg">فتح المنيو ومعاينة الأصناف والصور الآن ➔</a>
+                    <a href="${url}" target="_blank" class="block w-full bg-emerald-600 text-white font-black py-3.5 rounded-xl shadow-lg">فتح المنيو ومعاينة التجربة الآن ➔</a>
                 </div>
             `;
         }
 
-        // ================= CUSTOMER STOREFRONT =================
         function renderStorefront(){
             const restId = targetRestSlug || Object.keys(globalDB.restaurants)[0];
             const rest = globalDB.restaurants[restId];
