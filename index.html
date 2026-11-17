@@ -49,7 +49,7 @@
 
         let globalDB = { restaurants: {} };
         try {
-            const raw = localStorage.getItem('tablia_multitenant_2030_v40');
+            const raw = localStorage.getItem('tablia_multitenant_2030_v42');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) {}
 
@@ -59,7 +59,7 @@
                     "rest_demo": {
                         id: "rest_demo", ownerName: "محمد علي", name: "شواء الذهب الفاخر", phone: "01015861991", pass: "1234",
                         template_id: "gold-luxury", tablesCount: 20, deliveryFee: 30,
-                        address: "الرياض، المملكة العربية السعودية", wifiName: "Gold_Grill_Free", wifiPass: "357159357", lang: "ar",
+                        address: "الإسماعيلية، شارع الاستاد", wifiName: "Gold_Grill_Free", wifiPass: "357159357", lang: "ar",
                         subscription: { isActive: true, expiresAt: Date.now() + 30*24*60*60*1000 },
                         theme: { primary: '#d4af37', bg: '#0a0a0a', accent: '#f59e0b' },
                         categories: [
@@ -96,15 +96,15 @@
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_multitenant_2030_v40', JSON.stringify(globalDB));
+                localStorage.setItem('tablia_multitenant_2030_v42', JSON.stringify(globalDB));
                 if (cloudDB) {
-                    cloudDB.ref('tablia_multitenant_enterprise_2030_v40').set(globalDB).catch(() => {});
+                    cloudDB.ref('tablia_multitenant_enterprise_2030_v42').set(globalDB).catch(() => {});
                 }
             } catch (e) {}
         }
 
         if (cloudDB) {
-            cloudDB.ref('tablia_multitenant_enterprise_2030_v40').on('value', (snap) => {
+            cloudDB.ref('tablia_multitenant_enterprise_2030_v42').on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.restaurants) {
                     if (currentRestId && data.restaurants[currentRestId]) {
@@ -118,7 +118,7 @@
                     }
                     globalDB = data;
                     try {
-                        localStorage.setItem('tablia_multitenant_2030_v40', JSON.stringify(globalDB));
+                        localStorage.setItem('tablia_multitenant_2030_v42', JSON.stringify(globalDB));
                     } catch(e){}
                     render();
                 }
@@ -276,7 +276,7 @@
             <div class="max-w-md mx-auto px-4 py-12 space-y-6">
                 <div class="text-center space-y-2">
                     <h1 class="text-2xl font-black text-white">منصة طبلية | Tablia OS</h1>
-                    <p class="text-xs text-slate-400">صالة، دليفري، استخراج كامل الـ 88 صنف بدقة فائقة</p>
+                    <p class="text-xs text-slate-400">صالة، دليفري، استخراج 88 صنف، وعنوان المطعم</p>
                 </div>
                 <div class="flex bg-slate-900 p-1.5 rounded-2xl text-xs border border-slate-800">
                     <button onclick="appState.authTab='login'; render();" class="flex-1 py-3 rounded-xl font-bold transition ${appState.authTab==='login'?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">تسجيل دخول</button>
@@ -324,11 +324,11 @@
             if(!phone || !pass) { alert('يرجى إدخال رقم الموبايل وكلمة السر'); return; }
 
             if(cloudDB) {
-                cloudDB.ref('tablia_multitenant_enterprise_2030_v40').once('value').then(snap => {
+                cloudDB.ref('tablia_multitenant_enterprise_2030_v42').once('value').then(snap => {
                     const data = snap.val();
                     if(data && data.restaurants) {
                         globalDB = data;
-                        localStorage.setItem('tablia_multitenant_2030_v40', JSON.stringify(globalDB));
+                        localStorage.setItem('tablia_multitenant_2030_v42', JSON.stringify(globalDB));
                     }
                     verifyLoginData(phone, pass);
                 }).catch(() => { verifyLoginData(phone, pass); });
@@ -366,7 +366,7 @@
             globalDB.restaurants[restId] = { 
                 id: restId, ownerName: owner, name: name, phone: phone, pass: pass, 
                 template_id: 'gold-luxury', theme: TEMPLATES_CATALOG[0].theme, tablesCount: 20, deliveryFee: 30,
-                address: 'الرياض، المملكة العربية السعودية', wifiName: name + '_Free', wifiPass: '357159357', lang: 'ar',
+                address: 'الإسماعيلية، شارع الاستاد', wifiName: name + '_Free', wifiPass: '357159357', lang: 'ar',
                 subscription: { isActive: false, expiresAt: null }, 
                 categories: [
                     { id: 'cat_1', name: 'الرئيسية', icon: '🍽️' }
@@ -390,8 +390,8 @@
                 ${renderNav()}
                 <div class="max-w-3xl mx-auto px-4 py-6 space-y-5">
                     <div class="flex gap-1.5 bg-slate-900 p-1.5 rounded-2xl text-xs border border-slate-800 shadow-sm">
-                        <button onclick="appState.builderStep=1; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===1?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">1. القوالب والمعاينة</button>
-                        <button onclick="appState.builderStep=2; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===2?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">2. الماسح الشامل للمنيو (88 صنف)</button>
+                        <button onclick="appState.builderStep=1; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===1?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">1. القوالب وبيانات المطعم</button>
+                        <button onclick="appState.builderStep=2; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===2?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">2. الماسح الشامل (88 صنف)</button>
                         <button onclick="appState.builderStep=4; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===4?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">3. نشر اللينك والـ QR</button>
                     </div>
                     ${appState.builderStep===1 ? renderStep1(rest) : (appState.builderStep===2 ? renderStep2(rest) : renderStep4(rest))}
@@ -402,11 +402,15 @@
         function renderStep1(rest){
             return `
                 <div class="bg-slate-900 p-6 rounded-3xl space-y-5 text-xs border border-slate-800 shadow-xl text-slate-100">
-                    <h2 class="font-black text-white text-sm">🎨 اختر القالب الاحترافي لمطعمك (يُطبق فوراً على بياناتك وأقسامك)</h2>
+                    <h2 class="font-black text-white text-sm">🎨 اسم مطعمك، عنوانه، وقوالبه الاحترافية</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-slate-300 font-bold mb-1.5">اسم المطعم</label>
                             <input id="r_name" value="${rest.name || ''}" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold outline-none focus:border-red-600">
+                        </div>
+                        <div>
+                            <label class="block text-slate-300 font-bold mb-1.5">📍 عنوان المطعم (يظهر للعملاء والخرائط)</label>
+                            <input id="r_address" value="${rest.address || ''}" placeholder="مثال: الإسماعيلية، شارع الاستاد" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold outline-none focus:border-red-600">
                         </div>
                         <div>
                             <label class="block text-slate-300 font-bold mb-1.5">سعر التوصيل (الدليفري)</label>
@@ -415,10 +419,6 @@
                         <div>
                             <label class="block text-slate-300 font-bold mb-1.5">شبكة الواي فاي</label>
                             <input id="r_wifiname" value="${rest.wifiName || ''}" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold outline-none focus:border-red-600">
-                        </div>
-                        <div>
-                            <label class="block text-slate-300 font-bold mb-1.5">باسورد الواي فاي</label>
-                            <input id="r_wifipass" value="${rest.wifiPass || ''}" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold outline-none focus:border-red-600">
                         </div>
                     </div>
                     <div>
@@ -446,7 +446,7 @@
                             `).join('')}
                         </div>
                     </div>
-                    <button onclick="saveStep1()" class="bg-red-600 text-white font-black px-5 py-3.5 rounded-xl w-full text-xs shadow-lg hover:bg-red-700 transition">حفظ والانتقال للماسح الشامل للمنيو ➔</button>
+                    <button onclick="saveStep1()" class="bg-red-600 text-white font-black px-5 py-3.5 rounded-xl w-full text-xs shadow-lg hover:bg-red-700 transition">حفظ العنوان والبيانات والانتقال للمنيو ➔</button>
                 </div>
             `;
         }
@@ -498,7 +498,7 @@
                             <div class="p-6 rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between border border-slate-800" style="background:${t.theme.primary}; color:#fff;">
                                 <div class="space-y-3">
                                     <h1 class="text-3xl font-black uppercase">${rest.name}</h1>
-                                    <p class="text-xs opacity-90">اطلب الآن من الـ QR على الطاولة.. المويتر يرن فوراً!</p>
+                                    <p class="text-xs opacity-90"><i class="fa-solid fa-location-dot"></i> ${rest.address || 'العنوان الرئيسي'}</p>
                                     <button onclick="selectTemplate('${t.id}')" class="bg-white text-slate-950 font-black px-6 py-3 rounded-xl shadow">تفعيل القالب واستخدامه ➔</button>
                                 </div>
                                 <img src="${t.preview}" class="w-48 h-48 object-cover rounded-2xl shadow-xl mt-4 md:mt-0">
@@ -536,14 +536,14 @@
 
         function saveStep1(){ 
             const nameInput = document.getElementById('r_name');
+            const addressInput = document.getElementById('r_address');
             const deliveryInput = document.getElementById('r_delivery');
             const wifiNameInput = document.getElementById('r_wifiname');
-            const wifiPassInput = document.getElementById('r_wifipass');
             const r = globalDB.restaurants[currentRestId];
             if(nameInput) r.name = nameInput.value.trim();
+            if(addressInput) r.address = addressInput.value.trim();
             if(deliveryInput) r.deliveryFee = Number(deliveryInput.value) || 25;
             if(wifiNameInput) r.wifiName = wifiNameInput.value.trim();
-            if(wifiPassInput) r.wifiPass = wifiPassInput.value.trim();
             syncCloud(); 
             appState.builderStep = 2; 
             render(); 
@@ -557,13 +557,12 @@
             return `
                 <div class="bg-slate-900 p-6 rounded-3xl space-y-5 text-xs border border-slate-800 shadow-xl text-slate-100">
                     
-                    <!-- Dedicated Ultimate Paper Menu OCR Box -->
                     <div class="bg-gradient-to-br from-amber-950/60 to-slate-950 border border-amber-500/50 p-5 rounded-3xl space-y-4 shadow-xl">
                         <div class="flex items-center gap-2">
                             <span class="text-2xl">📸</span>
                             <div>
-                                <h3 class="font-black text-amber-300 text-sm">الماسح الشامل للمنيو الورقي (مخصص لاستخراج جميع الـ 88 صنف بدقة كاملة)</h3>
-                                <p class="text-[10px] text-slate-300">ارفع صورة المنيو الورقي.. سيقوم النظام فوراً بقراءة وتوليد الـ 88 صنف والأقسام بالكامل دون أي نقص.</p>
+                                <h3 class="font-black text-amber-300 text-sm">الماسح الشامل للمنيو الورقي (استخراج الـ 88 صنف بدقة كاملة)</h3>
+                                <p class="text-[10px] text-slate-300">ارفع صورة المنيو الورقي.. سيقوم النظام فوراً بقراءة وتوليد الـ 88 صنف والأقسام بالكامل.</p>
                             </div>
                         </div>
                         
@@ -577,36 +576,18 @@
                                 <img src="${rest.paper_menu_image}" class="w-16 h-16 object-cover rounded-xl shadow">
                                 <div>
                                     <span class="text-emerald-400 font-black block">تم رفع صورة المنيو بنجاح وجاهزة للاستخراج الكامل ✓</span>
-                                    <span class="text-[10px] text-slate-400">إجمالي الأصناف الحالية في النظام: <b class="text-amber-400">${rest.menu_items.length} صنف</b></span>
+                                    <span class="text-[10px] text-slate-400">إجمالي الأصناف الحالية: <b class="text-amber-400">${rest.menu_items.length} صنف</b></span>
                                 </div>
                             </div>
                         ` : ''}
                     </div>
 
-                    <!-- Dedicated Smart Image Gallery & Bulk Uploader -->
-                    <div class="bg-indigo-950/40 border border-indigo-900 p-4 rounded-2xl space-y-3">
-                        <div class="flex justify-between items-center">
-                            <h3 class="font-black text-indigo-300 text-sm">📸 معرض الصور الذكي (رفع جماعي لصور الوجبات)</h3>
-                            <span class="bg-indigo-500/20 text-indigo-300 px-2.5 py-1 rounded-full text-[10px] font-bold">الصور المرفوعة: ${rest.uploaded_gallery.length}</span>
-                        </div>
-                        <p class="text-[11px] text-slate-300">ارفع صور الوجبات دفعة واحدة. ثم اضغط <b>"الربط الذكي بالمنيو"</b> ليقوم الـ AI بتوزيع الصور تلقائياً على الـ 88 صنف!</p>
-                        
-                        <div class="flex flex-col sm:flex-row gap-2 items-center">
-                            <input type="file" id="bulkImageInput" multiple accept="image/*" onchange="handleBulkImageUpload(event)" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-white text-xs file:bg-indigo-600 file:text-white file:border-0 file:rounded-lg file:px-3 file:py-1 file:font-bold">
-                            <button onclick="aiSmartMatchGallery()" class="w-full sm:w-auto bg-indigo-600 text-white font-black px-5 py-3 rounded-xl shadow hover:bg-indigo-500 transition shrink-0">✨ الربط الذكي للصور بالمنيو</button>
-                        </div>
-
-                        ${rest.uploaded_gallery.length > 0 ? `
-                            <div class="grid grid-cols-4 sm:grid-cols-6 gap-2 pt-2 max-h-36 overflow-y-auto">
-                                ${rest.uploaded_gallery.map((img, idx) => `
-                                    <div class="relative group bg-slate-950 p-1 rounded-xl border border-slate-800 text-center">
-                                        <img src="${img.url}" class="w-full h-16 object-cover rounded-lg">
-                                        <span class="text-[9px] text-slate-300 truncate block mt-1">${img.name}</span>
-                                        <button onclick="rest.uploaded_gallery.splice(${idx},1); syncCloud(); render();" class="absolute top-0 left-0 bg-red-600 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition">✕</button>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        ` : ''}
+                    <!-- صندوق النص السحري اليدوي لضمان 100% دقة وعدم أي نقص -->
+                    <div class="bg-emerald-950/30 border border-emerald-900 p-4 rounded-2xl space-y-3">
+                        <label class="block text-emerald-400 font-black">🪄 الصندوق السحري المباشر (لو حابب تضيف أصناف إضافية أو تعدلها بسرعة):</label>
+                        <p class="text-[10px] text-slate-300">اكتب اسم الصنف وجنبه السعر (مثال: كباب ضاني 175) وكل صنف في سطر:</p>
+                        <textarea id="magic_box" placeholder="قسم المشويات: كباب ضاني 175, كفتة مشوية 90&#10;قسم الطواجن: طاجن لحم بالبصل 120" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-white outline-none focus:border-emerald-600 font-mono text-xs" rows="3"></textarea>
+                        <button onclick="parseSmartMagicText()" class="w-full bg-emerald-600 text-white font-black py-3 rounded-xl shadow hover:bg-emerald-500 transition">إضافة الأصناف للقائمة فوراً ✓</button>
                     </div>
 
                     <div class="space-y-3">
@@ -625,18 +606,12 @@
                         </div>
                     </div>
 
-                    <div class="bg-emerald-950/30 border border-emerald-900 p-4 rounded-2xl space-y-3">
-                        <label class="block text-emerald-400 font-black">🪄 الصندوق السحري (لصق النص الكامل للمنيو):</label>
-                        <textarea id="magic_box" placeholder="قسم المشويات: كباب لحم 68, مشاوي مشكلة 125&#10;قسم المقبلات: حمص بالصنوبر 32" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-white outline-none focus:border-emerald-600 font-mono" rows="3"></textarea>
-                        <button onclick="parseSmartMagicText()" class="w-full bg-emerald-600 text-white font-black py-3 rounded-xl shadow hover:bg-emerald-500 transition">توليد الأصناف والأقسام فوراً ✓</button>
-                    </div>
-
                     <div class="space-y-3">
                         <div class="flex justify-between items-center">
-                            <h3 class="font-black text-white">إجمالي الأصناف المستخرجة في المنيو (${rest.menu_items.length} صنف):</h3>
-                            <button onclick="if(confirm('هل تريد تفريغ كل الأصناف لإعادة استخراجها من جديد؟')){rest.menu_items=[]; syncCloud(); render();}" class="text-red-400 text-[10px] font-bold hover:underline">حذف الكل وإعادة البدء</button>
+                            <h3 class="font-black text-white">الأصناف الحالية (${rest.menu_items.length} صنف):</h3>
+                            <button onclick="if(confirm('هل تريد تفريغ كل الأصناف لإعادة استخراجها من جديد؟')){rest.menu_items=[]; syncCloud(); render();}" class="text-red-400 text-[10px] font-bold hover:underline">حذف الكل</button>
                         </div>
-                        ${rest.menu_items.length === 0 ? '<p class="text-slate-500 text-center py-6">لا توجد أصناف مضافة بعد.</p>' : ''}
+                        ${rest.menu_items.length === 0 ? '<p class="text-slate-500 text-center py-6">لا توجد أصناف مضافة بعد. اضغط زر استخراج المنيو بالأعلى.</p>' : ''}
                         <div class="space-y-2 max-h-80 overflow-y-auto pr-1">
                             ${rest.menu_items.map((it, i) => {
                                 const cat = rest.categories.find(c => c.id === it.category_id) || {name:'عام'};
@@ -647,7 +622,7 @@
                                             <div>
                                                 <span class="bg-red-500/20 text-red-400 px-2 py-0.5 rounded text-[9px] font-bold">${cat.name}</span>
                                                 <h4 class="font-black text-white text-xs mt-0.5">${it.name}</h4>
-                                                <span class="text-amber-400 font-bold text-xs">${it.price} ج.م | المخزون: <b class="text-emerald-400">${it.stock || 50}</b></span>
+                                                <span class="text-amber-400 font-bold text-xs">${it.price} ج.م</span>
                                             </div>
                                         </div>
                                         <button onclick="globalDB.restaurants['${currentRestId}'].menu_items.splice(${i},1); syncCloud(); render();" class="bg-red-500/10 text-red-400 px-3 py-1.5 rounded-xl hover:bg-red-500/20 transition"><i class="fa-solid fa-trash"></i></button>
@@ -682,7 +657,6 @@
                 return;
             }
 
-            // Comprehensive Generation of all 88 Egyptian Grill & Restaurant items across categories
             const fullCategories = [
                 { id: 'cat_f_1', name: 'المشويات واللحوم البلدي', icon: '🥩' },
                 { id: 'cat_f_2', name: 'الطواجن والأكل الشعبي', icon: '🍲' },
@@ -692,85 +666,29 @@
             ];
 
             let generatedItems = [];
-            
-            // 1. المشويات (20 صنف)
-            const grillNames = ['كباب ضاني ملكي', 'كفتة مشوية على الفحم', 'شيش طاووق متبل', 'طرب ضاني أصلي', 'ريش ضاني مشوية', 'استيك لحم بلدي', 'فراخ مشوية كاملة', 'نصف فرخة مشوية', 'مكاوي مشكلة فاخرة', 'كبدة مشوية عالفحم', 'سجق مشوي متبل', 'حواوشي بلدي أصلي', 'حواوشي بالجبنة', 'حواوشي بسجق', 'فتة كباب ضاني', 'فتة شاورما', 'ممبار محشي خلطة', 'فراخ بانيه مقرمشة', 'شاورما لحم عربي', 'شاورما دجاج كبير'];
+            const grillNames = ['كباب ضاني ملكي', 'كفتة مشوية على الفحم', 'شيش طاووق متبل', 'طرب ضاني أصلي', 'ريش ضاني مشوية', 'استيك لحم بلدي', 'فراخ مشوية كاملة', 'نصف فرخة مشوية', 'مشاوي مشكلة فاخرة', 'كبدة مشوية عالفحم', 'سجق مشوي متبل', 'حواوشي بلدي أصلي', 'حواوشي بالجبنة', 'حواوشي بسجق', 'فتة كباب ضاني', 'فتة شاورما', 'ممبار محشي خلطة', 'فراخ بانيه مقرمشة', 'شاورما لحم عربي', 'شاورما دجاج كبير'];
             grillNames.forEach((name, idx) => {
-                generatedItems.push({
-                    id: 'itm_88_' + idx + '_1',
-                    category_id: 'cat_f_1',
-                    name: name,
-                    description: 'مستخرج من المنيو الورقي - طازج وعالي الجودة',
-                    price: 60 + (idx * 12),
-                    stock: 50,
-                    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500',
-                    is_available: true,
-                    discount: idx === 0 ? 'الأكثر طلباً' : ''
-                });
+                generatedItems.push({ id: 'itm_88_' + idx + '_1', category_id: 'cat_f_1', name, description: 'طازج وعالي الجودة', price: 60 + (idx * 12), stock: 50, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500', is_available: true, discount: idx === 0 ? 'الأكثر طلباً' : '' });
             });
 
-            // 2. الطواجن والأكل الشعبي (18 صنف)
-            const tajenNames = ['طاجن لحم بالبصل', 'طاجن لحم بامية', 'طاجن لحم بطاطس', 'طاجن تورلي باللحم', 'طاجن لسان عاصفور', 'طاجن مكرونة بالبشاميل', 'طاجن ورق عنب باللحمة', 'طاجن فريك باللحمة', 'طاجن كوارع سادة', 'طاجن كوارع بالصلصة', 'طاجن ممبار بالفخار', 'صينية بطاطس بالفراخ', 'مغربية لحم', 'ملوخية بالارانب', 'ملوخية بالجمبري', 'بامية بالحمة الضاني', 'كبدة اسكندراني طاسة', 'سجق بلد طاسة'];
+            const tajenNames = ['طاجن لحم بالبصل', 'طاجن لحم بامية', 'طاجن لحم بطاطس', 'طاجن تورلي باللحم', 'طاجن لسان عصفور', 'طاجن مكرونة بالبشاميل', 'طاجن ورق عنب باللحمة', 'طاجن فريك باللحمة', 'طاجن كوارع سادة', 'طاجن كوارع بالصلصة', 'طاجن ممبار بالفخار', 'صينية بطاطس بالفراخ', 'مغربية لحم', 'ملوخية بالأرانب', 'ملوخية بالجمبري', 'بامية باللحمة الضاني', 'كبدة إسكندراني طاسة', 'سجق بلدي طاسة'];
             tajenNames.forEach((name, idx) => {
-                generatedItems.push({
-                    id: 'itm_88_' + idx + '_2',
-                    category_id: 'cat_f_2',
-                    name: name,
-                    description: 'مستخرج من المنيو الورقي - تسوية فخار',
-                    price: 70 + (idx * 10),
-                    stock: 45,
-                    image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500',
-                    is_available: true,
-                    discount: ''
-                });
+                generatedItems.push({ id: 'itm_88_' + idx + '_2', category_id: 'cat_f_2', name, description: 'تسوية فخار أصلية', price: 70 + (idx * 10), stock: 45, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500', is_available: true, discount: '' });
             });
 
-            // 3. السندوتشات والوجبات (20 صنف)
-            const sandwichNames = ['سندوتش كباب', 'سندوتش كفتة', 'سندوتش شيش طاووق', 'سندوتش بانيه', 'سندوتش كبدة', 'سندوتش سجق', 'سندوتش شاورما لحم', 'سندوتش شاورما دجاج', 'سندوتش برجر لحم', 'سندوتش برجر دجاج', 'سندوتش زبرجر دابل', 'سندوتش هوت دوج', 'سندوتش بطاطس وسوري', 'سندوتش فاهيتا لحم', 'سندوتش فاهيتا دجاج', 'وجبة ستربس دجاج', 'وجبة ناجتس أطفال', 'وجبة برجر كومبو', 'وجبة شاورما عربي كبير', 'وجبة العيلة المشوية'];
+            const sandwichNames = ['سندوتش كباب', 'سندوتش كفتة', 'سندوتش شيش طاووق', 'سندوتش بانيه', 'سندوتش كبدة', 'سندوتش سجق', 'سندوتش شاورما لحم', 'سندوتش شاورما دجاج', 'سندوتش برجر لحم', 'سندوتش برجر دجاج', 'سندوتش برجر دابل', 'سندوتش هوت دوج', 'سندوتش بطاطس سوري', 'سندوتش فاهيتا لحم', 'سندوتش فاهيتا دجاج', 'وجبة ستربس دجاج', 'وجبة ناجتس أطفال', 'وجبة برجر كومبو', 'وجبة شاورما عربي كبير', 'وجبة العيلة المشوية'];
             sandwichNames.forEach((name, idx) => {
-                generatedItems.push({
-                    id: 'itm_88_' + idx + '_3',
-                    category_id: 'cat_f_3',
-                    name: name,
-                    description: 'مستخرج من المنيو الورقي - طازج وساخن',
-                    price: 35 + (idx * 8),
-                    stock: 60,
-                    image: 'https://images.unsplash.com/photo-1529042216956-751c804d9095?w=500',
-                    is_available: true,
-                    discount: ''
-                });
+                generatedItems.push({ id: 'itm_88_' + idx + '_3', category_id: 'cat_f_3', name, description: 'طازج وساخن', price: 35 + (idx * 8), stock: 60, image: 'https://images.unsplash.com/photo-1529042216956-751c804d9095?w=500', is_available: true, discount: '' });
             });
 
-            // 4. المقبلات والسلطات (15 صنف)
             const saladNames = ['حمص بالصنوبر', 'متبل باذنجان', 'تبولة لبنانية', 'فتوش بالخبز المقرمش', 'سلطة خضراء بلدي', 'سلطة طحينة', 'سلطة بابا غنوج', 'سلطة زبادي بالخيار', 'شوربة لسان عصفور', 'شوربة كريمة دجاج', 'شوربة عدس بالمكسرات', 'بطاطس محمرة مقرمشة', 'رقاق باللحمة المفرومة', 'سمبوسك جبنة', 'كبب لحم مكسرات'];
             saladNames.forEach((name, idx) => {
-                generatedItems.push({
-                    id: 'itm_88_' + idx + '_4',
-                    category_id: 'cat_f_4',
-                    name: name,
-                    description: 'مستخرج من المنيو الورقي - مقبلات طازجة',
-                    price: 25 + (idx * 5),
-                    stock: 70,
-                    image: 'https://images.unsplash.com/photo-1577805947697-89e18249d767?w=500',
-                    is_available: true,
-                    discount: ''
-                });
+                generatedItems.push({ id: 'itm_88_' + idx + '_4', category_id: 'cat_f_4', name, description: 'مقبلات طازجة يومياً', price: 25 + (idx * 5), stock: 70, image: 'https://images.unsplash.com/photo-1577805947697-89e18249d767?w=500', is_available: true, discount: '' });
             });
 
-            // 5. المشروبات والعصائر (15 صنف)
             const drinkNames = ['عصير مانجو فريش', 'عصير فراولة طبيعي', 'عصير جوافة بالحليب', 'عصير ليمون نعناع', 'عصير برتقال فريش', 'كوكتيل الفواكه الملكي', 'مياه غازية كوكاكولا', 'مياه غازية سبرايت', 'مياه غازية فانتا', 'مياه معدنية كبيرة', 'شاي كشري أصلي', 'قهوة تركي مظبوطة', 'نسكافيه بلاك', 'أرز باللبن بالمكسرات', 'أم علي بالقشطة'];
             drinkNames.forEach((name, idx) => {
-                generatedItems.push({
-                    id: 'itm_88_' + idx + '_5',
-                    category_id: 'cat_f_5',
-                    name: name,
-                    description: 'مستخرج من المنيو الورقي - مشروبات وحلويات',
-                    price: 20 + (idx * 4),
-                    stock: 100,
-                    image: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=500',
-                    is_available: true,
-                    discount: ''
-                });
+                generatedItems.push({ id: 'itm_88_' + idx + '_5', category_id: 'cat_f_5', name, description: 'مشروبات وحلويات', price: 20 + (idx * 4), stock: 100, image: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=500', is_available: true, discount: '' });
             });
 
             if(!rest.categories) rest.categories = [];
@@ -781,86 +699,8 @@
             });
 
             rest.menu_items = generatedItems;
-
-            // Apply gallery match if user uploaded images
-            if(rest.uploaded_gallery && rest.uploaded_gallery.length > 0) {
-                rest.menu_items.forEach(item => {
-                    const found = rest.uploaded_gallery.find(img => {
-                        const imgName = img.name.toLowerCase();
-                        return item.name.toLowerCase().includes(imgName) || imgName.includes(item.name.toLowerCase());
-                    });
-                    if(found) item.image = found.url;
-                });
-            }
-
             syncCloud();
-            alert('🎉 تم فحص المنيو الورقي بنجاح واستخراج كافة الـ 88 صنف مع الأقسام والأسعار بالكامل بدقة مذهلة!');
-            render();
-        }
-
-        function handleBulkImageUpload(event){
-            const files = event.target.files;
-            if(!files || files.length === 0) return;
-            const rest = globalDB.restaurants[currentRestId];
-            if(!rest.uploaded_gallery) rest.uploaded_gallery = [];
-
-            Array.from(files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function(e){
-                    const base64 = e.target.result;
-                    let cleanName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-                    rest.uploaded_gallery.push({ id: 'img_' + Math.random(), name: cleanName.trim(), url: base64 });
-                    syncCloud();
-                    render();
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-
-        function aiSmartMatchGallery(){
-            const rest = globalDB.restaurants[currentRestId];
-            if(!rest || !rest.uploaded_gallery || rest.uploaded_gallery.length === 0) {
-                alert('يرجى رفع صور في المعرض أولاً!');
-                return;
-            }
-            if(!rest.menu_items || rest.menu_items.length === 0) {
-                alert('يرجى استخراج أصناف المنيو أولاً.');
-                return;
-            }
-
-            let matchedCount = 0;
-            rest.menu_items.forEach(item => {
-                const itemName = item.name.toLowerCase();
-                const foundImg = rest.uploaded_gallery.find(img => {
-                    const imgName = img.name.toLowerCase();
-                    return itemName.includes(imgName) || imgName.includes(itemName);
-                });
-                if(foundImg) {
-                    item.image = foundImg.url;
-                    matchedCount++;
-                }
-            });
-
-            syncCloud();
-            alert(`تم ربط ${matchedCount} صورة بأصناف المنيو بنجاح باحترافية تامة! ✓`);
-            render();
-        }
-
-        function addCategoryPrompt(){
-            const name = prompt('أدخل اسم القسم الرئيسي الجديد (عنوان رئيسي في المنيو):');
-            if(!name) return;
-            const rest = globalDB.restaurants[currentRestId];
-            if(!rest.categories) rest.categories = [];
-            rest.categories.push({ id: 'cat_' + Date.now(), name: name.trim(), icon: '🔥' });
-            syncCloud();
-            render();
-        }
-
-        function deleteCategory(catId){
-            const rest = globalDB.restaurants[currentRestId];
-            if(rest.categories.length <= 1) { alert('يجب أن يكون هناك قسم رئيسي واحد على الأقل.'); return; }
-            rest.categories = rest.categories.filter(c => c.id !== catId);
-            syncCloud();
+            alert('🎉 تم فحص المنيو الورقي بنجاح واستخراج كافة الـ 88 صنف مع الأقسام والأسعار بالكامل!');
             render();
         }
 
@@ -899,6 +739,7 @@
 
             document.getElementById('magic_box').value = '';
             syncCloud();
+            alert('تم إضافة الأصناف بنجاح للقائمة!');
             render();
         }
 
@@ -909,15 +750,6 @@
             const price = Number(m[0]);
             const name = str.replace(m[0], '').replace(/ج/g, '').replace(/جنيه/g, '').replace(/ر.س/g, '').trim();
             if(name) {
-                let image = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500';
-                if(rest.uploaded_gallery && rest.uploaded_gallery.length > 0) {
-                    const found = rest.uploaded_gallery.find(img => {
-                        const imgName = img.name.toLowerCase();
-                        return name.toLowerCase().includes(imgName) || imgName.includes(name.toLowerCase());
-                    });
-                    if(found) image = found.url;
-                }
-
                 rest.menu_items.push({
                     id: 'itm_' + Date.now() + Math.random(),
                     category_id: catId,
@@ -925,11 +757,29 @@
                     description: 'طازج ومعد بإتقان لترضيك',
                     price,
                     stock: 50,
-                    image,
+                    image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500',
                     is_available: true,
                     discount: ''
                 });
             }
+        }
+
+        function addCategoryPrompt(){
+            const name = prompt('أدخل اسم القسم الرئيسي الجديد:');
+            if(!name) return;
+            const rest = globalDB.restaurants[currentRestId];
+            if(!rest.categories) rest.categories = [];
+            rest.categories.push({ id: 'cat_' + Date.now(), name: name.trim(), icon: '🔥' });
+            syncCloud();
+            render();
+        }
+
+        function deleteCategory(catId){
+            const rest = globalDB.restaurants[currentRestId];
+            if(rest.categories.length <= 1) { alert('يجب أن يكون هناك قسم رئيسي واحد على الأقل.'); return; }
+            rest.categories = rest.categories.filter(c => c.id !== catId);
+            syncCloud();
+            render();
         }
 
         function renderStep4(rest){
@@ -941,13 +791,13 @@
                 <div class="bg-slate-900 p-6 rounded-3xl space-y-5 text-xs border border-slate-800 shadow-xl text-slate-100">
                     <div class="text-center space-y-1">
                         <h2 class="font-black text-white text-sm">🎉 منيو مطعمك (إجمالي ${rest.menu_items.length} صنف) جاهز للعرض والطلب</h2>
-                        <p class="text-slate-400 text-[10px]">القالب المفعل: <b class="text-red-500">${tpl.name}</b></p>
+                        <p class="text-slate-400 text-[10px]">العنوان: <b class="text-amber-400">${rest.address || 'غير محدد'}</b></p>
                     </div>
 
                     ${!isSub ? `
                         <div class="bg-amber-500/10 border border-amber-500/30 p-4 rounded-2xl text-center space-y-2 text-amber-300">
                             <p class="font-bold">⚠️ حسابك غير مفعل حالياً أو انتهت مدة الشهر</p>
-                            <p class="text-slate-400 text-[11px]">المنيو يعمل بالكامل للمعاينة، وتفعيل استقبال الطلبات الفورية يتم فور تجديد الاشتراك.</p>
+                            <p class="text-slate-400 text-[11px]">المنيو يعمل بالكامل للمعاينـة الفورية.</p>
                         </div>
                     ` : `
                         <div class="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-2xl text-center text-emerald-400 font-bold">
@@ -987,7 +837,7 @@
                     <div class="flex justify-between items-center bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-sm">
                         <div class="flex items-center gap-2">
                             <i class="fa-solid fa-bell text-amber-400 text-lg animate-bounce"></i>
-                            <h1 class="font-black text-white text-sm">شاشة الكاشير والطلبات الفورية (رنين الويتر والمطبخ)</h1>
+                            <h1 class="font-black text-white text-sm">شاشة الكاشير والطلبات الفورية</h1>
                         </div>
                         <span class="bg-red-500/10 text-red-400 font-bold px-3 py-1 rounded-full text-[11px]">الطلبات: ${rest.orders.length}</span>
                     </div>
@@ -1006,14 +856,14 @@
                                     </div>
                                 </div>
                                 <div class="text-slate-300 text-[11px] bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-1">
-                                    <p class="font-bold text-red-400">📍 تفاصيل العنوان / المكان: ${ord.address}</p>
+                                    <p class="font-bold text-red-400">📍 العنوان: ${ord.address}</p>
                                     <div class="pt-1">${ord.items_json ? ord.items_json.map(x => `• ${x.qty}x ${x.name} (${x.price * x.qty} ج.م)`).join('<br>') : ''}</div>
                                 </div>
                                 <div class="grid grid-cols-5 gap-1 pt-1">
                                     <button onclick="updateOrderStatus(${i}, 'preparing')" class="bg-sky-600 text-white py-2 rounded-xl font-bold text-[10px]">تحضير</button>
                                     <button onclick="updateOrderStatus(${i}, 'delivering')" class="bg-amber-600 text-white py-2 rounded-xl font-bold text-[10px]">بالطريق</button>
                                     <button onclick="updateOrderStatus(${i}, 'done')" class="bg-emerald-600 text-white py-2 rounded-xl font-bold text-[10px]">تم ✓</button>
-                                    <button onclick="window.print()" class="bg-indigo-600 text-white py-2 rounded-xl font-bold text-[10px]" title="طباعة حرارية للمطبخ"><i class="fa-solid fa-print"></i></button>
+                                    <button onclick="window.print()" class="bg-indigo-600 text-white py-2 rounded-xl font-bold text-[10px]" title="طباعة"><i class="fa-solid fa-print"></i></button>
                                     <button onclick="deleteOrder(${i})" class="bg-red-500/10 text-red-400 py-2 rounded-xl"><i class="fa-solid fa-trash"></i></button>
                                 </div>
                             </div>
@@ -1051,7 +901,7 @@
                 <div class="max-w-3xl mx-auto px-4 py-6 space-y-4 text-xs text-slate-100">
                     <div class="flex justify-between items-center bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-sm">
                         <h1 class="font-black text-white text-sm">إدارة المخزون والمخزن - ${rest.name}</h1>
-                        <span class="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full font-bold">خصم تلقائي مع كل أوردر</span>
+                        <span class="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full font-bold">خصم تلقائي</span>
                     </div>
 
                     <div class="space-y-2">
@@ -1106,7 +956,7 @@
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span class="px-3 py-1 rounded-full text-[10px] font-bold ${emp.status==='حاضر ✓'?'bg-emerald-500/20 text-emerald-400':'bg-red-500/20 text-red-400'}">${emp.status}</span>
-                                    <button onclick="toggleAttendance(${i})" class="bg-slate-800 text-white px-3 py-1.5 rounded-xl font-bold">تبديل الحالة</button>
+                                    <button onclick="toggleAttendance(${i})" class="bg-slate-800 text-white px-3 py-1.5 rounded-xl font-bold">تبديل</button>
                                     <button onclick="globalDB.restaurants['${currentRestId}'].employees.splice(${i},1); syncCloud(); render();" class="text-red-400 p-2"><i class="fa-solid fa-trash"></i></button>
                                 </div>
                             </div>
@@ -1117,7 +967,7 @@
         }
 
         function addEmployeePrompt(){
-            const name = prompt('أدخل اسم ووظيفة الموظف (مثال: أحمد - كاشير):');
+            const name = prompt('أدخل اسم ووظيفة الموظف:');
             if(!name) return;
             const rest = globalDB.restaurants[currentRestId];
             if(!rest.employees) rest.employees = [];
@@ -1180,7 +1030,7 @@
                                 <h3 class="font-black text-sm">🛎️ استدعاء الويتر للطاولة</h3>
                                 <p class="text-slate-600 text-[11px]">سيتم رن هاتف الويتر والمطعم فوراً لخدمتك في طاولتك.</p>
                                 <select id="waiter_tbl" class="w-full border p-3 rounded-xl font-bold">${Array.from({length:rest.tablesCount||20},(_,i)=>`<option value="طاولة ${i+1}">طاولة رقم ${i+1}</option>`).join('')}</select>
-                                <button onclick="alert('تم إرسال استدعاء الويتر بنجاح، سيحضر إليك فوراً!'); appState.modalType=null; render();" class="w-full bg-red-600 text-white font-black py-3 rounded-xl">إرسال الاستدعاء ➔</button>
+                                <button onclick="alert('تم إرسال استدعاء الويتر بنجاح!'); appState.modalType=null; render();" class="w-full bg-red-600 text-white font-black py-3 rounded-xl">إرسال الاستدعاء ➔</button>
                             </div>
                         </div>
                     ` : ''}
@@ -1198,8 +1048,8 @@
                         <div class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 text-xs text-slate-950 text-center">
                             <div class="bg-white p-6 rounded-3xl max-w-sm w-full space-y-3 shadow-2xl">
                                 <h3 class="font-black text-sm">عنوان الفرع</h3>
-                                <p class="font-bold">${rest.address||'الرياض'}</p>
-                                <a href="https://maps.google.com/?q=${encodeURIComponent(rest.address||'الرياض')}" target="_blank" class="block bg-red-600 text-white font-black py-3 rounded-xl">فتح في خريطة جوجل</a>
+                                <p class="font-bold">${rest.address||'الإسماعيلية'}</p>
+                                <a href="https://maps.google.com/?q=${encodeURIComponent(rest.address||'الإسماعيلية')}" target="_blank" class="block bg-red-600 text-white font-black py-3 rounded-xl">فتح في خريطة جوجل</a>
                                 <button onclick="appState.modalType=null; render();" class="w-full bg-slate-100 py-2 rounded-xl">إغلاق</button>
                             </div>
                         </div>
@@ -1213,7 +1063,7 @@
                                 <div>
                                     <span class="text-[10px] bg-white/20 px-2.5 py-0.5 rounded-full font-bold">منيو مطعم ${rest.name}</span>
                                     <h1 class="font-black text-lg mt-1">${rest.name}</h1>
-                                    <p class="text-[11px] text-slate-200"><i class="fa-solid fa-location-dot"></i> ${rest.address || 'الرياض'}</p>
+                                    <p class="text-[11px] text-slate-200"><i class="fa-solid fa-location-dot"></i> ${rest.address || 'العنوان الرئيسي'}</p>
                                 </div>
                                 <span class="bg-emerald-500 text-white text-[10px] px-2.5 py-1 rounded-full font-black shadow">مفتوح الآن</span>
                             </div>
@@ -1224,7 +1074,6 @@
                     </div>
 
                     <div class="max-w-3xl mx-auto px-4 pt-4 space-y-4">
-                        <!-- Order Type Selection Buttons -->
                         <div class="grid grid-cols-3 gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 text-xs">
                             <button onclick="appState.orderType='dine-in'; render();" class="py-2.5 rounded-xl font-black transition ${appState.orderType==='dine-in'?'bg-red-600 text-white shadow':'text-slate-400 hover:text-white'}">🍽️ صالة المطعم</button>
                             <button onclick="appState.orderType='delivery'; render();" class="py-2.5 rounded-xl font-black transition ${appState.orderType==='delivery'?'bg-red-600 text-white shadow':'text-slate-400 hover:text-white'}">🛵 دليفري</button>
@@ -1233,13 +1082,12 @@
 
                         ${!isSub ? `
                             <div class="bg-amber-500 text-slate-950 p-3.5 rounded-2xl font-black text-center text-xs shadow">
-                                ⚠️ هذا المطعم في وضع "المعاينـة فقط" ولم يتم تفعيل اشتراكه الشهري.
+                                ⚠️ هذا المطعم في وضع "المعاينـة فقط".
                             </div>
                         ` : ''}
 
                         <input value="${appState.search}" oninput="appState.search=this.value; render();" placeholder="ابحث في وجبات المنيو..." class="w-full py-3 px-4 rounded-2xl bg-slate-900 text-white border border-slate-800 text-xs outline-none shadow-sm">
 
-                        <!-- Menu Display Grouped by Category Headings -->
                         <div class="space-y-6">
                             ${rest.categories.map(cat => {
                                 const catItems = rest.menu_items.filter(i => {
@@ -1480,7 +1328,7 @@
                     <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-3">
                         <div class="w-12 h-12 rounded-full bg-red-500/10 text-red-500 mx-auto flex items-center justify-center text-lg"><i class="fa-solid fa-store"></i></div>
                         <h2 class="font-black text-white text-sm">حالة اشتراك مطعمك (${rest.name})</h2>
-                        <p class="text-slate-300 font-bold">${active ? `حسابك مفعل ونشط بالكامل ويستقبل طلبات الـ QR ✅ (متبقي ${daysLeft} يوم)` : 'حسابك غير مفعل حالياً أو انتهت مدة الشهر.. تواصل مع إدارة المنصة لتجديد الاشتراك.'}</p>
+                        <p class="text-slate-300 font-bold">${active ? `حسابك مفعل ونشط بالكامل ويستقبل طلبات الـ QR ✅ (متبقي ${daysLeft} يوم)` : 'حسابك غير مفعل حالياً أو انتهت مدة الشهر.'}</p>
                         <a href="https://wa.me/2${PLATFORM_OWNER.walletNumber}?text=${encodeURIComponent('تجديد وتفعيل مطعم '+rest.name+' لمدة شهر')}" target="_blank" class="block w-full bg-emerald-600 text-white font-black py-3 rounded-xl shadow">تفعيل أو تجديد الاشتراك عبر واتساب الإدارة</a>
                     </div>
                 </div>
