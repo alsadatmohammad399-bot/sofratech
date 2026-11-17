@@ -49,7 +49,7 @@
 
         let globalDB = { restaurants: {} };
         try {
-            const raw = localStorage.getItem('tablia_multitenant_2030_v45');
+            const raw = localStorage.getItem('tablia_multitenant_2030_v46');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) {}
 
@@ -87,19 +87,19 @@
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_multitenant_2030_v45', JSON.stringify(globalDB));
+                localStorage.setItem('tablia_multitenant_2030_v46', JSON.stringify(globalDB));
                 if (cloudDB) {
-                    cloudDB.ref('tablia_multitenant_enterprise_2030_v45').set(globalDB).catch(() => {});
+                    cloudDB.ref('tablia_multitenant_enterprise_2030_v46').set(globalDB).catch(() => {});
                 }
             } catch (e) {}
         }
 
         if (cloudDB) {
-            cloudDB.ref('tablia_multitenant_enterprise_2030_v45').on('value', (snap) => {
+            cloudDB.ref('tablia_multitenant_enterprise_2030_v46').on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.restaurants) {
                     globalDB = data;
-                    try { localStorage.setItem('tablia_multitenant_2030_v45', JSON.stringify(globalDB)); } catch(e){}
+                    try { localStorage.setItem('tablia_multitenant_2030_v46', JSON.stringify(globalDB)); } catch(e){}
                     render();
                 }
             });
@@ -118,9 +118,9 @@
         const isCustomerMode = urlParams.get('view') === 'menu';
         const targetRestSlug = urlParams.get('rest');
         
-        let currentRestId = localStorage.getItem('tablia_logged_rest_id_v45') || null;
+        let currentRestId = localStorage.getItem('tablia_logged_rest_id_v46') || null;
         if (currentRestId && (!globalDB.restaurants || !globalDB.restaurants[currentRestId])) {
-            localStorage.removeItem('tablia_logged_rest_id_v45');
+            localStorage.removeItem('tablia_logged_rest_id_v46');
             currentRestId = null;
         }
 
@@ -157,7 +157,7 @@
                 } else {
                     if(!currentRestId || !globalDB.restaurants || !globalDB.restaurants[currentRestId]) {
                         currentRestId = null;
-                        localStorage.removeItem('tablia_logged_rest_id_v45');
+                        localStorage.removeItem('tablia_logged_rest_id_v46');
                         appState.page = 'auth';
                         content = renderAuthScreen();
                     } else if(appState.page === 'builder') {
@@ -190,7 +190,7 @@
 
         function renderNav(){
             const rest = (currentRestId && globalDB.restaurants) ? globalDB.restaurants[currentRestId] : null;
-            return `<nav class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-md shadow-sm border-b border-slate-800 px-4 py-3"><div class="max-w-4xl mx-auto flex justify-between items-center"><div class="flex gap-2 items-center cursor-pointer" onclick="setPage(currentRestId?'builder':'auth')"><div class="w-10 h-10 rounded-2xl bg-red-600 text-white flex items-center justify-center font-black shadow-md">ط</div><div><span class="font-black text-white text-sm">Tablia <span class="text-red-500">OS</span></span></div></div>${rest?`<button onclick="currentRestId=null; localStorage.removeItem('tablia_logged_rest_id_v45'); setPage('auth');" class="bg-red-500/10 text-red-400 px-3 py-1.5 rounded-xl text-xs font-bold">خروج</button>`:''}</div></nav>`;
+            return `<nav class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-md shadow-sm border-b border-slate-800 px-4 py-3"><div class="max-w-4xl mx-auto flex justify-between items-center"><div class="flex gap-2 items-center cursor-pointer" onclick="setPage(currentRestId?'builder':'auth')"><div class="w-10 h-10 rounded-2xl bg-red-600 text-white flex items-center justify-center font-black shadow-md">ط</div><div><span class="font-black text-white text-sm">Tablia <span class="text-red-500">OS</span></span></div></div>${rest?`<button onclick="currentRestId=null; localStorage.removeItem('tablia_logged_rest_id_v46'); setPage('auth');" class="bg-red-500/10 text-red-400 px-3 py-1.5 rounded-xl text-xs font-bold">خروج</button>`:''}</div></nav>`;
         }
 
         function renderBottomNav(){
@@ -254,7 +254,7 @@
                 for(let id in globalDB.restaurants){ 
                     if(globalDB.restaurants[id].phone === phone && globalDB.restaurants[id].pass === pass){ 
                         currentRestId = id; 
-                        localStorage.setItem('tablia_logged_rest_id_v45', id); 
+                        localStorage.setItem('tablia_logged_rest_id_v46', id); 
                         found = true; setPage('builder'); break;
                     } 
                 }
@@ -279,7 +279,7 @@
                 categories: [{ id: 'cat_1', name: 'القسم الرئيسي', icon: '🍽️' }], 
                 menu_items: [], paper_menu_image: null, orders: [], employees: []
             };
-            syncCloud(); currentRestId = restId; localStorage.setItem('tablia_logged_rest_id_v45', restId); setPage('builder');
+            syncCloud(); currentRestId = restId; localStorage.setItem('tablia_logged_rest_id_v46', restId); setPage('builder');
         }
 
         function renderBuilder(){
