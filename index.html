@@ -49,7 +49,7 @@
 
         let globalDB = { restaurants: {} };
         try {
-            const raw = localStorage.getItem('tablia_multitenant_2030_v34');
+            const raw = localStorage.getItem('tablia_multitenant_2030_v35');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) {}
 
@@ -95,15 +95,15 @@
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_multitenant_2030_v34', JSON.stringify(globalDB));
+                localStorage.setItem('tablia_multitenant_2030_v35', JSON.stringify(globalDB));
                 if (cloudDB) {
-                    cloudDB.ref('tablia_multitenant_enterprise_2030_v34').set(globalDB).catch(() => {});
+                    cloudDB.ref('tablia_multitenant_enterprise_2030_v35').set(globalDB).catch(() => {});
                 }
             } catch (e) {}
         }
 
         if (cloudDB) {
-            cloudDB.ref('tablia_multitenant_enterprise_2030_v34').on('value', (snap) => {
+            cloudDB.ref('tablia_multitenant_enterprise_2030_v35').on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.restaurants) {
                     if (currentRestId && data.restaurants[currentRestId]) {
@@ -117,7 +117,7 @@
                     }
                     globalDB = data;
                     try {
-                        localStorage.setItem('tablia_multitenant_2030_v34', JSON.stringify(globalDB));
+                        localStorage.setItem('tablia_multitenant_2030_v35', JSON.stringify(globalDB));
                     } catch(e){}
                     render();
                 }
@@ -160,7 +160,8 @@
             modalType: null,
             previewTpl: null,
             paymentMethod: 'cash',
-            transferRefInput: ''
+            transferRefInput: '',
+            tempBase64Img: ''
         };
 
         function setPage(p){ appState.page = p; render(); window.scrollTo(0,0); }
@@ -275,7 +276,7 @@
             <div class="max-w-md mx-auto px-4 py-12 space-y-6">
                 <div class="text-center space-y-2">
                     <h1 class="text-2xl font-black text-white">منصة طبلية | Tablia OS</h1>
-                    <p class="text-xs text-slate-400">صالة، دليفري، استلام، عناوين رئيسية، وقوالب احترافية</p>
+                    <p class="text-xs text-slate-400">صالة، دليفري، استلام، رفع صور بلا حدود، وتوليد ذكي للمنيو</p>
                 </div>
                 <div class="flex bg-slate-900 p-1.5 rounded-2xl text-xs border border-slate-800">
                     <button onclick="appState.authTab='login'; render();" class="flex-1 py-3 rounded-xl font-bold transition ${appState.authTab==='login'?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">تسجيل دخول</button>
@@ -323,11 +324,11 @@
             if(!phone || !pass) { alert('يرجى إدخال رقم الموبايل وكلمة السر'); return; }
 
             if(cloudDB) {
-                cloudDB.ref('tablia_multitenant_enterprise_2030_v34').once('value').then(snap => {
+                cloudDB.ref('tablia_multitenant_enterprise_2030_v35').once('value').then(snap => {
                     const data = snap.val();
                     if(data && data.restaurants) {
                         globalDB = data;
-                        localStorage.setItem('tablia_multitenant_2030_v34', JSON.stringify(globalDB));
+                        localStorage.setItem('tablia_multitenant_2030_v35', JSON.stringify(globalDB));
                     }
                     verifyLoginData(phone, pass);
                 }).catch(() => { verifyLoginData(phone, pass); });
@@ -388,7 +389,7 @@
                 <div class="max-w-3xl mx-auto px-4 py-6 space-y-5">
                     <div class="flex gap-1.5 bg-slate-900 p-1.5 rounded-2xl text-xs border border-slate-800 shadow-sm">
                         <button onclick="appState.builderStep=1; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===1?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">1. القوالب والمعاينة</button>
-                        <button onclick="appState.builderStep=2; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===2?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">2. الأقسام والصندوق السحري</button>
+                        <button onclick="appState.builderStep=2; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===2?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">2. الأقسام والصندوق السحري ورفع الصور</button>
                         <button onclick="appState.builderStep=4; render();" class="flex-1 py-2.5 rounded-xl transition ${appState.builderStep===4?'bg-red-600 text-white font-black shadow':'text-slate-400 hover:text-white'}">3. نشر اللينك والـ QR</button>
                     </div>
                     ${appState.builderStep===1 ? renderStep1(rest) : (appState.builderStep===2 ? renderStep2(rest) : renderStep4(rest))}
@@ -569,32 +570,35 @@
                     </div>
 
                     <div class="bg-emerald-950/30 border border-emerald-900 p-4 rounded-2xl space-y-3">
-                        <label class="block text-emerald-400 font-black">🪄 الصندوق السحري الذكي (يضيف الأقسام والأصناف والصور تلقائياً):</label>
-                        <p class="text-[11px] text-slate-300">اكتب الأقسام عناوين رئيسية وتحتها الأصناف مع الأسعار والصور (مثال):</p>
-                        <div class="bg-slate-950 p-3 rounded-xl font-mono text-[10px] text-amber-300 space-y-1">
-                            قسم المشويات: كباب لحم 68 [رابط الصورة], مشاوي مشكلة 125 [رابط الصورة]<br>
-                            قسم المقبلات: حمص بالصنوبر 32 [رابط الصورة]
-                        </div>
+                        <label class="block text-emerald-400 font-black">🪄 الصندوق السحري الذكي (يولد الأصناف مع صورها تلقائياً):</label>
+                        <p class="text-[11px] text-slate-300">اكتب الأقسام عناوين رئيسية وتحتها الأصناف مع الأسعار (النظام سيولد لكل صنف صورتة التلقائية الشهية):</p>
                         <textarea id="magic_box" placeholder="قسم المشويات: كباب لحم 68, مشاوي مشكلة 125&#10;قسم المقبلات: حمص بالصنوبر 32" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-white outline-none focus:border-emerald-600 font-mono" rows="4"></textarea>
-                        <button onclick="parseSmartMagicText()" class="w-full bg-emerald-600 text-white font-black py-3 rounded-xl shadow hover:bg-emerald-500 transition">توليد الأقسام والأصناف وتوزيعها تلقائياً ✓</button>
+                        <button onclick="parseSmartMagicText()" class="w-full bg-emerald-600 text-white font-black py-3 rounded-xl shadow hover:bg-emerald-500 transition">توليد الأقسام والأصناف بالصور تلقائياً ✓</button>
                     </div>
 
                     <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
-                        <h3 class="font-black text-white text-xs">➕ إضافة صنف جديد يدوياً مع صورة وقسم محدد:</h3>
+                        <h3 class="font-black text-white text-xs">➕ إضافة صنف جديد مع رفع صورة من جهازك (عدد لا نهائي):</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <input id="newItemName" placeholder="اسم الصنف (مثال: شيش طاووق)" class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold outline-none">
                             <input id="newItemPrice" type="number" placeholder="السعر (ج.م / ر.س)" class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold outline-none">
                             <select id="newItemCat" class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold outline-none">
                                 ${rest.categories.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}
                             </select>
-                            <input id="newItemImg" placeholder="رابط صورة الصنف (URL) أو اتركها فارغة" class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-white font-bold outline-none">
+                            <div>
+                                <label class="block text-slate-400 text-[10px] mb-1">اختر صورة من الموبايل / الكمبيوتر:</label>
+                                <input type="file" id="newItemFile" accept="image/*" onchange="previewUploadedImage(event)" class="w-full bg-slate-900 border border-slate-700 p-2 rounded-xl text-white text-[10px]">
+                            </div>
                         </div>
-                        <textarea id="newItemDesc" placeholder="وصف الصنف (مكونات الطبق)..." class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white outline-none" rows="2"></textarea>
-                        <button onclick="addNewManualItem()" class="w-full bg-red-600 text-white font-black py-3 rounded-xl shadow hover:bg-red-700 transition">إضافة الصنف للمنيو ➔</button>
+                        <div id="img_preview_box" class="hidden flex items-center gap-2">
+                            <img id="preview_thumb" class="w-12 h-12 object-cover rounded-xl border">
+                            <span class="text-emerald-400 text-[10px]">تم اختيار الصورة بنجاح ✓</span>
+                        </div>
+                        <textarea id="newItemDesc" placeholder="وصف الصنف..." class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white outline-none" rows="2"></textarea>
+                        <button onclick="addNewManualItem()" class="w-full bg-red-600 text-white font-black py-3 rounded-xl shadow hover:bg-red-700 transition">إضافة الصنف للمنيو بالصورة المرفوعة ➔</button>
                     </div>
 
                     <div class="space-y-3">
-                        <h3 class="font-black text-white">الأصناف الحالية مرتبطة بالأقسام (${rest.menu_items.length}):</h3>
+                        <h3 class="font-black text-white">الأصناف الحالية مرتبطة بالأقسام والصور (${rest.menu_items.length}):</h3>
                         ${rest.menu_items.length === 0 ? '<p class="text-slate-500 text-center py-6">لا توجد أصناف مضافة بعد.</p>' : ''}
                         <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
                             ${rest.menu_items.map((it, i) => {
@@ -621,6 +625,22 @@
             `;
         }
 
+        function previewUploadedImage(event){
+            const file = event.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e){
+                appState.tempBase64Img = e.target.result;
+                const thumb = document.getElementById('preview_thumb');
+                const box = document.getElementById('img_preview_box');
+                if(thumb && box) {
+                    thumb.src = appState.tempBase64Img;
+                    box.classList.remove('hidden');
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
         function addCategoryPrompt(){
             const name = prompt('أدخل اسم القسم الرئيسي الجديد (عنوان رئيسي في المنيو):');
             if(!name) return;
@@ -644,8 +664,8 @@
             const name = document.getElementById('newItemName').value.trim();
             const price = Number(document.getElementById('newItemPrice').value);
             const catId = document.getElementById('newItemCat').value;
-            const img = document.getElementById('newItemImg').value.trim() || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500';
             const desc = document.getElementById('newItemDesc').value.trim() || 'طازج ومعد بإتقان';
+            const image = appState.tempBase64Img || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500';
 
             if(!name || !price) { alert('يرجى إدخال اسم الصنف والسعر على الأقل.'); return; }
             if(!rest.menu_items) rest.menu_items = [];
@@ -657,13 +677,27 @@
                 description: desc,
                 price,
                 stock: 50,
-                image: img,
+                image,
                 is_available: true,
                 discount: 'موصى به'
             });
 
+            appState.tempBase64Img = '';
             syncCloud();
             render();
+        }
+
+        function getSmartFoodImage(name){
+            const n = name.toLowerCase();
+            if(n.includes('برجر') || n.includes('burger')) return 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500';
+            if(n.includes('كباب') || n.includes('مشاوي') || n.includes('لحم') || n.includes('شيش')) return 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500';
+            if(n.includes('شاورما') || n.includes('سندوتش')) return 'https://images.unsplash.com/photo-1529042216956-751c804d9095?w=500';
+            if(n.includes('حمص') || n.includes('مقبلات') || n.includes('سلطة')) return 'https://images.unsplash.com/photo-1577805947697-89e18249d767?w=500';
+            if(n.includes('قهوة') || n.includes('اسبريسو') || n.includes('لاتيه') || n.includes('كابتشينو')) return 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=500';
+            if(n.includes('كرواسون') || n.includes('معجنات') || n.includes('كعكة')) return 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=500';
+            if(n.includes('سمك') || n.includes('جمبري') || n.includes('بحرية')) return 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=500';
+            if(n.includes('بيتزا') || n.includes('معجنات')) return 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500';
+            return 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500';
         }
 
         function parseSmartMagicText(){
@@ -689,12 +723,12 @@
                     
                     if(parts[1]) {
                         parts[1].split(',').forEach(itemStr => {
-                            parseAndAddItem(rest, currentCatId, itemStr);
+                            parseAndAddItemSmart(rest, currentCatId, itemStr);
                         });
                     }
                 } else {
                     line.split(',').forEach(itemStr => {
-                        parseAndAddItem(rest, currentCatId, itemStr);
+                        parseAndAddItemSmart(rest, currentCatId, itemStr);
                     });
                 }
             });
@@ -704,13 +738,14 @@
             render();
         }
 
-        function parseAndAddItem(rest, catId, str) {
+        function parseAndAddItemSmart(rest, catId, str) {
             str = str.trim();
             const m = str.match(/\d+/);
             if(!m) return;
             const price = Number(m[0]);
             const name = str.replace(m[0], '').replace(/ج/g, '').replace(/جنيه/g, '').replace(/ر.س/g, '').trim();
             if(name) {
+                const image = getSmartFoodImage(name);
                 rest.menu_items.push({
                     id: 'itm_' + Date.now() + Math.random(),
                     category_id: catId,
@@ -718,7 +753,7 @@
                     description: 'طازج ومعد بإتقان لترضيك',
                     price,
                     stock: 50,
-                    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500',
+                    image,
                     is_available: true,
                     discount: ''
                 });
