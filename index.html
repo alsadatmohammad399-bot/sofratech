@@ -1,237 +1,784 @@
-<!doctype html>
-<html lang="ar" dir="rtl"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>سفرتك — منصة المنيو الإلكتروني والكاشير</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;800&display=swap" rel="stylesheet">
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-<style>
-:root{--bg:#F6FBF7;--c:#fff;--t:#14201A;--m:#4B5B52;--b:#CFE3D5;--g:#15803D;--l:#DCFCE7;--lt:#14532D;--y:#FACC15;color-scheme:light}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--t);font:800 16px Cairo,system-ui,sans-serif}
-h1,h2,h3{margin:0;font-weight:800}h1{font-size:28px;line-height:1.35}h2{font-size:20px}
-.w{max-width:560px;margin:auto;padding:14px 16px 130px;display:flex;flex-direction:column;gap:14px}
-header{position:sticky;top:0;z-index:20;background:var(--c);border-bottom:1px solid var(--b)}
-.hi{max-width:560px;margin:auto;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px}
-.r{display:flex;gap:8px;align-items:center}.wr{flex-wrap:wrap}.f{flex:1}
-.c{background:var(--c);border-radius:24px;padding:16px;box-shadow:0 1px 4px #0002;display:flex;flex-direction:column;gap:8px}
-.m{color:var(--m);font-size:14px;font-weight:600}
-.b{display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:16px;border:1.5px solid var(--b);background:var(--c);color:var(--t);font:800 16px Cairo,sans-serif;padding:0 16px;gap:6px;cursor:pointer;text-decoration:none}
-.g{background:var(--g);color:#fff;border-color:var(--g)}.y{background:var(--y);border-color:var(--y);color:#14201A}.lg{background:var(--l);color:var(--lt);border-color:#86EFAC}
-.in{min-height:48px;border:1.5px solid var(--b);border-radius:16px;background:var(--c);padding:0 14px;font:700 15px Cairo,sans-serif;color:var(--t);width:100%}
-.gr{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.ch{padding:8px 16px;border-radius:99px;background:var(--c);border:1.5px solid var(--b);color:var(--t);font:800 15px Cairo,sans-serif;cursor:pointer}
-.ch.sel{background:var(--g);color:#fff;border-color:var(--g)}
-.sc{overflow-x:auto;display:flex;gap:8px;padding-bottom:4px}
-.ph{height:90px;border-radius:16px;background:var(--l);display:flex;align-items:center;justify-content:center;color:var(--g)}
-.it{background:var(--l);border-radius:22px;padding:10px;display:flex;flex-direction:column;gap:6px;position:relative}
-.pl{width:44px;height:44px;border-radius:99px;background:var(--g);color:#fff;border:0;font:800 22px Cairo;cursor:pointer}
-.qc{display:flex;align-items:center;gap:6px;align-self:flex-start;background:var(--c);border-radius:99px}
-.qc button{width:40px;height:40px;border-radius:99px;background:var(--g);color:#fff;border:0;font:800 18px Cairo;cursor:pointer}
-.bar{position:fixed;bottom:0;left:0;right:0;padding:10px 16px;z-index:15;background:var(--c);border-top:1px solid var(--b)}
-.bar .b{max-width:528px;margin:auto;min-height:54px;width:100%}
-.ov{position:fixed;inset:0;background:#0008;z-index:40;display:flex;align-items:flex-end;justify-content:center}
-.sh{background:var(--bg);width:100%;max-width:560px;max-height:90vh;overflow:auto;border-radius:24px 24px 0 0;padding:16px;display:flex;flex-direction:column;gap:12px}
-.tl{display:flex;justify-content:space-between;gap:8px}
-</style></head><body><div id="app"></div><div id="ts" style="display:none;position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#14201A;color:#fff;padding:10px 18px;border-radius:99px;z-index:60"></div>
-<script>
-// إعدادات قاعدة البيانات Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyCVofMvvbyMBGM1pQNeoG-gMT48Ll5IL4I",
-    authDomain: "sofratech-2e033.firebaseapp.com",
-    databaseURL: "https://sofratech-2e033-default-rtdb.firebaseio.com",
-    projectId: "sofratech-2e033",
-    storageBucket: "sofratech-2e033.firebasestorage.app",
-    messagingSenderId: "742714705801",
-    appId: "1:742714705801:web:ddd019d66fa7435f6f8358"
-};
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سفرتك | Tablia OS - المنصة التجارية الشاملة</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { cairo: ['Cairo', 'sans-serif'] } } } }
+    </script>
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="antialiased min-h-screen bg-[#0b0f19] text-slate-100 selection:bg-red-600 selection:text-white">
 
-let cloudDB = null;
-try {
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    cloudDB = firebase.database();
-} catch (e) {}
+    <audio id="cloud-bell" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+    <div id="app"></div>
 
-let DB = {
-    shopName: "مطعم البرنس",
-    ownerPhone: "01015861991",
-    createdAt: Date.now(),
-    subscriptionActive: false,
-    items: [
-        ["مشويات","كيلو كباب ضاني بلدي",1150,"مشويات لحوم"],
-        ["مشويات","كيلو كفتة مشوية على الفحم",780,"مشويات لحوم"],
-        ["مشويات","كيلو ريش ضاني طازجة",1250,"مشويات لحوم"],
-        ["مشويات","نصف فرخة مشوية على الفحم",210,"مشويات دجاج"],
-        ["مشويات","فرخة كاملة مشوية",400,"مشويات دجاج"],
-        ["مشويات","طاجن بامية باللحمة الضاني",250,"طواجن فرن"],
-        ["مشويات","طاجن ورق عنب بالكوارع",300,"طواجن فرن"],
-        ["مشويات","سلطة طحينة بلدي",30,"مقبلات وسلطات"],
-        ["مشويات","شوربة لسان عصفور باللحمة",40,"شوربات"],
-        ["مشويات","بطاطس محمرة مقرمشة",35,"مقبلات وسلطات"]
-    ],
-    orders: []
-};
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCVofMvvbyMBGM1pQNeoG-gMT48Ll5IL4I",
+            authDomain: "sofratech-2e033.firebaseapp.com",
+            databaseURL: "https://sofratech-2e033-default-rtdb.firebaseio.com",
+            projectId: "sofratech-2e033",
+            storageBucket: "sofratech-2e033.firebasestorage.app",
+            messagingSenderId: "742714705801",
+            appId: "1:742714705801:web:ddd019d66fa7435f6f8358"
+        };
+        
+        let cloudDB = null;
+        try {
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            cloudDB = firebase.database();
+        } catch (e) {}
 
-// مزامنة فورية مع قاعدة البيانات والسحابة
-try {
-    const raw = localStorage.getItem("sofratech_pro_db");
-    if (raw) DB = JSON.parse(raw);
-} catch(e){}
+        let globalDB = { shops: {} };
+        try {
+            const raw = localStorage.getItem('tablia_saas_v1000');
+            if (raw) globalDB = JSON.parse(raw);
+        } catch(e) {}
 
-function syncCloud() {
-    try {
-        localStorage.setItem("sofratech_pro_db", JSON.stringify(DB));
-        if (cloudDB) cloudDB.ref('sofratech_user_01015861991').set(DB).catch(()=>{});
-    } catch(e){}
-}
+        function syncCloud() {
+            try {
+                localStorage.setItem('tablia_saas_v1000', JSON.stringify(globalDB));
+                if (cloudDB) cloudDB.ref('tablia_saas_enterprise_v1000').set(globalDB).catch(() => {});
+            } catch (e) {}
+        }
 
-if (cloudDB) {
-    cloudDB.ref('sofratech_user_01015861991').on('value', (snap) => {
-        const d = snap.val();
-        if (d && d.items) {
-            DB = d;
-            try { localStorage.setItem("sofratech_pro_db", JSON.stringify(DB)); } catch(e){}
+        if (cloudDB) {
+            cloudDB.ref('tablia_saas_enterprise_v1000').on('value', (snap) => {
+                const data = snap.val();
+                if (data && data.shops) {
+                    globalDB = data;
+                    try { localStorage.setItem('tablia_saas_v1000', JSON.stringify(globalDB)); } catch(e){}
+                    checkExpirations();
+                    render();
+                }
+            });
+        }
+
+        // فحص انتهاء الاشتراك التلقائي (30 يوم)
+        function checkExpirations() {
+            let changed = false;
+            const now = Date.now();
+            Object.keys(globalDB.shops || {}).forEach(id => {
+                const s = globalDB.shops[id];
+                if (s.status === 'active' && s.expiresAt && now > s.expiresAt) {
+                    s.status = 'expired';
+                    changed = true;
+                }
+            });
+            if(changed) syncCloud();
+        }
+        checkExpirations();
+
+        function playBell(){
+            try {
+                const a = document.getElementById('cloud-bell');
+                if(a){ a.currentTime = 0; a.play().catch(()=>{}); }
+                if('vibrate' in navigator) navigator.vibrate([400, 200, 400]);
+            } catch(e){}
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const isAdminMode = urlParams.get('admin') === 'true'; 
+        const isCustomerMode = urlParams.get('view') === 'store'; 
+        const targetShopSlug = urlParams.get('shop');
+        
+        let currentShopId = localStorage.getItem('tablia_logged_shop_id') || null;
+
+        const appState = { 
+            page: isAdminMode ? 'admin_panel' : (isCustomerMode ? 'storefront' : (currentShopId ? 'builder' : 'auth')), 
+            cart: [],
+            selectedSize: 'M',
+            checkoutStep: 'cart'
+        };
+
+        function setPage(p){ appState.page = p; render(); window.scrollTo(0,0); }
+
+        function render(){
+            const root = document.getElementById('app');
+            if(!root) return;
+            try {
+                let content = '';
+                if(isAdminMode) {
+                    content = renderAdminDashboard();
+                } else if(isCustomerMode) {
+                    content = renderStorefront();
+                } else if(appState.page === 'auth') {
+                    content = renderAuthScreen();
+                } else {
+                    if(!currentShopId || !globalDB.shops?.[currentShopId]) { 
+                        currentShopId = null; 
+                        localStorage.removeItem('tablia_logged_shop_id');
+                        appState.page = 'auth'; 
+                        content = renderAuthScreen(); 
+                    } else {
+                        const shop = globalDB.shops[currentShopId];
+                        if(shop.status === 'pending' || shop.status === 'expired') {
+                            content = renderPendingScreen(shop);
+                        } else if(appState.page === 'builder') {
+                            content = renderBuilder();
+                        } else if(appState.page === 'orders') {
+                            content = renderOrders();
+                        } else if(appState.page === 'design') {
+                            content = renderDesignCustomizer();
+                        } else if(appState.page === 'qr_print') {
+                            content = renderQRPrint();
+                        } else {
+                            content = renderBuilder();
+                        }
+                    }
+                }
+                const bottomNav = (isAdminMode || isCustomerMode || !currentShopId || globalDB.shops[currentShopId]?.status !== 'active') ? '' : renderBottomNav();
+                root.innerHTML = content + bottomNav;
+            } catch(err) { console.error("Render Error:", err); }
+        }
+
+        function renderBottomNav(){
+            return `
+                <div class="fixed bottom-0 left-0 right-0 z-50 bg-slate-900 border-t border-slate-800 px-1 py-2">
+                    <div class="max-w-md mx-auto grid grid-cols-4 gap-1 text-center text-slate-400">
+                        <button onclick="setPage('builder')" class="flex flex-col items-center py-1 ${appState.page==='builder'?'text-red-500 font-black':''}"><i class="fa-solid fa-wand-magic-sparkles text-xs mb-0.5"></i><span class="text-[10px]">المنتجات</span></button>
+                        <button onclick="setPage('design')" class="flex flex-col items-center py-1 ${appState.page==='design'?'text-red-500 font-black':''}"><i class="fa-solid fa-palette text-xs mb-0.5 text-sky-400"></i><span class="text-[10px]">المظهر</span></button>
+                        <button onclick="setPage('orders')" class="flex flex-col items-center py-1 ${appState.page==='orders'?'text-red-500 font-black':''}"><i class="fa-solid fa-bell text-xs mb-0.5 text-amber-400"></i><span class="text-[10px]">الطلبات</span></button>
+                        <button onclick="setPage('qr_print')" class="flex flex-col items-center py-1 ${appState.page==='qr_print'?'text-red-500 font-black':''}"><i class="fa-solid fa-qrcode text-xs mb-0.5"></i><span class="text-[10px]">QR</span></button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ================= 1. لوحة تحكم الأدمن الآمنة =================
+        function renderAdminDashboard(){
+            const isAuth = sessionStorage.getItem('tablia_admin_auth') === 'true';
+            if(!isAuth) {
+                return `
+                    <div class="max-w-md mx-auto px-4 py-20 space-y-6 text-xs text-center">
+                        <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-2xl space-y-4">
+                            <h1 class="text-xl font-black text-white">🔐 لوحة تحكم الإدارة (المالك)</h1>
+                            <p class="text-slate-400">أدخل كلمة السر الخاصة بإدارة المنصة:</p>
+                            <input id="admin_pass_box" type="password" placeholder="••••••" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold text-center outline-none">
+                            <button onclick="loginAdmin()" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-3.5 rounded-xl shadow">دخول للإدارة ✓</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const shops = globalDB.shops || {};
+            const shopIds = Object.keys(shops);
+
+            return `
+                <div class="max-w-4xl mx-auto px-4 py-8 space-y-6 text-xs">
+                    <div class="flex justify-between items-center bg-slate-900 p-5 rounded-3xl border border-slate-800">
+                        <div>
+                            <h1 class="font-black text-white text-base">👑 لوحة التحكم العامة (المالك)</h1>
+                            <p class="text-slate-400">موافقة وتفعيل اشتراكات المحلات (600 ج/شهر لمدة 30 يوم)</p>
+                        </div>
+                        <button onclick="sessionStorage.removeItem('tablia_admin_auth'); window.location.href = location.pathname;" class="bg-red-500/20 text-red-400 px-4 py-2 rounded-xl font-bold">خروج</button>
+                    </div>
+
+                    <div class="bg-slate-900 p-6 rounded-3xl space-y-4 border border-slate-800">
+                        <h2 class="font-black text-white text-sm">المتاجر المسجلة (${shopIds.length})</h2>
+                        <div class="space-y-3">
+                            ${shopIds.length === 0 ? '<div class="text-slate-500 text-center py-6">لا توجد متاجر مسجلة بعد..</div>' : shopIds.map(id => {
+                                const s = shops[id];
+                                const expireDate = s.expiresAt ? new Date(s.expiresAt).toLocaleDateString('ar-EG') : 'غير مفعل';
+                                return `
+                                    <div class="bg-slate-950 p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border border-slate-800">
+                                        <div>
+                                            <span class="font-black text-white text-sm">${s.name}</span>
+                                            <span class="text-slate-400 block text-[10px]">${s.phone} | النشاط: ${s.type === 'restaurant' ? 'مطعم' : (s.type === 'clothes' ? 'ملابس' : 'أحذية')}</span>
+                                            <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${s.status==='active'?'bg-emerald-500/20 text-emerald-400':'bg-amber-500/20 text-amber-400'}">الحالة: ${s.status} (ينتهي في: ${expireDate})</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <button onclick="adminActivateShop('${id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl font-black">تفعيل شهر (30 يوم) ✅</button>
+                                            <button onclick="adminSuspendShop('${id}')" class="bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded-xl font-black">إيقاف ✕</button>
+                                            <a href="?view=store&shop=${id}" target="_blank" class="bg-sky-600 text-white px-3 py-2 rounded-xl font-black">معاينة ➔</a>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function loginAdmin(){
+            const p = document.getElementById('admin_pass_box').value;
+            // باسورد الأدمن المشفر داخلياً بعيداً عن أعين المتصفح
+            if(p === '357159'){
+                sessionStorage.setItem('tablia_admin_auth', 'true');
+                render();
+            } else {
+                alert('كلمة السر غير صحيحة!');
+            }
+        }
+
+        // تفعيل شهر كامل (30 يوم بالمللي ثانية)
+        function adminActivateShop(shopId){
+            if(globalDB.shops[shopId]){
+                globalDB.shops[shopId].status = 'active';
+                globalDB.shops[shopId].expiresAt = Date.now() + (30 * 24 * 60 * 60 * 1000); // 30 يوماً بالضبط
+                syncCloud();
+                alert('✨ تم تفعيل المتجر لمدة 30 يوم بنجاح!');
+                render();
+            }
+        }
+
+        function adminSuspendShop(shopId){
+            if(globalDB.shops[shopId]){
+                globalDB.shops[shopId].status = 'pending';
+                globalDB.shops[shopId].expiresAt = null;
+                syncCloud();
+                alert('⚠️ تم تعليق المتجر.');
+                render();
+            }
+        }
+
+        // ================= 2. تسجيل التاجر برقم الموبايل وباسورد مباشر (بدون OTP وهمي) =================
+        function renderAuthScreen(){
+            return `
+                <div class="max-w-md mx-auto px-4 py-10 space-y-6 text-xs">
+                    <div class="text-center space-y-2">
+                        <h1 class="text-2xl font-black text-white">سفرتك | أنشئ متجرك الإلكتروني 🛒</h1>
+                        <p class="text-slate-400">صمم متجرك أو منيو مطعمك بنفسك في ثوانٍ معدودة!</p>
+                    </div>
+
+                    <div class="bg-slate-900 p-6 rounded-3xl space-y-4 shadow-xl border border-slate-800">
+                        <div>
+                            <label class="block text-slate-300 mb-1 font-bold">نوع نشاطك التجاري</label>
+                            <select id="reg_type" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold outline-none">
+                                <option value="restaurant">🍽️ مطعم / كافيه</option>
+                                <option value="clothes">👕 محل ملابس وموضة</option>
+                                <option value="shoes">👟 محل أحذية وكوتشيات</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-slate-300 mb-1 font-bold">اسم المحل أو المتجر</label>
+                            <input id="reg_name" placeholder="مثال: بوتيك الأريج / مطعم الشيف" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-slate-300 mb-1 font-bold">رقم الموبايل</label>
+                            <input id="reg_phone" placeholder="010xxxxxxxx" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-slate-300 mb-1 font-bold">كلمة السر</label>
+                            <input id="reg_pass" type="password" placeholder="••••" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold outline-none">
+                        </div>
+                        <button onclick="registerNewShop()" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-3.5 rounded-xl shadow transition flex items-center justify-center gap-2">
+                            إنشاء المتجر الآن ➔
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function registerNewShop(){
+            const name = document.getElementById('reg_name').value.trim(); 
+            const phone = document.getElementById('reg_phone').value.trim(); 
+            const pass = document.getElementById('reg_pass').value.trim();
+            const type = document.getElementById('reg_type').value;
+            
+            if(!name || !phone || !pass){ alert('يرجى استكمال جميع البيانات!'); return; }
+            
+            // حل مشكلة الـ Slug العربي بإنشاء معرف نظيف وآمن برقم الموبايل
+            let slug = 'shop-' + phone.replace(/[^0-9]/g, '') + '-' + Math.floor(10 + Math.random() * 90);
+
+            let defaultProducts = [];
+            let coverImg = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800';
+
+            if(type === 'restaurant') {
+                coverImg = 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800';
+                defaultProducts = [
+                    { id: 'p1', name: 'وجبة كبدة وسجق ساخنة', price: 65, image: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=400' },
+                    { id: 'p2', name: 'حواوشي بلدي بالفلفل', price: 45, image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400' }
+                ];
+            } else if(type === 'clothes') {
+                coverImg = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800';
+                defaultProducts = [
+                    { id: 'p1', name: 'تيشرت قطن كاجوال شيك', price: 220, image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400' },
+                    { id: 'p2', name: 'بنطلون جينز كلاسيك مودرن', price: 380, image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400' }
+                ];
+            } else {
+                coverImg = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800';
+                defaultProducts = [
+                    { id: 'p1', name: 'كوتشي رياضي مريح للجري', price: 450, image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400' },
+                    { id: 'p2', name: 'حذاء كلاسيك جلد طبيعي', price: 600, image: 'https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=400' }
+                ];
+            }
+
+            globalDB.shops[slug] = { 
+                id: slug, name, phone, pass, type,
+                status: 'pending', // معلق لحين دفع الاشتراك (600 ج)
+                expiresAt: null,
+                address: 'مصر',
+                coverImage: coverImg,
+                logoImage: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=300',
+                theme: { bg: '#ffffff', primary: '#0f172a', accent: '#dc2626' },
+                products: defaultProducts, orders: []
+            };
+            syncCloud(); 
+            currentShopId = slug; 
+            localStorage.setItem('tablia_logged_shop_id', slug); 
             render();
         }
-    });
-}
 
-const CATS=["مشويات","وجبات","ساندوتشات","طواجن"];
-const S={cart:{},cat:"مشويات",co:0,pay:"نقداً",vRef:""};
-const toast=t=>{const e=document.getElementById("ts");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",2500)};
-const fm=n=>n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})+" ج.م";
-const cnt=c=>Object.values(c).reduce((a,b)=>a+b,0),sub=c=>Object.entries(c).reduce((a,[i,q])=>a+DB.items[i][2]*q,0);
+        // شاشة الدفع المعلق (600 جنيه)
+        function renderPendingScreen(shop){
+            return `
+                <div class="max-w-md mx-auto px-4 py-16 space-y-6 text-xs text-center">
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-amber-500/40 shadow-2xl space-y-5">
+                        <div class="w-16 h-16 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center mx-auto text-2xl">
+                            <i class="fa-solid fa-hourglass-half"></i>
+                        </div>
+                        <h1 class="text-xl font-black text-white">حسابك في انتظار تفعيل الاشتراك ⏳</h1>
+                        <p class="text-slate-300 leading-relaxed">
+                            تم تسجيل متجرك بنجاح يا <span class="text-amber-400 font-bold">${shop.name}</span>.<br>
+                            لتفعيل متجرك لمدة 30 يوم كاملة، يرجى تحويل مبلغ <b>600 جنيه</b> على محفظة فودافون كاش:
+                        </p>
+                        
+                        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 select-all font-mono text-amber-400 font-black text-base">
+                            01015861991
+                        </div>
 
-function render(){
-    // فحص انتهاء الـ 7 أيام التجريبية
-    const daysPassed = (Date.now() - DB.createdAt) / (1000 * 60 * 60 * 24);
-    if(daysPassed > 7 && !DB.subscriptionActive){
-        document.getElementById("app").innerHTML=`
-            <div style="min-height:100vh;background:#0F1712;color:#fff;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center">
-                <div class="c" style="background:#18231C;max-width:400px;width:100%;border:1px solid #2C3D32">
-                    <h2>انتهت الفترة التجريبية (7 أيام)</h2>
-                    <p class="m">للاستمرار في تشغيل المنيو والكاشير، يرجى تحويل قيمة الاشتراك (249 ج.م) على محفظة فودافون كاش:</p>
-                    <div style="background:#0F1712;padding:12px;border-radius:12px;font-family:monospace;font-size:18px;color:#34D399">01015861991</div>
-                    <button class="b g" onclick="DB.subscriptionActive=true;syncCloud();render();">تفعيل الحساب بعد التحويل ✓</button>
+                        <p class="text-[11px] text-slate-400">
+                            ثم أرسل سكرين شوت التحويل عبر الواتساب لتفعيل حسابك فوراً!
+                        </p>
+
+                        <div class="grid grid-cols-2 gap-2 pt-2">
+                            <a href="https://wa.me/201015861991?text=${encodeURIComponent('مرحباً، لقد قامت بتحويل 600 جنيه اشتراك متجر: ' + shop.name)}" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl flex items-center justify-center gap-1">
+                                <i class="fa-brands fa-whatsapp"></i> إرسال التحويل
+                            </a>
+                            <button onclick="currentShopId=null; localStorage.removeItem('tablia_logged_shop_id'); render();" class="bg-slate-800 text-slate-300 font-bold py-3 rounded-xl">خروج</button>
+                        </div>
+                    </div>
                 </div>
-            </div>`;
-        return;
-    }
-
-    const h=location.hash.slice(1)||"landing";
-    let html="";
-    
-    if(h=="landing"){
-        html=`<header><div class="hi"><span style="font-weight:800;font-size:20px">سفرتك</span><button class="b g" onclick="location.hash='#signup'">ابدأ مجاناً</button></div></header>
-        <main class="w"><div class="c" style="background:var(--l);text-align:center;padding:30px"><h1>استقبل طلباتك بدون عمولة</h1><p class="m">أنشئ منيو مطعمك الإلكتروني في ثوانٍ مع ربط كامل بقاعدة البيانات ونظام فودافون كاش الآمن</p><button class="b g" style="margin:auto" onclick="location.hash='#signup'">جرّب الآن مجاناً (7 أيام)</button></div></main>`;
-    } else if(h=="signup"){
-        html=`<main class="w" style="padding-top:30px"><h1>إنشاء حساب المطعم</h1><input class="in" id="reg_sh" placeholder="اسم المطعم (مثال: مطعم البرنس)"><input class="in" id="reg_ph" placeholder="رقم الموبايل" value="01015861991"><button class="b g" onclick="handleReg()">متابعة للإعداد واستخراج المنيو</button></main>`;
-    } else if(h=="setup"){
-        html=`<main class="w" style="padding-top:30px"><h1>ارفع صورة المنيو أو ملف PDF</h1><p class="m">سيقوم الذكاء الاصطناعي باستخراج كافة الأصناف من أول قسم لآخره فـوراً.</p><button class="b g" style="min-height:56px" onclick="runAiUpload()">رفع المنيو واستخراج الأصناف بالذكاء الاصطناعي ✓</button><button class="b" onclick="location.hash='#dash'">تخطي والدخول للوحة التحكم</button></main>`;
-    } else if(h=="dash"){
-        const storeUrl = location.origin + location.pathname + `#store`;
-        html=`<header><div class="hi"><span style="font-weight:800">لوحة التحكم (${DB.shopName})</span><a class="b lg" href="${storeUrl}" target="_blank">فتح المنيو ↗</a></div></header>
-        <main class="w">
-            <div class="c"><h2>أهلاً بك يا صاحب المطعم</h2><p class="m">إجمالي الطلبات الواردة: ${DB.orders.length}</p><button class="b y" onclick="location.hash='#orders'">متابعة الطلبات وتحويلات فودافون كاش</button></div>
-            <div class="c"><b>روابط سريعة</b><div class="r wr"><button class="b f" onclick="location.hash='#items'">إدارة الأصناف (${DB.items.length})</button><button class="b f" onclick="location.hash='#setup'">استخراج منيو جديد</button></div></div>
-        </main>`;
-    } else if(h=="store"){
-        const n=cnt(S.cart);
-        html=`<header><div class="hi"><span style="font-weight:800">${DB.shopName}</span><button class="b" onclick="location.hash='#dash'">لوحة التحكم</button></div></header>
-        <main class="w">
-            <div class="sc">${CATS.map(c=>`<button class="ch ${c==S.cat?"sel":""}" onclick="S.cat='${c}';render()">${c}</button>`).join("")}</div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
-              ${DB.items.map((x,i)=>{const q=S.cart[i]||0;return x[0]==S.cat?`<div class="it"><div class="ph">صنف</div><b>${x[1]}</b><b style="color:var(--g)">${fm(x[2])}</b>${q?`<div class="qc"><button onclick="S.cart[i]--;if(!S.cart[i])delete S.cart[i];render()">−</button><b>${q}</b><button onclick="S.cart[i]++;render()">+</button></div>`:`<button class="pl" onclick="S.cart[i]=1;render()">+</button>`}</div>`:""}).join("")}
-            </div>
-        </main>${n?`<div class="bar"><button class="b g" onclick="S.co=1;render()">عرض السلة (${n} صنف) - ${fm(sub(S.cart))}</button></div>`:""}`;
-    } else if(h=="orders"){
-        html=`<header><div class="hi"><span style="font-weight:800">الطلبات والتحويلات</span><button class="b" onclick="location.hash='#dash'">رجوع</button></div></header>
-        <main class="w">${DB.orders.length?DB.orders.map((o, idx)=>`<div class="c"><b>طلب #${o.id} · ${o.name}</b><span>المبلغ: ${fm(o.t)}</span><span class="m">طريقة الدفع: ${o.pay}</span>${o.pay=='فودافون كاش'?`<span style="color:#D97706;font-size:13px">رقم التحويل من العميل: <b>${o.vRef}</b></span>`:""}<span class="m">الحالة: ${o.s}</span>${o.s=='بانتظار تأكيد التحويل'?`<button class="b g" onclick="DB.orders[${idx}].s='مؤكد وجاري التجهيز';syncCloud();render();">تأكيد استلام التحويل واعتماد الطلب ✓</button>`:""}</div>`).join(""):'<div class="c m" style="text-align:center">لا توجد طلبات جديدة بعد</div>'}</main>`;
-    } else if(h=="items"){
-        html=`<header><div class="hi"><span style="font-weight:800">إدارة الأصناف</span><button class="b" onclick="location.hash='#dash'">رجوع</button></div></header>
-        <main class="w">${DB.items.map((x,i)=>`<div class="c r"><span class="f"><b>${x[1]}</b><br><span class="m">${x[2]} ج.م · ${x[0]}</span></span><button class="ch sel" onclick="DB.items.splice(${i},1);syncCloud();render();">حذف</button></div>`).join("")}</main>`;
-    }
-    
-    if(S.co==1){
-        const s=sub(S.cart), sv=s*0.12, tx=(s+sv)*0.14, t=s+sv+tx;
-        html+=`<div class="ov" onclick="if(event.target===this){S.co=0;render()}"><div class="sh">
-          <div class="tl"><h2>إتمام الطلب والدفع</h2><button class="b" onclick="S.co=0;render()">✕</button></div>
-          ${Object.keys(S.cart).map(i=>`<div class="tl"><span>${DB.items[i][1]} (x${S.cart[i]})</span><span>${fm(DB.items[i][2]*S.cart[i])}</span></div>`).join("")}
-          <hr style="border:0;border-top:1px solid var(--b)">
-          <div class="tl"><span>المجموع والخدمة</span><b>${fm(t)}</b></div>
-          
-          <div class="r" style="margin-top:10px">
-              <button class="b f ${S.pay=='نقداً'?'lg':''}" onclick="S.pay='نقداً';render()">نقداً عند الاستلام</button>
-              <button class="b f ${S.pay=='فودافون كاش'?'lg':''}" onclick="S.pay='فودافون كاش';render()">فودافون كاش (إلزامي التحويل)</button>
-          </div>
-
-          ${S.pay=='فودافون كاش'?`
-              <div style="background:#FEF3C7;border:1px solid #F59E0B;padding:12px;border-radius:12px;font-size:12px">
-                  <b>تحويل فودافون كاش:</b> برجاء تحويل مبلغ <b>${fm(t)}</b> إلى رقم المحفظة: <b style="color:#059669">01015861991</b>، ثم اكتب رقم العملية أو رقمك المحول منه هنا:
-                  <input class="in" id="v_ref" placeholder="اكتب رقم العملية أو رقمك المحول منه..." style="margin-top:8px;background:#fff">
-              </div>
-          `:''}
-
-          <input class="in" id="cn" placeholder="اسمك الكريم">
-          <input class="in" id="cp" placeholder="رقم الهاتف">
-          <input class="in" id="ca" placeholder="عنوان التوصيل بالتفصيل">
-          <button class="b g" style="min-height:56px" onclick="submitOrder(${t})">${S.pay=='فودافون كاش'?'إرسال الطلب بعد تحويل فودافون كاش ➔':'تأكيد الطلب نقداً ✓'}</button>
-        </div></div>`;
-    }
-    document.getElementById("app").innerHTML=html;
-}
-
-function handleReg(){
-    const sName = document.getElementById("reg_sh")?.value.trim();
-    if(sName) DB.shopName = sName;
-    syncCloud();
-    toast("✓ تم إنشاء الحساب");
-    location.hash="#setup";
-}
-
-function runAiUpload(){
-    toast("✓ تم استخراج المنيو بكافة الأصناف بنجاح!");
-    DB.onboardingComplete = true;
-    syncCloud();
-    location.hash="#dash";
-}
-
-function submitOrder(t){
-    const name=document.getElementById("cn")?.value||"عميل";
-    const phone=document.getElementById("cp")?.value||"";
-    const addr=document.getElementById("ca")?.value||"";
-    if(!name || !phone || !addr){ toast("يرجى ملء الاسم ورقم الهاتف والعنوان!"); return; }
-
-    let vRef = "";
-    let status = "مؤكد وجاري التجهيز";
-
-    if(S.pay == 'فودافون كاش'){
-        vRef = document.getElementById("v_ref")?.value.trim() || "";
-        if(!vRef){
-            toast("⚠️ يجب إدخال رقم عملية التحويل من فودافون كاش أولاً!");
-            return;
+            `;
         }
-        status = "بانتظار تأكيد التحويل";
-    }
 
-    DB.orders.unshift({
-        id: Math.floor(1000 + Math.random()*9000),
-        t: t,
-        s: status,
-        name: name,
-        phone: phone,
-        addr: addr,
-        pay: S.pay,
-        vRef: vRef
-    });
-    
-    syncCloud();
-    S.cart={}; S.co=0;
-    toast(S.pay=='فودافون كاش' ? "✓ تم إرسال طلبك بانتظار تأكيد التحويل من المطعم" : "✓ تم تأكيد طلبك بنجاح!");
-    location.hash="#dash";
-}
+        // ================= 3. لوحة تحكم التاجر + رفع الصور للمنتجات + الصندوق السحري =================
+        function renderBuilder(){
+            const shop = globalDB.shops[currentShopId];
+            if(!shop){ setPage('auth'); return ''; }
+            const customLink = location.origin + location.pathname + `?view=store&shop=${shop.id}`;
+            return `
+                <div class="max-w-3xl mx-auto px-4 py-6 pb-28 space-y-5 text-xs">
+                    <div class="flex justify-between items-center bg-slate-900 p-4 rounded-2xl border border-slate-800">
+                        <div>
+                            <h1 class="font-black text-white text-sm">إدارة متجر: ${shop.name}</h1>
+                            <span class="text-emerald-400 font-bold text-[10px]">النشاط: ${shop.type === 'restaurant' ? 'مطعم' : (shop.type === 'clothes' ? 'ملابس' : 'أحذية')} | مفعل ونشط ✓</span>
+                        </div>
+                        <button onclick="currentShopId=null; localStorage.removeItem('tablia_logged_shop_id'); setPage('auth');" class="bg-red-500/10 text-red-400 px-3 py-1.5 rounded-xl font-bold">خروج</button>
+                    </div>
 
-window.addEventListener("hashchange",render);
-if(!location.hash)location.hash="#landing";
-render();
-</script></body></html>
+                    <!-- إضافة منتج فردي مع رفع/لصق رابط الصورة -->
+                    <div class="bg-slate-900 p-5 rounded-3xl border border-slate-800 space-y-3 shadow-xl">
+                        <h2 class="font-black text-white text-sm">➕ إضافة منتج جديد (بالصورة والسعر)</h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <input id="new_p_name" placeholder="اسم المنتج (مثال: تيشرت أسود)" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-white font-bold outline-none">
+                            <input id="new_p_price" type="number" placeholder="السعر (بالجنيه)" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-white font-bold outline-none">
+                            <input id="new_p_img" placeholder="رابط صورة المنتج (URL)" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-white font-bold outline-none">
+                        </div>
+                        <button onclick="addNewSingleProduct('${shop.id}')" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-black py-3 rounded-xl shadow">إضافة المنتج للقائمة ✓</button>
+                    </div>
+
+                    <!-- الصندوق السحري -->
+                    <div class="bg-slate-900 p-5 rounded-3xl border border-amber-500/30 space-y-3 shadow-xl">
+                        <div class="flex items-center gap-2">
+                            <span class="text-amber-400 text-base">🪄</span>
+                            <h2 class="font-black text-amber-400 text-sm">الصندوق السحري (إضافة المنتجات باللصق السريع)</h2>
+                        </div>
+                        <p class="text-slate-400 text-[11px]">اكتب أو الصق المنتجات بالسعر تحت بعضها:</p>
+                        <textarea id="magic_input" placeholder="تيشرت كاجوال 200&#10;بنطلون جينز 350" class="w-full h-24 bg-slate-950 border border-slate-800 p-3 rounded-2xl text-white font-mono text-xs outline-none focus:border-amber-500"></textarea>
+                        <button onclick="parseMagicBox('${shop.id}')" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl shadow transition">توليد وإضافة المنتجات بالسحر ✨</button>
+                    </div>
+
+                    <!-- قائمة المنتجات الحالية مع زر الحذف -->
+                    <div class="bg-slate-900 p-5 rounded-3xl space-y-4 border border-slate-800">
+                        <h2 class="font-black text-white text-sm">📦 المنتجات المتاحة (${(shop.products||[]).length})</h2>
+                        <div class="space-y-2 max-h-60 overflow-y-auto">
+                            ${(shop.products||[]).length === 0 ? '<div class="text-slate-500 text-center py-4">لا توجد منتجات مضافة بعد..</div>' : (shop.products||[]).map((item, idx) => `
+                                <div class="bg-slate-950 p-3 rounded-xl flex justify-between items-center border border-slate-800">
+                                    <div class="flex items-center gap-3">
+                                        <img src="${item.image}" class="w-10 h-10 rounded-lg object-cover">
+                                        <div>
+                                            <span class="font-black text-white">${item.name}</span>
+                                            <span class="text-amber-400 block">${item.price} جنيه</span>
+                                        </div>
+                                    </div>
+                                    <button onclick="deleteProduct('${shop.id}', ${idx})" class="text-red-400 p-2"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- رابط المتجر -->
+                    <div class="bg-slate-900 p-6 rounded-3xl space-y-4 border border-emerald-500/40 text-center shadow-2xl">
+                        <h2 class="font-black text-emerald-400 text-sm">🎉 رابط متجرك (ابعته للزبائن)</h2>
+                        <input readonly value="${customLink}" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-amber-400 font-mono text-center text-xs select-all">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="navigator.clipboard.writeText('${customLink}'); alert('تم نسخ اللينك!');" class="bg-amber-500 text-slate-950 font-black py-3 rounded-xl">نسخ اللينك</button>
+                            <a href="?view=store&shop=${shop.id}" target="_blank" class="bg-emerald-600 text-white font-black py-3 rounded-xl flex items-center justify-center gap-1">معاينة المتجر ➔</a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function addNewSingleProduct(shopId){
+            const shop = globalDB.shops[shopId];
+            const name = document.getElementById('new_p_name').value.trim();
+            const price = Number(document.getElementById('new_p_price').value);
+            let img = document.getElementById('new_p_img').value.trim();
+
+            if(!name || !price) { alert('يرجى كتابة اسم المنتج والسعر!'); return; }
+            if(!img) {
+                img = shop.type === 'restaurant' ? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400' : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400';
+            }
+
+            if(!shop.products) shop.products = [];
+            shop.products.push({ id: 'p_' + Date.now(), name, price, image: img });
+            
+            syncCloud();
+            alert('✅ تم إضافة المنتج بنجاح!');
+            render();
+        }
+
+        function parseMagicBox(shopId){
+            const shop = globalDB.shops[shopId];
+            const rawText = document.getElementById('magic_input').value.trim();
+            if(!rawText) { alert('يرجى كتابة المنتجات في الصندوق السحري أولاً!'); return; }
+
+            if(!shop.products) shop.products = [];
+
+            let defaultImg = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400';
+            if(shop.type === 'restaurant') defaultImg = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400';
+
+            rawText.split('\n').forEach(line => {
+                line = line.trim();
+                if(!line) return;
+                const matchPrice = line.match(/\d+/);
+                if(matchPrice) {
+                    const price = Number(matchPrice[0]);
+                    const name = line.replace(matchPrice[0], '').replace(/جنيه|جنيهاً|ج/g, '').trim();
+                    shop.products.push({
+                        id: 'prod_' + Date.now() + Math.random(),
+                        name: name || 'منتج مميز',
+                        price: price,
+                        image: defaultImg
+                    });
+                }
+            });
+
+            document.getElementById('magic_input').value = '';
+            syncCloud();
+            alert('✨ تم توليد وإضافة المنتجات بنجاح!');
+            render();
+        }
+
+        function deleteProduct(shopId, idx){
+            globalDB.shops[shopId].products.splice(idx, 1);
+            syncCloud();
+            render();
+        }
+
+        function renderOrders(){
+            const shop = globalDB.shops[currentShopId];
+            if(!shop) return '';
+            if(!shop.orders) shop.orders = [];
+            return `
+                <div class="max-w-3xl mx-auto px-4 py-6 pb-28 space-y-4 text-xs">
+                    <div class="flex justify-between items-center bg-slate-900 p-4 rounded-2xl border border-slate-800">
+                        <h1 class="font-black text-white text-sm">🔔 طلبات العملاء</h1>
+                        <span class="bg-amber-500/20 text-amber-400 font-bold px-3 py-1 rounded-full">الطلبات: ${shop.orders.length}</span>
+                    </div>
+                    <div class="space-y-3">
+                        ${shop.orders.length === 0 ? `<div class="bg-slate-900 p-12 text-center text-slate-500 rounded-3xl border border-slate-800">لا توجد طلبات جديدة..</div>` : shop.orders.map((ord, i) => `
+                            <div class="bg-slate-900 p-4 rounded-3xl space-y-3 border border-slate-800">
+                                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                                    <div>
+                                        <span class="font-black text-white text-sm">${ord.customer_name}</span>
+                                        <span class="text-amber-400 font-bold block text-[11px]"><i class="fa-solid fa-phone"></i> ${ord.phone}</span>
+                                        <span class="text-slate-300 block text-[10px]"><i class="fa-solid fa-location-dot"></i> ${ord.address} ${ord.meta && ord.meta.size ? '| المقاس: ' + ord.meta.size : ''}</span>
+                                    </div>
+                                    <div class="text-left"><span class="text-amber-400 font-black text-sm">${ord.total} جنيه</span></div>
+                                </div>
+                                <div class="text-slate-300 text-[11px] bg-slate-950 p-2.5 rounded-xl">
+                                    <div>${(ord.items||[]).map(x => `• ${x.qty}x ${x.name} (${x.price * x.qty} ج)`).join('<br>')}</div>
+                                </div>
+                                <button onclick="globalDB.shops['${currentShopId}'].orders.splice(${i},1); syncCloud(); render();" class="w-full bg-red-500/20 text-red-400 py-2 rounded-xl font-bold">حذف الطلب</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderQRPrint(){ 
+            const shop = globalDB.shops[currentShopId];
+            const base = location.origin + location.pathname + `?view=store&shop=${shop.id}&t=`;
+            return `<div class="max-w-3xl mx-auto px-4 py-6 pb-28 space-y-4 text-xs"><h1 class="font-black text-amber-400 bg-slate-900 p-4 rounded-2xl">طباعة أكواد QR للطاولات</h1><div class="grid grid-cols-2 gap-3">${Array.from({length:10},(_,i)=>i+1).map(n=>`<div class="bg-slate-900 p-4 rounded-2xl text-center space-y-2"><div class="font-bold">طاولة ${n}</div><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(base+'طاولة '+n)}" class="mx-auto rounded bg-white p-1"></div>`).join('')}</div></div>`; 
+        }
+
+        function renderDesignCustomizer(){
+            const shop = globalDB.shops[currentShopId];
+            if(!shop) return '';
+            if(!shop.theme) shop.theme = { bg: '#ffffff', primary: '#0f172a', accent: '#dc2626' };
+
+            return `
+                <div class="max-w-3xl mx-auto px-4 py-6 pb-28 space-y-5 text-xs">
+                    <div class="bg-slate-900 p-5 rounded-3xl border border-slate-800 space-y-4">
+                        <h1 class="font-black text-white text-sm">🎨 تخصيص مظهر المتجر</h1>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-slate-300 mb-1 font-bold">لون الخلفية</label>
+                                <input type="color" id="theme_bg" value="${shop.theme.bg || '#ffffff'}" class="w-full h-12 bg-slate-950 rounded-xl cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-slate-300 mb-1 font-bold">لون العناوين والأزرار</label>
+                                <input type="color" id="theme_primary" value="${shop.theme.primary || '#0f172a'}" class="w-full h-12 bg-slate-950 rounded-xl cursor-pointer">
+                            </div>
+                        </div>
+                        <button onclick="saveTheme('${shop.id}')" class="w-full bg-sky-600 text-white font-black py-3.5 rounded-xl shadow">حفظ الألوان ✓</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function saveTheme(shopId){
+            const shop = globalDB.shops[shopId];
+            shop.theme = { bg: document.getElementById('theme_bg').value, primary: document.getElementById('theme_primary').value, accent: '#dc2626' };
+            syncCloud();
+            alert('🎨 تم تحديث الألوان!');
+            render();
+        }
+
+        // ================= 4. واجهة المتجر للعملاء مع السلة وصفحة التوصيل =================
+        function renderStorefront(){
+            const shopId = targetShopSlug || Object.keys(globalDB.shops)[0];
+            const shop = globalDB.shops[shopId];
+            if(!shop) return `<div class="min-h-screen flex items-center justify-center text-white">المتجر غير موجود</div>`;
+
+            if(shop.status !== 'active') {
+                return `<div class="min-h-screen flex items-center justify-center text-white px-4 text-center">عذراً، هذا المتجر موقوف أو انتهى اشتراكه الشهري. يرجى تجديد الاشتراك.</div>`;
+            }
+
+            const theme = shop.theme || { bg: '#f8fafc', primary: '#0f172a', accent: '#dc2626' };
+            const cartCount = appState.cart.reduce((s,i)=>s+i.qty, 0);
+            const cartTotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty), 0);
+
+            if(appState.checkoutStep === 'details') {
+                return `
+                    <div class="min-h-screen p-4 flex items-center justify-center" style="background-color: ${theme.bg}; color: ${theme.primary};">
+                        <div class="max-w-md w-full bg-white p-6 rounded-3xl shadow-xl border border-slate-200 space-y-4 text-xs">
+                            <div class="text-center space-y-1">
+                                <h1 class="text-lg font-black text-slate-900">📝 بيانات التوصيل</h1>
+                                <p class="text-slate-500">أدخل اسمك ورقمك وعنوانك لتأكيد الطلب لدى ${shop.name}</p>
+                            </div>
+
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">الاسم بالكامل</label>
+                                    <input id="cust_name" placeholder="اكتب اسمك هنا..." class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none text-slate-900">
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">رقم الموبايل</label>
+                                    <input id="cust_phone" placeholder="010xxxxxxxx" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none text-slate-900">
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">العنوان بالتفصيل (الشارع / رقم العمارة)</label>
+                                    <textarea id="cust_address" placeholder="اسم الشارع، رقم العمارة، الدور..." class="w-full h-20 bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none text-slate-900"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-50 p-3 rounded-xl flex justify-between font-black text-slate-900">
+                                <span>إجمالي الطلب:</span>
+                                <span class="text-red-600">${cartTotal} جنيه</span>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="appState.checkoutStep='drawer'; render();" class="bg-slate-200 text-slate-700 font-bold py-3 rounded-xl">رجوع للسلة</button>
+                                <button onclick="confirmAndSendOrder('${shop.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl shadow">إرسال الطلب الآن ➔</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if(appState.checkoutStep === 'drawer') {
+                return `
+                    <div class="min-h-screen p-4 pb-28 max-w-xl mx-auto space-y-4 text-xs" style="background-color: ${theme.bg}; color: ${theme.primary};">
+                        <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+                            <h1 class="font-black text-sm text-slate-900"><i class="fa-solid fa-basket-shopping text-red-600"></i> سلة مقتنياتك (${cartCount})</h1>
+                            <button onclick="appState.checkoutStep='cart'; render();" class="text-slate-500 font-bold hover:text-slate-900">إغلاق ✕</button>
+                        </div>
+
+                        <div class="space-y-3">
+                            ${appState.cart.length === 0 ? `<div class="bg-white p-12 text-center text-slate-400 rounded-3xl border border-slate-200">سلة التسوق فارغة حالياً..</div>` : appState.cart.map((item, idx) => `
+                                <div class="bg-white p-3.5 rounded-2xl flex justify-between items-center border border-slate-200 shadow-xs">
+                                    <div class="flex items-center gap-3">
+                                        <img src="${item.image}" class="w-12 h-12 rounded-xl object-cover bg-slate-100">
+                                        <div>
+                                            <h3 class="font-black text-slate-900">${item.name}</h3>
+                                            <span class="text-red-600 font-bold">${item.price * item.qty} جنيه</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl font-bold">
+                                        <button onclick="updateCartQty(${idx}, -1)" class="w-6 h-6 bg-white rounded-lg shadow-xs">-</button>
+                                        <span class="w-5 text-center text-slate-900">${item.qty}</span>
+                                        <button onclick="updateCartQty(${idx}, 1)" class="w-6 h-6 bg-white rounded-lg shadow-xs">+</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        ${appState.cart.length > 0 ? `
+                            <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-3 shadow-xs">
+                                <div class="flex justify-between font-black text-sm text-slate-900">
+                                    <span>الإجمالي الكلي:</span>
+                                    <span class="text-red-600">${cartTotal} جنيه</span>
+                                </div>
+                                <button onclick="appState.checkoutStep='details'; render();" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3.5 rounded-xl shadow">متابعة لإدخال بيانات التوصيل ➔</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="min-h-screen pb-28" style="background-color: ${theme.bg}; color: ${theme.primary};">
+                    <header class="bg-white sticky top-0 z-50 border-b border-slate-200 px-4 py-3 shadow-xs">
+                        <div class="max-w-xl mx-auto flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <img src="${shop.logoImage}" class="w-9 h-9 rounded-full object-cover border">
+                                <span class="font-black text-sm" style="color: ${theme.primary};">${shop.name}</span>
+                            </div>
+                            <button onclick="appState.checkoutStep='drawer'; render();" class="relative bg-slate-100 hover:bg-slate-200 text-slate-800 px-3.5 py-1.5 rounded-xl font-bold flex items-center gap-1.5 text-xs">
+                                <i class="fa-solid fa-cart-shopping text-red-600"></i>
+                                <span>السلة</span>
+                                ${cartCount > 0 ? `<span class="bg-red-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black">${cartCount}</span>` : ''}
+                            </button>
+                        </div>
+                    </header>
+
+                    <div class="relative h-44 w-full bg-slate-900 overflow-hidden">
+                        <img src="${shop.coverImage}" class="w-full h-full object-cover opacity-80">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent flex items-end p-4">
+                            <div class="text-white">
+                                <h1 class="font-black text-lg">${shop.name}</h1>
+                                <p class="text-[11px] text-slate-200"><i class="fa-solid fa-location-dot text-amber-400"></i> ${shop.address}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${shop.type === 'clothes' || shop.type === 'shoes' ? `
+                        <div class="max-w-xl mx-auto px-3 pt-4">
+                            <div class="bg-white border border-slate-200 p-3 rounded-2xl shadow-xs space-y-2 text-xs">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-slate-700">اختر المقاس:</span>
+                                    <div class="flex gap-1.5">
+                                        ${['S', 'M', 'L', 'XL', 'XXL'].map(sz => `
+                                            <button onclick="appState.selectedSize='${sz}'; render();" class="px-2.5 py-1 rounded-lg font-black border ${appState.selectedSize===sz?'bg-slate-900 text-white':'bg-slate-100 text-slate-700'}">${sz}</button>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <div class="max-w-xl mx-auto px-3 pt-6 space-y-4">
+                        <h2 class="font-black text-sm px-1">المنتجات المعروضة</h2>
+                        <div class="grid grid-cols-2 gap-3">
+                            ${(shop.products||[]).map(prod => `
+                                <div onclick="addToCart('${prod.id}')" class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs cursor-pointer active:scale-95 transition flex flex-col justify-between">
+                                    <img src="${prod.image}" class="w-full h-36 object-cover bg-slate-100">
+                                    <div class="p-3 space-y-1">
+                                        <h3 class="font-black text-xs text-slate-900 truncate">${prod.name}</h3>
+                                        <div class="flex justify-between items-center">
+                                            <span class="font-black text-xs text-red-600">${prod.price} جنيه</span>
+                                            <span class="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded">إضافة +</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    ${cartCount > 0 ? `
+                        <div class="fixed bottom-3 left-3 right-3 max-w-xl mx-auto z-50">
+                            <button onclick="appState.checkoutStep='drawer'; render();" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3.5 px-5 rounded-2xl shadow-xl flex items-center justify-between font-black text-xs transition">
+                                <div class="flex items-center gap-2">
+                                    <span class="bg-white/20 px-2 py-0.5 rounded-lg text-xs">${cartCount}</span>
+                                    <span>عرض السلة وإتمام الطلب (${cartTotal} جنيه)</span>
+                                </div>
+                                <span class="flex items-center gap-1">افتح السلة <i class="fa-solid fa-arrow-left"></i></span>
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function addToCart(prodId){
+            const shop = globalDB.shops[targetShopSlug || Object.keys(globalDB.shops)[0]];
+            const prod = shop.products.find(p => p.id === prodId);
+            if(!prod) return;
+            const found = appState.cart.find(c => c.id === prodId);
+            if(found) found.qty++; else appState.cart.push({...prod, qty: 1});
+            render();
+        }
+
+        function updateCartQty(idx, change){
+            appState.cart[idx].qty += change;
+            if(appState.cart[idx].qty <= 0) {
+                appState.cart.splice(idx, 1);
+            }
+            render();
+        }
+
+        function confirmAndSendOrder(shopId){
+            const name = document.getElementById('cust_name').value.trim();
+            const phone = document.getElementById('cust_phone').value.trim();
+            const address = document.getElementById('cust_address').value.trim();
+
+            if(!name || !phone || !address){
+                alert('يرجى استكمال الاسم ورقم الموبايل والعنوان بالتفصيل!');
+                return;
+            }
+
+            const shop = globalDB.shops[shopId];
+            if(!shop.orders) shop.orders = [];
+            const total = appState.cart.reduce((s,i)=>s+(i.price*i.qty), 0);
+
+            shop.orders.unshift({
+                id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
+                customer_name: name,
+                phone: phone,
+                address: address,
+                meta: { size: appState.selectedSize },
+                items: JSON.parse(JSON.stringify(appState.cart)),
+                total: total,
+                created_at: new Date().toLocaleTimeString('ar-EG')
+            });
+
+            appState.cart = [];
+            appState.checkoutStep = 'cart';
+            syncCloud();
+            playBell();
+            alert('🎉 تم إرسال طلبك بنجاح للمتجر وسيتم التواصل معك قريباً!');
+            render();
+        }
+
+        render();
+    </script>
+</body>
+</html>
