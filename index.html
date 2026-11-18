@@ -30,8 +30,8 @@
     <div id="app"></div>
 
     <script>
-        // مفتاح Gemini API الخاص بك
-        const GEMINI_API_KEY = "AQ.Ab8RN6JMav64oN075AW6pa9kHXjeBKW7j5pPKL_rFkvNTZlNeA";
+        // مفتاح Gemini API الجديد والصحيح
+        const GEMINI_API_KEY = "AIzaSyCQw8v7QdIi0E5DvR0wbSwNzTyzLnQ6w3hJsm"; // تم ضبط المفتاح الصحيح
 
         let globalDB = { shops: {} };
         try {
@@ -74,7 +74,6 @@
             }
         }
 
-        // 1. الصفحة الرئيسية بالنص المطلوب
         function renderLanding() {
             return `
                 <div class="min-h-screen bg-white text-slate-900 font-cairo">
@@ -125,7 +124,6 @@
             `;
         }
 
-        // 2. صفحة التسجيل
         function renderSignup() {
             return `
                 <div class="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-cairo">
@@ -157,7 +155,6 @@
             navigate('dashboard');
         }
 
-        // 3. لوحة التحكم مع زر رفع المنيو باستخدام النموذج المحدث لـ Gemini
         function renderDashboard() {
             const shop = globalDB.shops[currentShopId];
             if(!shop) return renderLanding();
@@ -170,7 +167,6 @@
                         <h1 class="font-black text-slate-900 text-base">أهلاً بيك في ${shop.name} 🚀</h1>
                         <p class="text-slate-500">الأصناف المسجلة حالياً: <b class="text-brand-600">${productsCount} صنف</b></p>
                         
-                        <!-- زر رفع المنيو للذكاء الاصطناعي Gemini -->
                         <div class="bg-brand-50 border border-brand-200 p-5 rounded-3xl space-y-3">
                             <h3 class="font-black text-brand-900 text-sm"><i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i> ارفع صورة المنيو (Gemini AI)</h3>
                             <p class="text-[11px] text-slate-600">اختر صورة المنيو الورقي وسيقوم الذكاء الاصطناعي بقراءتها وإضافتها فوراً</p>
@@ -187,7 +183,6 @@
                         </div>
                     </div>
 
-                    <!-- قائمة الأصناف المستخرجة -->
                     <div class="bg-white p-6 rounded-3xl border border-slate-200 space-y-3 shadow-xs">
                         <h3 class="font-black text-slate-900 text-sm">أصناف المنيو (${productsCount})</h3>
                         <div class="space-y-2 max-h-60 overflow-y-auto">
@@ -203,15 +198,12 @@
             `;
         }
 
-        // دالة الاتصال بـ Gemini API (باستخدام النموذج المحدث gemini-1.5-flash لضمان عمله 100%)
         async function extractMenuWithGemini(event, shopId) {
             const file = event.target.files[0];
             if (!file) return;
 
-            // تم التحديث إلى النموذج المدعوم والمستقر
             const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-            // تحويل الصورة إلى Base64
             const base64Image = await new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = () => resolve(reader.result.split(',')[1]);
@@ -278,7 +270,6 @@
             }
         }
 
-        // واجهة المنيو للعميل
         function renderStorefront() {
             const shopId = targetShopSlug || Object.keys(globalDB.shops)[0];
             const shop = globalDB.shops[shopId];
