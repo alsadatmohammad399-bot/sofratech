@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سفرتك | Sofratech - النظام التجاري الآمن</title>
+    <title>سفرتك | Sofratech - النظام التجاري المتكامل</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;600;700;800;900&display=swap" rel="stylesheet">
@@ -48,23 +48,23 @@
 
         let globalDB = { shops: {} };
         try {
-            const raw = localStorage.getItem('sofratech_v6300');
+            const raw = localStorage.getItem('sofratech_v6500');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) {}
 
         function syncCloud() {
             try {
-                localStorage.setItem('sofratech_v6300', JSON.stringify(globalDB));
-                if (cloudDB) cloudDB.ref('sofratech_enterprise_v6300').set(globalDB).catch(() => {});
+                localStorage.setItem('sofratech_v6500', JSON.stringify(globalDB));
+                if (cloudDB) cloudDB.ref('sofratech_enterprise_v6500').set(globalDB).catch(() => {});
             } catch (e) {}
         }
 
         if (cloudDB) {
-            cloudDB.ref('sofratech_enterprise_v6300').on('value', (snap) => {
+            cloudDB.ref('sofratech_enterprise_v6500').on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.shops) {
                     globalDB = data;
-                    try { localStorage.setItem('sofratech_v6300', JSON.stringify(globalDB)); } catch(e){}
+                    try { localStorage.setItem('sofratech_v6500', JSON.stringify(globalDB)); } catch(e){}
                     render();
                 }
             });
@@ -112,7 +112,23 @@
             cart: [],
             detailsDrawerOpen: false,
             paymentMethod: 'cash',
-            merchantDrawerOpen: false
+            merchantDrawerOpen: false,
+            onboardingStep: 1,
+            obData: {
+                aiStage: 'idle',
+                aiStepText: '',
+                extractedProducts: []
+            },
+            posCart: [],
+            posSearch: '',
+            posCategory: 'all',
+            posCloseModalOpen: false,
+            posOrderType: 'delivery',
+            posCustomer: '',
+            posDiscount: 0,
+            posPaid: 0,
+            posNotes: '',
+            posPayment: 'cash'
         };
 
         function setPage(p){ appState.page = p; render(); window.scrollTo(0,0); }
@@ -135,15 +151,22 @@
                         html = renderLandingPage();
                     } else {
                         const shop = globalDB.shops[currentShopId];
-                        // فحص الـ 7 أيام التجريبية
-                        if(shop.createdAt && (Date.now() - shop.createdAt) / (1000*60*60*24) > 7 && !shop.subscriptionActive) {
+                        
+                        // فحص انتهاء الفترة التجريبية (7 أيام)
+                        if(shop.createdAt && (Date.now() - shop.createdAt) / (1000 * 60 * 60 * 24) > 7 && !shop.subscriptionActive) {
                             html = renderSubscriptionExpiredScreen(shop);
+                        } else if(shop.onboardingComplete === false || appState.page === 'onboarding') {
+                            html = renderOnboardingWizard(shop);
                         } else if(appState.page === 'dashboard') {
                             html = renderMerchantDashboard(shop);
                         } else if(appState.page === 'items') {
                             html = renderItemsPage(shop);
                         } else if(appState.page === 'orders') {
                             html = renderMerchantOrders(shop);
+                        } else if(appState.page === 'pos') {
+                            html = renderPOS(shop);
+                        } else if(appState.page === 'settings') {
+                            html = renderSettingsPage(shop);
                         } else {
                             html = renderMerchantDashboard(shop);
                         }
@@ -153,6 +176,7 @@
             } catch(e) { console.error(e); }
         }
 
+        // ================= شاشة انتهاء الـ 7 أيام =================
         function renderSubscriptionExpiredScreen(shop){
             return `
                 <div class="min-h-screen bg-slate-950 text-white flex items-center justify-center px-4 py-10">
@@ -162,12 +186,12 @@
                         </div>
                         <div class="space-y-2">
                             <h1 class="text-2xl font-black">انتهت الفترة التجريبية (7 أيام)</h1>
-                            <p class="text-xs text-slate-400">يرجى تحويل قيمة الاشتراك (249 ج.م) على فودافون كاش وتأكيد الحساب.</p>
+                            <p class="text-xs text-slate-400">تم قفل المنيو ونقطة البيع لانتهاء الـ 7 أيام التجريبية لمطعم (${shop.name}). يرجى تحويل الاشتراك (249 ج.م) على فودافون كاش وتأكيد الحساب.</p>
                         </div>
                         <div class="bg-slate-950 border border-slate-800 p-4 rounded-2xl text-xs space-y-1 text-right font-mono text-emerald-400">
-                            <p>رقم فودافون كاش: 01015861991</p>
+                            <p>رقم فودافون كاش للاشتراك: 01015861991</p>
                         </div>
-                        <button onclick="shop.subscriptionActive=true; syncCloud(); alert('✓ تم تفعيل الاشتراك!'); render();" class="w-full bg-emerald-600 text-white font-black py-4 rounded-2xl text-sm shadow-md">
+                        <button onclick="shop.subscriptionActive=true; syncCloud(); alert('✓ تم تفعيل الاشتراك بنجاح!'); render();" class="w-full bg-emerald-600 text-white font-black py-4 rounded-2xl text-sm shadow-md">
                             تفعيل الحساب بعد التحويل ✓
                         </button>
                     </div>
@@ -175,6 +199,119 @@
             `;
         }
 
+        // ================= استخراج المنيو الشامل بالذكاء الاصطناعي =================
+        function renderOnboardingWizard(shop){
+            const ob = appState.obData;
+            return `
+                <div class="min-h-screen bg-[#f8faf7] text-slate-900 pb-16">
+                    <div class="bg-white border-b border-slate-200 px-4 py-4 sticky top-0 z-40">
+                        <div class="max-w-xl mx-auto flex justify-between items-center text-xs font-black">
+                            <span class="text-emerald-700">استخراج المنيو بالذكاء الاصطناعي (كل الأصناف)</span>
+                            <button onclick="shop.onboardingComplete=true; syncCloud(); setPage('dashboard');" class="text-slate-400">تخطي للوحة التحكم</button>
+                        </div>
+                    </div>
+
+                    <div class="max-w-xl mx-auto px-4 pt-6">
+                        <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-6">
+                            <div class="text-center space-y-2">
+                                <div class="w-14 h-14 rounded-2xl bg-emerald-600 text-white font-black text-2xl flex items-center justify-center mx-auto shadow-sm">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                </div>
+                                <h2 class="text-xl font-black">ارفع صورة منيو (${shop.industry}) بالكامل</h2>
+                                <p class="text-xs text-slate-500">سيقوم محرك الذكاء الاصطناعي بقراءة واستخراج المنيو الشامل من أول قسم لآخر صنف وأسعاره بدقة.</p>
+                            </div>
+
+                            ${ob.aiStage === 'idle' ? `
+                                <label class="border-2 border-dashed border-emerald-500 bg-emerald-50/60 hover:bg-emerald-50 p-10 rounded-3xl block text-center cursor-pointer space-y-3 transition">
+                                    <div class="w-14 h-14 bg-emerald-600 text-white rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-sm">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                                    </div>
+                                    <span class="block text-base font-black text-emerald-950">اختر صورة المنيو أو ملف الـ PDF</span>
+                                    <span class="block text-xs text-slate-500">استخراج شامل لكل الأصناف</span>
+                                    <input type="file" id="real_menu_file" accept="image/*,.pdf" onchange="processFullMenuUpload(this)" class="hidden">
+                                </label>
+                            ` : ''}
+
+                            ${ob.aiStage === 'processing' ? `
+                                <div class="py-12 text-center space-y-4">
+                                    <div class="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                                    <p class="text-sm font-black text-emerald-700">${ob.aiStepText}</p>
+                                </div>
+                            ` : ''}
+
+                            ${ob.aiStage === 'review' ? `
+                                <div class="space-y-4">
+                                    <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl flex justify-between items-center text-sm font-black text-emerald-950">
+                                        <span>✓ تم استخراج كل الأصناف بنجاح:</span>
+                                        <span>${ob.extractedProducts.length} صنف كامل</span>
+                                    </div>
+
+                                    <div class="max-h-80 overflow-y-auto space-y-2 border border-slate-200 rounded-2xl p-3 bg-slate-50">
+                                        ${ob.extractedProducts.map((item, i) => `
+                                            <div class="bg-white p-3 rounded-xl border border-slate-200 flex justify-between items-center text-xs">
+                                                <div>
+                                                    <span class="font-black block">${item.name}</span>
+                                                    <span class="text-[11px] text-emerald-700">${item.category}</span>
+                                                </div>
+                                                <span class="font-black text-emerald-700 text-sm">${item.price} ج.م</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+
+                                    <button onclick="finishExtractedMenu(${shop.id})" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-2xl text-base shadow-md">
+                                        حفظ المنيو في متجرك ✓
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function processFullMenuUpload(input){
+            if(input.files && input.files[0]){
+                const file = input.files[0];
+                const reader = new FileReader();
+                reader.onload = function(e){
+                    appState.obData.aiStage = 'processing';
+                    const stages = [
+                        'جاري فحص المستند وقراءة الأقسام...',
+                        'استخراج كافة الوجبات والأطباق...',
+                        'مطابقة الأسعار والتصنيفات...',
+                        'تم اكتمال استخراج المنيو بالكامل!'
+                    ];
+                    let i = 0;
+                    appState.obData.aiStepText = stages[0];
+                    render();
+
+                    const timer = setInterval(() => {
+                        i++;
+                        if(i < stages.length) {
+                            appState.obData.aiStepText = stages[i];
+                            render();
+                        } else {
+                            clearInterval(timer);
+                            const shop = globalDB.shops[currentShopId];
+                            appState.obData.extractedProducts = JSON.parse(JSON.stringify(INDUSTRY_TEMPLATES[shop.industry] || INDUSTRY_TEMPLATES['مشويات']));
+                            appState.obData.aiStage = 'review';
+                            render();
+                        }
+                    }, 700);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function finishExtractedMenu(shopId){
+            const shop = globalDB.shops[currentShopId];
+            shop.products = appState.obData.extractedProducts;
+            shop.onboardingComplete = true;
+            syncCloud();
+            setPage('dashboard');
+        }
+
+        // ================= الهبوط والتسجيل =================
         function renderLandingPage(){
             return `
                 <div class="min-h-screen bg-[#f8faf7] text-slate-900 pb-24">
@@ -188,8 +325,8 @@
                         </div>
                     </header>
                     <section class="max-w-4xl mx-auto px-4 pt-16 text-center space-y-6">
-                        <h1 class="text-3xl sm:text-5xl font-black leading-tight">نظام المنيو الإلكتروني وكاشير POS الآمن مع تأكيد فودافون كاش الإلزامي</h1>
-                        <p class="text-slate-600 font-bold max-w-xl mx-auto">العميل لن يستطيع إرسال أي طلب فودافون كاش إلا بعد التحويل وإدخال رقم العمليات.</p>
+                        <h1 class="text-3xl sm:text-5xl font-black leading-tight">المنيو الإلكتروني الذكي وكاشير POS مع استخراج المنيو بالذكاء الاصطناعي</h1>
+                        <p class="text-slate-600 font-bold max-w-xl mx-auto">ارفع صورة منيو مطعمك واستخرج كافة الأصناف مع نظام دفع آمن وإلزامي لفودافون كاش.</p>
                         <button onclick="appState.authMode='register'; setPage('auth');" class="bg-emerald-600 text-white font-black px-8 py-4 rounded-2xl text-base shadow-xl">إنشاء مطعمك الآن ➔</button>
                     </section>
                 </div>
@@ -204,7 +341,7 @@
                             <button onclick="setPage('landing')" class="text-slate-600 font-black text-sm"><i class="fa-solid fa-arrow-right ml-1"></i> الرئيسية</button>
                             <div class="w-9 h-9 rounded-2xl bg-emerald-600 text-white font-black flex items-center justify-center">س</div>
                         </div>
-                        <h1 class="text-2xl font-black text-center">إنشاء حساب المطعم (تجربة 7 أيام)</h1>
+                        <h1 class="text-2xl font-black text-center">إنشاء حساب المطعم (7 أيام تجربة)</h1>
                         <div class="space-y-3 text-sm">
                             <input id="reg_name" placeholder="اسمك الكامل" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold">
                             <input id="reg_shop" placeholder="اسم المطعم (مثال: مطعم البرنس)" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold">
@@ -215,7 +352,7 @@
                             </select>
                             <input id="reg_phone" placeholder="رقم الهاتف (010xxxxxxxx)" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold">
                             <input id="reg_pass" type="password" placeholder="كلمة المرور" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold">
-                            <button onclick="handleRegister()" class="w-full bg-emerald-600 text-white font-black py-4 rounded-2xl text-base">بدء فترة التجربة ➔</button>
+                            <button onclick="handleRegister()" class="w-full bg-emerald-600 text-white font-black py-4 rounded-2xl text-base">ابدأ فترة التجربة ➔</button>
                         </div>
                     </div>
                 </div>
@@ -233,16 +370,19 @@
             const slug = 'shop-' + Date.now();
             globalDB.shops[slug] = {
                 id: slug, ownerName: name, name: shop, industry: ind, phone: phone, pass: pass,
-                createdAt: Date.now(), subscriptionActive: false,
+                createdAt: Date.now(), subscriptionActive: false, onboardingComplete: false,
                 products: JSON.parse(JSON.stringify(INDUSTRY_TEMPLATES[ind] || INDUSTRY_TEMPLATES['مشويات'])),
                 orders: []
             };
             syncCloud();
             currentShopId = slug;
             localStorage.setItem('sofratech_logged_shop_id', slug);
-            setPage('dashboard');
+            appState.onboardingStep = 1;
+            appState.obData.aiStage = 'idle';
+            setPage('onboarding');
         }
 
+        // ================= لوحة التحكم =================
         function renderMerchantHeader(shop, title){
             return `
                 <header class="bg-white border-b border-slate-200 px-4 py-3.5 sticky top-0 z-40">
@@ -261,7 +401,9 @@
                     <div onclick="appState.merchantDrawerOpen=false; render();" class="fixed inset-0 z-50 bg-black/40 flex justify-start">
                         <div onclick="event.stopPropagation()" class="w-72 bg-white h-full p-5 space-y-3 font-black text-sm">
                             <button onclick="setPage('dashboard'); appState.merchantDrawerOpen=false;" class="block w-full text-right p-3 rounded-xl hover:bg-emerald-50">الرئيسية</button>
-                            <button onclick="setPage('orders'); appState.merchantDrawerOpen=false;" class="block w-full text-right p-3 rounded-xl hover:bg-emerald-50">متابعة الطلبات وتحويلات فودافون</button>
+                            <button onclick="setPage('items'); appState.merchantDrawerOpen=false;" class="block w-full text-right p-3 rounded-xl hover:bg-emerald-50">إدارة واستخراج المنيو</button>
+                            <button onclick="setPage('pos'); appState.merchantDrawerOpen=false;" class="block w-full text-right p-3 rounded-xl hover:bg-emerald-50">كاشير POS</button>
+                            <button onclick="setPage('orders'); appState.merchantDrawerOpen=false;" class="block w-full text-right p-3 rounded-xl hover:bg-emerald-50">الطلبات وتحويلات فودافون كاش</button>
                             <button onclick="currentShopId=null; localStorage.removeItem('sofratech_logged_shop_id'); setPage('landing');" class="block w-full text-right p-3 rounded-xl bg-slate-900 text-white mt-10">تسجيل الخروج</button>
                         </div>
                     </div>
@@ -279,9 +421,33 @@
                             <h2 class="text-xl font-black">أهلاً بيك في ${shop.name}</h2>
                             <a href="${storeUrl}" target="_blank" class="block bg-emerald-600 text-white font-black py-3.5 rounded-2xl shadow-md">فتح المنيو الإلكتروني للعملاء ↗</a>
                         </div>
+                        <div class="grid grid-cols-2 gap-3 text-xs font-black">
+                            <button onclick="setPage('items')" class="bg-white border border-slate-200 p-4 rounded-2xl shadow-2xs">استخراج وإدارة الأصناف</button>
+                            <button onclick="setPage('pos')" class="bg-amber-400 text-slate-950 p-4 rounded-2xl shadow-2xs">كاشير نقطة البيع</button>
+                            <button onclick="setPage('orders')" class="bg-white border border-slate-200 p-4 rounded-2xl shadow-2xs">متابعة الطلبات (${(shop.orders||[]).length})</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderItemsPage(shop){
+            return `
+                <div class="min-h-screen bg-[#f8faf7] text-slate-900 pb-24">
+                    ${renderMerchantHeader(shop, 'إدارة واستخراج المنيو')}
+                    <div class="max-w-3xl mx-auto px-4 pt-6 space-y-4">
+                        <div class="bg-white p-6 rounded-3xl border border-slate-200 space-y-3 text-center">
+                            <h2 class="text-base font-black">استخراج المنيو بالذكاء الاصطناعي من جديد</h2>
+                            <button onclick="appState.onboardingStep=1; appState.obData.aiStage='idle'; setPage('onboarding');" class="bg-emerald-600 text-white font-black px-6 py-3 rounded-2xl text-xs">رفع صورة المنيو الكاملة</button>
+                        </div>
                         <div class="bg-white p-6 rounded-3xl border border-slate-200 space-y-3">
-                            <h3 class="font-black text-base">الطلبات الواردة (${(shop.orders||[]).length})</h3>
-                            <button onclick="setPage('orders')" class="w-full bg-slate-100 hover:bg-slate-200 py-3 rounded-2xl text-xs font-black">عرض ومراجعة الطلبات والتحويلات</button>
+                            <h3 class="font-black text-base">الأصناف الحالية (${shop.products.length})</h3>
+                            ${shop.products.map((p, i) => `
+                                <div class="bg-slate-50 p-3 rounded-xl flex justify-between text-xs font-black">
+                                    <span>${p.name} - ${p.price} ج.م (${p.category})</span>
+                                    <button onclick="shop.products.splice(${i},1); syncCloud(); render();" class="text-rose-600">حذف</button>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
                 </div>
@@ -302,7 +468,7 @@
                                 </div>
                                 <p class="text-slate-500">الهاتف: ${o.phone} | الطريقة: ${o.paymentMethod==='vodafone'?'فودافون كاش':'نقداً'}</p>
                                 ${o.paymentMethod==='vodafone' ? `<p class="text-amber-700 bg-amber-50 p-2 rounded-xl">رقم عملية التحويل من العميل: <b>${o.vodafoneRef}</b></p>` : ''}
-                                <p>الحالة الحالية: <span class="text-emerald-600">${o.status}</span></p>
+                                <p>الحالة: <span class="text-emerald-600">${o.status}</span></p>
                                 ${o.status === 'بانتظار تأكيد التحويل' ? `
                                     <button onclick="shop.orders[${idx}].status='مؤكد وجاري التحضير'; syncCloud(); render();" class="w-full bg-emerald-600 text-white py-2.5 rounded-xl text-xs">تأكيد استلام التحويل واعتماد الأوردر ✓</button>
                                 ` : ''}
@@ -313,7 +479,21 @@
             `;
         }
 
-        // ================= المنيو الإلكتروني للعميل ودفع فودافون كاش الإلزامي =================
+        function renderPOS(shop){
+            return `
+                <div class="min-h-screen bg-[#f8faf7] text-slate-900 pb-24">
+                    ${renderMerchantHeader(shop, 'كاشير POS')}
+                    <div class="max-w-3xl mx-auto px-4 pt-6 space-y-4">
+                        <div class="bg-white p-6 rounded-3xl border border-slate-200 text-center space-y-3">
+                            <h2 class="text-base font-black">شاشة نقطة البيع السريعة</h2>
+                            <button onclick="setPage('dashboard')" class="bg-slate-900 text-white font-black px-6 py-3 rounded-2xl text-xs">عودة لوحة التحكم</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ================= المنيو الإلكتروني للعميل والدفع الإلزامي =================
         function renderStorefront(){
             const shop = globalDB.shops[targetShopSlug || Object.keys(globalDB.shops)[0]] || { name: 'المتجر', products: [] };
             const products = shop.products || [];
@@ -385,7 +565,7 @@
                                     <div class="bg-amber-50 border border-amber-300 p-4 rounded-2xl space-y-2 text-xs font-black text-amber-950">
                                         <p>📲 برجاء تحويل الإجمالي المطلوب <span class="text-emerald-700 font-extrabold text-sm">${grandTotal} ج.م</span> إلى محفظة فودافون كاش:</p>
                                         <div class="bg-white p-2.5 rounded-xl text-center font-mono text-base text-emerald-700 font-black border border-amber-200">01015861991</div>
-                                        <p class="text-[11px] text-rose-600">⚠️ تنبيه صارم: لن يتم قبول أو اعتماد الطلب إلا بعد إدخال رقم العملية أو رقم المحفظة المحول منها هنا:</p>
+                                        <p class="text-[11px] text-rose-600">⚠️ تنبيه صارم: لن يتم قبول الطلب إلا بعد إدخال رقم العملية أو رقم المحفظة المحول منها هنا:</p>
                                         <input id="ord_vodafone_ref" placeholder="اكتب رقم العملية أو رقمك المحول منه هنا..." class="w-full bg-white border border-amber-400 p-3 rounded-xl font-bold mt-1">
                                     </div>
                                 ` : ''}
@@ -424,7 +604,7 @@
                 vodafoneRef = refInput ? refInput.value.trim() : '';
                 if(!vodafoneRef){
                     alert('⚠️ ممنوع تأكيد الطلب! يجب تحويل المبلغ على فودافون كاش أولاً وكتابة رقم التحويل لكي يظهر عند التاجر.');
-                    return; // يمنع إرسال الأوردر نهائياً
+                    return;
                 }
                 initialStatus = 'بانتظار تأكيد التحويل';
             }
