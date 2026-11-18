@@ -42,27 +42,42 @@
 
         let globalDB = { shops: {} };
         try {
-            const raw = localStorage.getItem('tablia_saas_v800');
+            const raw = localStorage.getItem('tablia_saas_v1200');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) {}
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_saas_v800', JSON.stringify(globalDB));
-                if (cloudDB) cloudDB.ref('tablia_saas_enterprise_v800').set(globalDB).catch(() => {});
+                localStorage.setItem('tablia_saas_v1200', JSON.stringify(globalDB));
+                if (cloudDB) cloudDB.ref('tablia_saas_enterprise_v1200').set(globalDB).catch(() => {});
             } catch (e) {}
         }
 
         if (cloudDB) {
-            cloudDB.ref('tablia_saas_enterprise_v800').on('value', (snap) => {
+            cloudDB.ref('tablia_saas_enterprise_v1200').on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.shops) {
                     globalDB = data;
-                    try { localStorage.setItem('tablia_saas_v800', JSON.stringify(globalDB)); } catch(e){}
+                    try { localStorage.setItem('tablia_saas_v1200', JSON.stringify(globalDB)); } catch(e){}
+                    checkExpirations();
                     render();
                 }
             });
         }
+
+        function checkExpirations() {
+            let changed = false;
+            const now = Date.now();
+            Object.keys(globalDB.shops || {}).forEach(id => {
+                const s = globalDB.shops[id];
+                if (s.status === 'active' && s.expiresAt && now > s.expiresAt) {
+                    s.status = 'expired';
+                    changed = true;
+                }
+            });
+            if(changed) syncCloud();
+        }
+        checkExpirations();
 
         function playBell(){
             try {
@@ -73,20 +88,18 @@
         }
 
         const urlParams = new URLSearchParams(window.location.search);
-        const isAdminMode = urlParams.get('admin') === 'true'; // رابط الأدمن: ?admin=true
-        const isCustomerMode = urlParams.get('view') === 'store'; // رابط المتجر للعملاء
+        const isAdminMode = urlParams.get('admin') === 'true'; 
+        const isCustomerMode = urlParams.get('view') === 'store'; 
         const targetShopSlug = urlParams.get('shop');
         
         let currentShopId = localStorage.getItem('tablia_logged_shop_id') || null;
 
         const appState = { 
-            page: isAdminMode ? 'admin_panel' : (isCustomerMode ? 'storefront' : (currentShopId ? 'builder' : 'auth')), 
-            authStep: 'register', 
-            tempRegData: null,
-            generatedOtp: null,
+            page: isAdminMode ? 'admin_panel' : (isCustomerMode ? 'storefront' : (currentShopId ? 'builder' : 'landing')), 
+            authMode: 'register', 
             cart: [],
             selectedSize: 'M',
-            checkoutStep: 'cart' // 'cart' أو 'details'
+            checkoutStep: 'cart'
         };
 
         function setPage(p){ appState.page = p; render(); window.scrollTo(0,0); }
@@ -100,14 +113,16 @@
                     content = renderAdminDashboard();
                 } else if(isCustomerMode) {
                     content = renderStorefront();
+                } else if(appState.page === 'landing') {
+                    content = renderLandingPage();
                 } else if(appState.page === 'auth') {
                     content = renderAuthScreen();
                 } else {
                     if(!currentShopId || !globalDB.shops?.[currentShopId]) { 
                         currentShopId = null; 
                         localStorage.removeItem('tablia_logged_shop_id');
-                        appState.page = 'auth'; 
-                        content = renderAuthScreen(); 
+                        appState.page = 'landing'; 
+                        content = renderLandingPage(); 
                     } else {
                         const shop = globalDB.shops[currentShopId];
                         if(shop.status === 'pending' || shop.status === 'expired') {
@@ -143,7 +158,58 @@
             `;
         }
 
-        // ================= 1. لوحة تحكم الأدمن =================
+        // ================= 1. صفحة الهبوط المحدثة (مع السعر وصورة المتجر الحقيقي) =================
+        function renderLandingPage(){
+            return `
+                <div class="max-w-xl mx-auto px-4 py-12 space-y-6 text-center">
+                    <div class="space-y-2">
+                        <span class="bg-red-500/10 text-red-500 font-black px-4 py-1.5 rounded-full text-xs">منصة سفرتك | Tablia OS 🚀</span>
+                        <h1 class="text-3xl font-black text-white leading-tight">اصنع متجرك أو منيو مطعمك الإلكتروني في ثوانٍ!</h1>
+                        <p class="text-slate-400 text-sm">بدون برمجة وبدون تعقيد. ارفع منتجاتك بالسحر أو بالسعر، واحصل على رابط متجرك الخاص لاستقبال طلبات الزبائن مباشرة.</p>
+                    </div>
+
+                    <!-- كارت معاينة شكل المتجر الحقيقي -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl text-right">
+                        <div class="relative h-40 bg-slate-950">
+                            <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800" class="w-full h-full object-cover opacity-75">
+                            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent flex items-end p-4">
+                                <div class="text-white">
+                                    <span class="bg-emerald-500 text-slate-950 font-black px-2 py-0.5 rounded text-[10px]">متجر تجريبي حقيقي</span>
+                                    <h3 class="font-black text-base mt-1">مطعم وفتة الشيف / بوتيك ملابس</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 space-y-3 bg-slate-900">
+                            <div class="flex justify-between items-center text-xs text-slate-300">
+                                <span>🛒 سلة شراء متكاملة + طلبات فورية</span>
+                                <span class="text-amber-400 font-black">⚡ جاهز فوري</span>
+                            </div>
+                            <!-- كارت السعر الواضح والجذاب -->
+                            <div class="bg-slate-950 border border-amber-500/30 p-3 rounded-2xl flex justify-between items-center">
+                                <div>
+                                    <span class="text-slate-400 text-[11px] block">اشتراك شهري شامل كل المميزات</span>
+                                    <span class="text-amber-400 font-black text-base">600 جنيه فقط / شهرياً</span>
+                                </div>
+                                <span class="bg-amber-500/20 text-amber-400 px-3 py-1 rounded-xl text-xs font-black">بدون عمولة على البيع 🔥</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-3 shadow-xl">
+                        <div class="grid grid-cols-1 gap-3">
+                            <button onclick="appState.authMode='register'; setPage('auth');" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-2xl shadow-lg text-sm transition">
+                                🛒 ابدأ متجرك الآن بـ 600 ج / شهر
+                            </button>
+                            <button onclick="appState.authMode='login'; setPage('auth');" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-3.5 rounded-2xl text-xs transition">
+                                🔑 عندي حساب - تسجيل الدخول
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ================= 2. لوحة تحكم الأدمن =================
         function renderAdminDashboard(){
             const isAuth = sessionStorage.getItem('tablia_admin_auth') === 'true';
             if(!isAuth) {
@@ -167,7 +233,7 @@
                     <div class="flex justify-between items-center bg-slate-900 p-5 rounded-3xl border border-slate-800">
                         <div>
                             <h1 class="font-black text-white text-base">👑 لوحة التحكم العامة (المالك)</h1>
-                            <p class="text-slate-400">موافقة وتفعيل اشتراكات المحلات (600 ج/شهر)</p>
+                            <p class="text-slate-400">موافقة وتفعيل اشتراكات المحلات (600 ج/شهر لمدة 30 يوم)</p>
                         </div>
                         <button onclick="sessionStorage.removeItem('tablia_admin_auth'); window.location.href = location.pathname;" class="bg-red-500/20 text-red-400 px-4 py-2 rounded-xl font-bold">خروج</button>
                     </div>
@@ -177,15 +243,16 @@
                         <div class="space-y-3">
                             ${shopIds.length === 0 ? '<div class="text-slate-500 text-center py-6">لا توجد متاجر مسجلة بعد..</div>' : shopIds.map(id => {
                                 const s = shops[id];
+                                const expireDate = s.expiresAt ? new Date(s.expiresAt).toLocaleDateString('ar-EG') : 'غير مفعل';
                                 return `
                                     <div class="bg-slate-950 p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border border-slate-800">
                                         <div>
                                             <span class="font-black text-white text-sm">${s.name}</span>
                                             <span class="text-slate-400 block text-[10px]">${s.phone} | النشاط: ${s.type === 'restaurant' ? 'مطعم' : (s.type === 'clothes' ? 'ملابس' : 'أحذية')}</span>
-                                            <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${s.status==='active'?'bg-emerald-500/20 text-emerald-400':'bg-amber-500/20 text-amber-400'}">الحالة: ${s.status}</span>
+                                            <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${s.status==='active'?'bg-emerald-500/20 text-emerald-400':'bg-amber-500/20 text-amber-400'}">الحالة: ${s.status} (ينتهي في: ${expireDate})</span>
                                         </div>
                                         <div class="flex items-center gap-2">
-                                            <button onclick="adminActivateShop('${id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl font-black">تفعيل شهر ✅</button>
+                                            <button onclick="adminActivateShop('${id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl font-black">تفعيل شهر (30 يوم) ✅</button>
                                             <button onclick="adminSuspendShop('${id}')" class="bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded-xl font-black">إيقاف ✕</button>
                                             <a href="?view=store&shop=${id}" target="_blank" class="bg-sky-600 text-white px-3 py-2 rounded-xl font-black">معاينة ➔</a>
                                         </div>
@@ -211,8 +278,9 @@
         function adminActivateShop(shopId){
             if(globalDB.shops[shopId]){
                 globalDB.shops[shopId].status = 'active';
+                globalDB.shops[shopId].expiresAt = Date.now() + (30 * 24 * 60 * 60 * 1000); 
                 syncCloud();
-                alert('✨ تم تفعيل المتجر لمدة شهر بنجاح!');
+                alert('✨ تم تفعيل المتجر لمدة 30 يوم بنجاح!');
                 render();
             }
         }
@@ -220,66 +288,44 @@
         function adminSuspendShop(shopId){
             if(globalDB.shops[shopId]){
                 globalDB.shops[shopId].status = 'pending';
+                globalDB.shops[shopId].expiresAt = null;
                 syncCloud();
                 alert('⚠️ تم تعليق المتجر.');
                 render();
             }
         }
 
-        // ================= 2. صفحة تسجيل التاجر =================
+        // ================= 3. شاشة التسجيل أو تسجيل الدخول =================
         function renderAuthScreen(){
-            if(appState.authStep === 'verify') {
-                const phoneWithoutZero = appState.tempRegData.phone.startsWith('0') ? appState.tempRegData.phone.substring(1) : appState.tempRegData.phone;
-                const fullPhone = '20' + phoneWithoutZero;
-                const whatsappMsg = encodeURIComponent(`مرحباً بك في منصة سفرتك 🚀\nرمز التحقق (OTP) الخاص بك هو: ${appState.generatedOtp}`);
-                const waLink = `https://wa.me/${fullPhone}?text=${whatsappMsg}`;
-
-                return `
-                    <div class="max-w-md mx-auto px-4 py-10 space-y-5 text-xs">
-                        <div class="text-center space-y-1">
-                            <h1 class="text-xl font-black text-white">تأكيد عبر واتساب 📱</h1>
-                            <p class="text-slate-400">تم تجهيز كود التحقق لإرساله عبر الواتساب لرقمك</p>
-                        </div>
-                        
-                        <div class="bg-emerald-950/40 border border-emerald-500/40 p-5 rounded-3xl space-y-4 text-center">
-                            <div class="text-emerald-400 font-bold text-sm"><i class="fa-brands fa-whatsapp text-lg"></i> تم توليد كود التحقق</div>
-                            <a href="${waLink}" target="_blank" class="block w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl shadow transition">
-                                اضغط هنا لفتح واتساب واستلام الكود 💬
-                            </a>
-                        </div>
-
-                        <div class="bg-slate-900 p-6 rounded-3xl space-y-4 shadow-xl border border-slate-800 text-center">
-                            <div>
-                                <label class="block text-slate-300 mb-1 font-bold">أدخل كود التحقق الوارد في الواتساب</label>
-                                <input id="otp_input" placeholder="0000" maxlength="4" class="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl text-center text-white font-black text-lg tracking-widest outline-none">
-                            </div>
-                            <button onclick="verifyOtpAndRegister()" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-3.5 rounded-xl shadow transition">تأكيد الكود وإنشاء المتجر ✓</button>
-                            <button onclick="appState.authStep='register'; render();" class="text-slate-400 hover:text-white">العودة لتعديل البيانات</button>
-                        </div>
-                    </div>
-                `;
-            }
-
+            const isLogin = appState.authMode === 'login';
             return `
                 <div class="max-w-md mx-auto px-4 py-10 space-y-6 text-xs">
-                    <div class="text-center space-y-2">
-                        <h1 class="text-2xl font-black text-white">سفرتك | أنشئ متجرك الإلكتروني 🛒</h1>
-                        <p class="text-slate-400">صمم متجرك أو منيو مطعمك بنفسك في ثوانٍ معدودة!</p>
+                    <div class="flex justify-between items-center">
+                        <button onclick="setPage('landing')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-arrow-right"></i> الرئيسية</button>
+                        <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-800">
+                            <button onclick="appState.authMode='register'; render();" class="px-3 py-1.5 rounded-lg font-bold ${!isLogin?'bg-red-600 text-white':''}">حساب جديد</button>
+                            <button onclick="appState.authMode='login'; render();" class="px-3 py-1.5 rounded-lg font-bold ${isLogin?'bg-red-600 text-white':''}">تسجيل دخول</button>
+                        </div>
                     </div>
 
                     <div class="bg-slate-900 p-6 rounded-3xl space-y-4 shadow-xl border border-slate-800">
-                        <div>
-                            <label class="block text-slate-300 mb-1 font-bold">نوع نشاطك التجاري</label>
-                            <select id="reg_type" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold outline-none">
-                                <option value="restaurant">🍽️ مطعم / كافيه</option>
-                                <option value="clothes">👕 محل ملابس وموضة</option>
-                                <option value="shoes">👟 محل أحذية وكوتشيات</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-slate-300 mb-1 font-bold">اسم المحل أو المتجر</label>
-                            <input id="reg_name" placeholder="مثال: بوتيك الأريج / مطعم الشيف" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold outline-none">
-                        </div>
+                        <h1 class="text-lg font-black text-white text-center">${isLogin ? '🔑 تسجيل الدخول لحسابك' : '🛒 إنشاء متجر جديد (600 ج/شهر)'}</h1>
+
+                        ${!isLogin ? `
+                            <div>
+                                <label class="block text-slate-300 mb-1 font-bold">نوع نشاطك التجاري</label>
+                                <select id="reg_type" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold outline-none">
+                                    <option value="restaurant">🍽️ مطعم / كافيه</option>
+                                    <option value="clothes">👕 محل ملابس وموضة</option>
+                                    <option value="shoes">👟 محل أحذية وكوتشيات</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-slate-300 mb-1 font-bold">اسم المحل أو المتجر</label>
+                                <input id="reg_name" placeholder="مثال: بوتيك الأريج" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold outline-none">
+                            </div>
+                        ` : ''}
+
                         <div>
                             <label class="block text-slate-300 mb-1 font-bold">رقم الموبايل</label>
                             <input id="reg_phone" placeholder="010xxxxxxxx" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold outline-none">
@@ -288,39 +334,24 @@
                             <label class="block text-slate-300 mb-1 font-bold">كلمة السر</label>
                             <input id="reg_pass" type="password" placeholder="••••" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold outline-none">
                         </div>
-                        <button onclick="requestWhatsappOtp()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3.5 rounded-xl shadow transition flex items-center justify-center gap-2">
-                            <i class="fa-brands fa-whatsapp text-sm"></i> تسجيل وإرسال كود الواتساب ➔
+
+                        <button onclick="${isLogin ? 'loginExistingShop()' : 'registerNewShop()'}" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-3.5 rounded-xl shadow transition">
+                            ${isLogin ? 'دخول للمتجر ➔' : 'إنشاء المتجر الآن ➔'}
                         </button>
                     </div>
                 </div>
             `;
         }
 
-        function requestWhatsappOtp(){
+        function registerNewShop(){
             const name = document.getElementById('reg_name').value.trim(); 
             const phone = document.getElementById('reg_phone').value.trim(); 
             const pass = document.getElementById('reg_pass').value.trim();
             const type = document.getElementById('reg_type').value;
+            
             if(!name || !phone || !pass){ alert('يرجى استكمال جميع البيانات!'); return; }
             
-            const otp = Math.floor(1000 + Math.random() * 9000).toString();
-            appState.generatedOtp = otp;
-            appState.tempRegData = { name, phone, pass, type };
-            appState.authStep = 'verify';
-            render();
-        }
-
-        function verifyOtpAndRegister(){
-            const enteredOtp = document.getElementById('otp_input').value.trim();
-            if(enteredOtp !== appState.generatedOtp) {
-                alert('كود التحقق غير صحيح!');
-                return;
-            }
-
-            const { name, phone, pass, type } = appState.tempRegData;
-            let slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
-            if(!slug || slug === '-') slug = 'shop-' + Date.now();
-            else slug = slug + '-' + Math.floor(100 + Math.random() * 900);
+            let slug = 'shop-' + phone.replace(/[^0-9]/g, '') + '-' + Math.floor(10 + Math.random() * 90);
 
             let defaultProducts = [];
             let coverImg = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800';
@@ -347,7 +378,8 @@
 
             globalDB.shops[slug] = { 
                 id: slug, name, phone, pass, type,
-                status: 'pending', // معلق لحين دفع الاشتراك (600 ج)
+                status: 'pending', 
+                expiresAt: null,
                 address: 'مصر',
                 coverImage: coverImg,
                 logoImage: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=300',
@@ -360,7 +392,24 @@
             render();
         }
 
-        // شاشة الدفع المعلق (600 جنيه)
+        function loginExistingShop(){
+            const phone = document.getElementById('reg_phone').value.trim();
+            const pass = document.getElementById('reg_pass').value.trim();
+
+            if(!phone || !pass){ alert('يرجى كتابة رقم الموبايل وكلمة السر!'); return; }
+
+            const shops = globalDB.shops || {};
+            const foundId = Object.keys(shops).find(id => shops[id].phone === phone && shops[id].pass === pass);
+
+            if(foundId) {
+                currentShopId = foundId;
+                localStorage.setItem('tablia_logged_shop_id', foundId);
+                render();
+            } else {
+                alert('بيانات الدخول غير صحيحة أو المتجر غير مسجل بهذا الرقم!');
+            }
+        }
+
         function renderPendingScreen(shop){
             return `
                 <div class="max-w-md mx-auto px-4 py-16 space-y-6 text-xs text-center">
@@ -370,60 +419,66 @@
                         </div>
                         <h1 class="text-xl font-black text-white">حسابك في انتظار تفعيل الاشتراك ⏳</h1>
                         <p class="text-slate-300 leading-relaxed">
-                            تم تسجيل متجرك بنجاح يا <span class="text-amber-400 font-bold">${shop.name}</span>.<br>
-                            لتفعيل متجرك لمدة شهر كامل، يرجى تحويل مبلغ <b>600 جنيه</b> على محفظة فودافون كاش:
+                            متجرك <span class="text-amber-400 font-bold">${shop.name}</span> مسجل بنجاح.<br>
+                            لتفعيله لمدة 30 يوم، يرجى تحويل <b>600 جنيه</b> فودافون كاش على الرقم:
                         </p>
                         
                         <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 select-all font-mono text-amber-400 font-black text-base">
                             01015861991
                         </div>
 
-                        <p class="text-[11px] text-slate-400">
-                            ثم أرسل سكرين شوت التحويل عبر الواتساب لتفعيل حسابك فوراً!
-                        </p>
-
                         <div class="grid grid-cols-2 gap-2 pt-2">
-                            <a href="https://wa.me/201015861991?text=${encodeURIComponent('مرحباً، لقد قامت بتحويل 600 جنيه اشتراك متجر: ' + shop.name)}" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl flex items-center justify-center gap-1">
+                            <a href="https://wa.me/201015861991?text=${encodeURIComponent('تم تحويل 600 جنيه اشتراك متجر: ' + shop.name)}" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl flex items-center justify-center gap-1">
                                 <i class="fa-brands fa-whatsapp"></i> إرسال التحويل
                             </a>
-                            <button onclick="currentShopId=null; localStorage.removeItem('tablia_logged_shop_id'); render();" class="bg-slate-800 text-slate-300 font-bold py-3 rounded-xl">خروج</button>
+                            <button onclick="currentShopId=null; localStorage.removeItem('tablia_logged_shop_id'); setPage('landing');" class="bg-slate-800 text-slate-300 font-bold py-3 rounded-xl">خروج</button>
                         </div>
                     </div>
                 </div>
             `;
         }
 
-        // ================= 3. لوحة تحكم التاجر مع الصندوق السحري =================
+        // ================= 4. لوحة تحكم التاجر =================
         function renderBuilder(){
             const shop = globalDB.shops[currentShopId];
-            if(!shop){ setPage('auth'); return ''; }
+            if(!shop){ setPage('landing'); return ''; }
             const customLink = location.origin + location.pathname + `?view=store&shop=${shop.id}`;
             return `
                 <div class="max-w-3xl mx-auto px-4 py-6 pb-28 space-y-5 text-xs">
                     <div class="flex justify-between items-center bg-slate-900 p-4 rounded-2xl border border-slate-800">
                         <div>
                             <h1 class="font-black text-white text-sm">إدارة متجر: ${shop.name}</h1>
-                            <span class="text-emerald-400 font-bold text-[10px]">النشاط: ${shop.type === 'restaurant' ? 'مطعم' : (shop.type === 'clothes' ? 'ملابس' : 'أحذية')} | مفعل ونشط ✓</span>
+                            <span class="text-emerald-400 font-bold text-[10px]">النشاط مفعل ونشط ✓</span>
                         </div>
-                        <button onclick="currentShopId=null; localStorage.removeItem('tablia_logged_shop_id'); setPage('auth');" class="bg-red-500/10 text-red-400 px-3 py-1.5 rounded-xl font-bold">خروج</button>
+                        <button onclick="currentShopId=null; localStorage.removeItem('tablia_logged_shop_id'); setPage('landing');" class="bg-red-500/10 text-red-400 px-3 py-1.5 rounded-xl font-bold">خروج</button>
+                    </div>
+
+                    <!-- إضافة منتج فردي -->
+                    <div class="bg-slate-900 p-5 rounded-3xl border border-slate-800 space-y-3 shadow-xl">
+                        <h2 class="font-black text-white text-sm">➕ إضافة منتج جديد (بالصورة والسعر)</h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <input id="new_p_name" placeholder="اسم المنتج" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-white font-bold outline-none">
+                            <input id="new_p_price" type="number" placeholder="السعر" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-white font-bold outline-none">
+                            <input id="new_p_img" placeholder="رابط صورة المنتج (URL)" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-white font-bold outline-none">
+                        </div>
+                        <button onclick="addNewSingleProduct('${shop.id}')" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-black py-3 rounded-xl shadow">إضافة المنتج ✓</button>
                     </div>
 
                     <!-- الصندوق السحري -->
                     <div class="bg-slate-900 p-5 rounded-3xl border border-amber-500/30 space-y-3 shadow-xl">
                         <div class="flex items-center gap-2">
                             <span class="text-amber-400 text-base">🪄</span>
-                            <h2 class="font-black text-amber-400 text-sm">الصندوق السحري (إضافة المنتجات باللصق السريع)</h2>
+                            <h2 class="font-black text-amber-400 text-sm">الصندوق السحري (إضافة سريعة)</h2>
                         </div>
-                        <p class="text-slate-400 text-[11px]">اكتب أو الصق المنتجات بالسعر تحت بعضها:</p>
-                        <textarea id="magic_input" placeholder="تيشرت كاجوال 200&#10;بنطلون جينز 350" class="w-full h-32 bg-slate-950 border border-slate-800 p-3 rounded-2xl text-white font-mono text-xs outline-none focus:border-amber-500"></textarea>
-                        <button onclick="parseMagicBox('${shop.id}')" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3.5 rounded-xl shadow transition">توليد وإضافة المنتجات بالسحر ✨</button>
+                        <textarea id="magic_input" placeholder="تيشرت كاجوال 200&#10;بنطلون جينز 350" class="w-full h-24 bg-slate-950 border border-slate-800 p-3 rounded-2xl text-white font-mono text-xs outline-none"></textarea>
+                        <button onclick="parseMagicBox('${shop.id}')" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl shadow">توليد وإضافة المنتجات بالسحر ✨</button>
                     </div>
 
-                    <!-- قائمة المنتجات -->
+                    <!-- المنتجات -->
                     <div class="bg-slate-900 p-5 rounded-3xl space-y-4 border border-slate-800">
                         <h2 class="font-black text-white text-sm">📦 المنتجات المتاحة (${(shop.products||[]).length})</h2>
                         <div class="space-y-2 max-h-60 overflow-y-auto">
-                            ${(shop.products||[]).length === 0 ? '<div class="text-slate-500 text-center py-4">لا توجد منتجات مضافة بعد..</div>' : (shop.products||[]).map((item, idx) => `
+                            ${(shop.products||[]).map((item, idx) => `
                                 <div class="bg-slate-950 p-3 rounded-xl flex justify-between items-center border border-slate-800">
                                     <div class="flex items-center gap-3">
                                         <img src="${item.image}" class="w-10 h-10 rounded-lg object-cover">
@@ -440,48 +495,48 @@
 
                     <!-- رابط المتجر -->
                     <div class="bg-slate-900 p-6 rounded-3xl space-y-4 border border-emerald-500/40 text-center shadow-2xl">
-                        <h2 class="font-black text-emerald-400 text-sm">🎉 رابط متجرك (ابعته للزبائن)</h2>
+                        <h2 class="font-black text-emerald-400 text-sm">🎉 رابط متجرك للزبائن</h2>
                         <input readonly value="${customLink}" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-amber-400 font-mono text-center text-xs select-all">
-                        <div class="grid grid-cols-2 gap-2">
-                            <button onclick="navigator.clipboard.writeText('${customLink}'); alert('تم نسخ اللينك!');" class="bg-amber-500 text-slate-950 font-black py-3 rounded-xl">نسخ اللينك</button>
-                            <a href="?view=store&shop=${shop.id}" target="_blank" class="bg-emerald-600 text-white font-black py-3 rounded-xl flex items-center justify-center gap-1">معاينة المتجر ➔</a>
-                        </div>
+                        <button onclick="navigator.clipboard.writeText('${customLink}'); alert('تم نسخ اللينك!');" class="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl">نسخ اللينك</button>
                     </div>
                 </div>
             `;
         }
 
+        function addNewSingleProduct(shopId){
+            const shop = globalDB.shops[shopId];
+            const name = document.getElementById('new_p_name').value.trim();
+            const price = Number(document.getElementById('new_p_price').value);
+            let img = document.getElementById('new_p_img').value.trim();
+
+            if(!name || !price) { alert('يرجى كتابة اسم المنتج والسعر!'); return; }
+            if(!img) img = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400';
+
+            if(!shop.products) shop.products = [];
+            shop.products.push({ id: 'p_' + Date.now(), name, price, image: img });
+            syncCloud();
+            render();
+        }
+
         function parseMagicBox(shopId){
             const shop = globalDB.shops[shopId];
             const rawText = document.getElementById('magic_input').value.trim();
-            if(!rawText) { alert('يرجى كتابة المنتجات في الصندوق السحري أولاً!'); return; }
-
+            if(!rawText) return;
             if(!shop.products) shop.products = [];
-
-            let defaultImg = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400';
-            if(shop.type === 'restaurant') defaultImg = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400';
-            else if(shop.type === 'clothes') defaultImg = 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400';
-            else if(shop.type === 'shoes') defaultImg = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400';
-
             rawText.split('\n').forEach(line => {
                 line = line.trim();
                 if(!line) return;
                 const matchPrice = line.match(/\d+/);
                 if(matchPrice) {
-                    const price = Number(matchPrice[0]);
-                    const name = line.replace(matchPrice[0], '').replace(/جنيه|جنيهاً|ج/g, '').trim();
                     shop.products.push({
                         id: 'prod_' + Date.now() + Math.random(),
-                        name: name || 'منتج مميز',
-                        price: price,
-                        image: defaultImg
+                        name: line.replace(matchPrice[0], '').replace(/جنيه|جنيهاً|ج/g, '').trim() || 'منتج',
+                        price: Number(matchPrice[0]),
+                        image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400'
                     });
                 }
             });
-
-            document.getElementById('magic_input').value = '';
             syncCloud();
-            alert('✨ تم توليد وإضافة المنتجات بنجاح!');
             render();
         }
 
@@ -498,8 +553,7 @@
             return `
                 <div class="max-w-3xl mx-auto px-4 py-6 pb-28 space-y-4 text-xs">
                     <div class="flex justify-between items-center bg-slate-900 p-4 rounded-2xl border border-slate-800">
-                        <h1 class="font-black text-white text-sm">🔔 طلبات العملاء</h1>
-                        <span class="bg-amber-500/20 text-amber-400 font-bold px-3 py-1 rounded-full">الطلبات: ${shop.orders.length}</span>
+                        <h1 class="font-black text-white text-sm">🔔 طلبات العملاء (${shop.orders.length})</h1>
                     </div>
                     <div class="space-y-3">
                         ${shop.orders.length === 0 ? `<div class="bg-slate-900 p-12 text-center text-slate-500 rounded-3xl border border-slate-800">لا توجد طلبات جديدة..</div>` : shop.orders.map((ord, i) => `
@@ -507,10 +561,9 @@
                                 <div class="flex justify-between items-center border-b border-slate-800 pb-2">
                                     <div>
                                         <span class="font-black text-white text-sm">${ord.customer_name}</span>
-                                        <span class="text-amber-400 font-bold block text-[11px]"><i class="fa-solid fa-phone"></i> ${ord.phone}</span>
-                                        <span class="text-slate-300 block text-[10px]"><i class="fa-solid fa-location-dot"></i> ${ord.address} ${ord.meta ? '| المقاس: ' + ord.meta.size : ''}</span>
+                                        <span class="text-amber-400 font-bold block text-[11px]">${ord.phone} - ${ord.address}</span>
                                     </div>
-                                    <div class="text-left"><span class="text-amber-400 font-black text-sm">${ord.total} جنيه</span></div>
+                                    <span class="text-amber-400 font-black text-sm">${ord.total} جنيه</span>
                                 </div>
                                 <div class="text-slate-300 text-[11px] bg-slate-950 p-2.5 rounded-xl">
                                     <div>${(ord.items||[]).map(x => `• ${x.qty}x ${x.name} (${x.price * x.qty} ج)`).join('<br>')}</div>
@@ -529,55 +582,92 @@
             return `<div class="max-w-3xl mx-auto px-4 py-6 pb-28 space-y-4 text-xs"><h1 class="font-black text-amber-400 bg-slate-900 p-4 rounded-2xl">طباعة أكواد QR للطاولات</h1><div class="grid grid-cols-2 gap-3">${Array.from({length:10},(_,i)=>i+1).map(n=>`<div class="bg-slate-900 p-4 rounded-2xl text-center space-y-2"><div class="font-bold">طاولة ${n}</div><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(base+'طاولة '+n)}" class="mx-auto rounded bg-white p-1"></div>`).join('')}</div></div>`; 
         }
 
-        // ================= 4. واجهة عرض المتجر للعملاء مع صفحة إدخال البيانات =================
+        function renderDesignCustomizer(){
+            const shop = globalDB.shops[currentShopId];
+            if(!shop) return '';
+            if(!shop.theme) shop.theme = { bg: '#ffffff', primary: '#0f172a' };
+            return `
+                <div class="max-w-3xl mx-auto px-4 py-6 pb-28 space-y-5 text-xs">
+                    <div class="bg-slate-900 p-5 rounded-3xl border border-slate-800 space-y-4">
+                        <h1 class="font-black text-white text-sm">🎨 تخصيص مظهر المتجر</h1>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-slate-300 mb-1 font-bold">لون الخلفية</label><input type="color" id="theme_bg" value="${shop.theme.bg}" class="w-full h-12 bg-slate-950 rounded-xl cursor-pointer"></div>
+                            <div><label class="block text-slate-300 mb-1 font-bold">لون العناوين والأزرار</label><input type="color" id="theme_primary" value="${shop.theme.primary}" class="w-full h-12 bg-slate-950 rounded-xl cursor-pointer"></div>
+                        </div>
+                        <button onclick="saveTheme('${shop.id}')" class="w-full bg-sky-600 text-white font-black py-3.5 rounded-xl shadow">حفظ الألوان ✓</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function saveTheme(shopId){
+            globalDB.shops[shopId].theme = { bg: document.getElementById('theme_bg').value, primary: document.getElementById('theme_primary').value };
+            syncCloud();
+            alert('🎨 تم تحديث الألوان!');
+            render();
+        }
+
+        // ================= 5. واجهة المتجر للعملاء =================
         function renderStorefront(){
             const shopId = targetShopSlug || Object.keys(globalDB.shops)[0];
             const shop = globalDB.shops[shopId];
             if(!shop) return `<div class="min-h-screen flex items-center justify-center text-white">المتجر غير موجود</div>`;
 
             if(shop.status !== 'active') {
-                return `<div class="min-h-screen flex items-center justify-center text-white px-4 text-center">عذراً، هذا المتجر موقوف مؤقتاً لحين تجديد الاشتراك.</div>`;
+                return `<div class="min-h-screen flex items-center justify-center text-white px-4 text-center">عذراً، هذا المتجر موقوف أو انتهى اشتراكه الشهري.</div>`;
             }
 
-            const theme = shop.theme || { bg: '#f8fafc', primary: '#0f172a', accent: '#dc2626' };
+            const theme = shop.theme || { bg: '#f8fafc', primary: '#0f172a' };
             const cartCount = appState.cart.reduce((s,i)=>s+i.qty, 0);
             const cartTotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty), 0);
 
-            // لو العميل ضغط إتمام الطلب تظهر له صفحة إدخال البيانات والعنوان
             if(appState.checkoutStep === 'details') {
                 return `
                     <div class="min-h-screen p-4 flex items-center justify-center" style="background-color: ${theme.bg}; color: ${theme.primary};">
                         <div class="max-w-md w-full bg-white p-6 rounded-3xl shadow-xl border border-slate-200 space-y-4 text-xs">
-                            <div class="text-center space-y-1">
-                                <h1 class="text-lg font-black text-slate-900">📝 بيانات التوصيل</h1>
-                                <p class="text-slate-500">أدخل اسمك ورقمك وعنوانك لتأكيد الطلب لدى ${shop.name}</p>
-                            </div>
-
+                            <h1 class="text-lg font-black text-slate-900 text-center">📝 بيانات التوصيل</h1>
                             <div class="space-y-3">
-                                <div>
-                                    <label class="block font-bold text-slate-700 mb-1">الاسم بالكامل</label>
-                                    <input id="cust_name" placeholder="اكتب اسمك هنا..." class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none text-slate-900">
-                                </div>
-                                <div>
-                                    <label class="block font-bold text-slate-700 mb-1">رقم الموبايل</label>
-                                    <input id="cust_phone" placeholder="010xxxxxxxx" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none text-slate-900">
-                                </div>
-                                <div>
-                                    <label class="block font-bold text-slate-700 mb-1">العنوان بالتفصيل (الشارع / رقم الحائط)</label>
-                                    <textarea id="cust_address" placeholder="اسم الشارع، رقم العمارة، الدور..." class="w-full h-20 bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none text-slate-900"></textarea>
-                                </div>
+                                <input id="cust_name" placeholder="الاسم بالكامل..." class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none text-slate-900">
+                                <input id="cust_phone" placeholder="رقم الموبايل..." class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none text-slate-900">
+                                <textarea id="cust_address" placeholder="العنوان بالتفصيل (الشارع، رقم العمارة)..." class="w-full h-20 bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none text-slate-900"></textarea>
                             </div>
-
-                            <div class="bg-slate-50 p-3 rounded-xl flex justify-between font-black text-slate-900">
-                                <span>إجمالي الطلب:</span>
-                                <span class="text-red-600">${cartTotal} جنيه</span>
-                            </div>
-
                             <div class="grid grid-cols-2 gap-2">
-                                <button onclick="appState.checkoutStep='cart'; render();" class="bg-slate-200 text-slate-700 font-bold py-3 rounded-xl">رجوع للسلة</button>
-                                <button onclick="confirmAndSendOrder('${shop.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl shadow">إرسال الطلب الآن ➔</button>
+                                <button onclick="appState.checkoutStep='drawer'; render();" class="bg-slate-200 text-slate-700 font-bold py-3 rounded-xl">رجوع</button>
+                                <button onclick="confirmAndSendOrder('${shop.id}')" class="bg-emerald-600 text-white font-black py-3 rounded-xl shadow">إرسال الطلب ➔</button>
                             </div>
                         </div>
+                    </div>
+                `;
+            }
+
+            if(appState.checkoutStep === 'drawer') {
+                return `
+                    <div class="min-h-screen p-4 pb-28 max-w-xl mx-auto space-y-4 text-xs" style="background-color: ${theme.bg}; color: ${theme.primary};">
+                        <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+                            <h1 class="font-black text-sm text-slate-900">🛒 سلة مقتنياتك (${cartCount})</h1>
+                            <button onclick="appState.checkoutStep='cart'; render();" class="text-slate-500 font-bold">إغلاق ✕</button>
+                        </div>
+                        <div class="space-y-3">
+                            ${appState.cart.length === 0 ? `<div class="bg-white p-12 text-center text-slate-400 rounded-3xl">السلة فارغة..</div>` : appState.cart.map((item, idx) => `
+                                <div class="bg-white p-3.5 rounded-2xl flex justify-between items-center border border-slate-200">
+                                    <div class="flex items-center gap-3">
+                                        <img src="${item.image}" class="w-12 h-12 rounded-xl object-cover">
+                                        <div><h3 class="font-black text-slate-900">${item.name}</h3><span class="text-red-600 font-bold">${item.price * item.qty} جنيه</span></div>
+                                    </div>
+                                    <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl font-bold">
+                                        <button onclick="updateCartQty(${idx}, -1)" class="w-6 h-6 bg-white rounded-lg">-</button>
+                                        <span class="w-5 text-center text-slate-900">${item.qty}</span>
+                                        <button onclick="updateCartQty(${idx}, 1)" class="w-6 h-6 bg-white rounded-lg">+</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        ${appState.cart.length > 0 ? `
+                            <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-3">
+                                <div class="flex justify-between font-black text-sm text-slate-900"><span>الإجمالي:</span><span class="text-red-600">${cartTotal} جنيه</span></div>
+                                <button onclick="appState.checkoutStep='details'; render();" class="w-full bg-emerald-600 text-white font-black py-3.5 rounded-xl">متابعة لإدخال البيانات ➔</button>
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             }
@@ -586,47 +676,30 @@
                 <div class="min-h-screen pb-28" style="background-color: ${theme.bg}; color: ${theme.primary};">
                     <header class="bg-white sticky top-0 z-50 border-b border-slate-200 px-4 py-3 shadow-xs">
                         <div class="max-w-xl mx-auto flex justify-between items-center">
-                            <div class="flex items-center gap-2">
-                                <img src="${shop.logoImage}" class="w-9 h-9 rounded-full object-cover border">
-                                <span class="font-black text-sm" style="color: ${theme.primary};">${shop.name}</span>
-                            </div>
+                            <span class="font-black text-sm">${shop.name}</span>
+                            <button onclick="appState.checkoutStep='drawer'; render();" class="relative bg-slate-100 text-slate-800 px-3.5 py-1.5 rounded-xl font-bold flex items-center gap-1.5 text-xs">
+                                <i class="fa-solid fa-cart-shopping text-red-600"><span>السلة</span></i>
+                                ${cartCount > 0 ? `<span class="bg-red-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black">${cartCount}</span>` : ''}
+                            </button>
                         </div>
                     </header>
 
                     <div class="relative h-44 w-full bg-slate-900 overflow-hidden">
                         <img src="${shop.coverImage}" class="w-full h-full object-cover opacity-80">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent flex items-end p-4">
-                            <div class="text-white">
-                                <h1 class="font-black text-lg">${shop.name}</h1>
-                                <p class="text-[11px] text-slate-200"><i class="fa-solid fa-location-dot text-amber-400"></i> ${shop.address}</p>
-                            </div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent flex items-end p-4 text-white">
+                            <h1 class="font-black text-lg">${shop.name}</h1>
                         </div>
                     </div>
 
-                    ${shop.type === 'clothes' || shop.type === 'shoes' ? `
-                        <div class="max-w-xl mx-auto px-3 pt-4">
-                            <div class="bg-white border border-slate-200 p-3 rounded-2xl shadow-xs space-y-2 text-xs">
-                                <div class="flex items-center justify-between">
-                                    <span class="font-bold text-slate-700">اختر المقاس:</span>
-                                    <div class="flex gap-1.5">
-                                        ${['S', 'M', 'L', 'XL', 'XXL'].map(sz => `
-                                            <button onclick="appState.selectedSize='${sz}'; render();" class="px-2.5 py-1 rounded-lg font-black border ${appState.selectedSize===sz?'bg-slate-900 text-white':'bg-slate-100 text-slate-700'}">${sz}</button>
-                                        `).join('')}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ` : ''}
-
                     <div class="max-w-xl mx-auto px-3 pt-6 space-y-4">
-                        <h2 class="font-black text-sm px-1">المنتجات المعروضة</h2>
+                        <h2 class="font-black text-sm">المنتجات</h2>
                         <div class="grid grid-cols-2 gap-3">
                             ${(shop.products||[]).map(prod => `
                                 <div onclick="addToCart('${prod.id}')" class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs cursor-pointer active:scale-95 transition flex flex-col justify-between">
                                     <img src="${prod.image}" class="w-full h-36 object-cover bg-slate-100">
                                     <div class="p-3 space-y-1">
                                         <h3 class="font-black text-xs text-slate-900 truncate">${prod.name}</h3>
-                                        <div class="font-black text-xs text-red-600">${prod.price} جنيه</div>
+                                        <div class="flex justify-between items-center"><span class="font-black text-xs text-red-600">${prod.price} جنيه</span><span class="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded">إضافة +</span></div>
                                     </div>
                                 </div>
                             `).join('')}
@@ -635,12 +708,9 @@
 
                     ${cartCount > 0 ? `
                         <div class="fixed bottom-3 left-3 right-3 max-w-xl mx-auto z-50">
-                            <button onclick="appState.checkoutStep='details'; render();" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3.5 px-5 rounded-2xl shadow-xl flex items-center justify-between font-black text-xs transition">
-                                <div class="flex items-center gap-2">
-                                    <span class="bg-white/20 px-2 py-0.5 rounded-lg text-xs">${cartCount}</span>
-                                    <span>إتمام الطلب (${cartTotal} جنيه)</span>
-                                </div>
-                                <span class="flex items-center gap-1">أدخل البيانات <i class="fa-solid fa-arrow-left"></i></span>
+                            <button onclick="appState.checkoutStep='drawer'; render();" class="w-full bg-emerald-600 text-white py-3.5 px-5 rounded-2xl shadow-xl flex items-center justify-between font-black text-xs">
+                                <span>عرض السلة وإتمام الطلب (${cartTotal} جنيه)</span>
+                                <i class="fa-solid fa-arrow-left"></i>
                             </button>
                         </div>
                     ` : ''}
@@ -657,15 +727,18 @@
             render();
         }
 
+        function updateCartQty(idx, change){
+            appState.cart[idx].qty += change;
+            if(appState.cart[idx].qty <= 0) appState.cart.splice(idx, 1);
+            render();
+        }
+
         function confirmAndSendOrder(shopId){
             const name = document.getElementById('cust_name').value.trim();
             const phone = document.getElementById('cust_phone').value.trim();
             const address = document.getElementById('cust_address').value.trim();
 
-            if(!name || !phone || !address){
-                alert('يرجى استكمال الاسم ورقم الموبايل والعنوان بالتفصيل!');
-                return;
-            }
+            if(!name || !phone || !address){ alert('يرجى استكمال البيانات!'); return; }
 
             const shop = globalDB.shops[shopId];
             if(!shop.orders) shop.orders = [];
@@ -673,20 +746,16 @@
 
             shop.orders.unshift({
                 id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
-                customer_name: name,
-                phone: phone,
-                address: address,
-                meta: { size: appState.selectedSize },
+                customer_name: name, phone: phone, address: address,
                 items: JSON.parse(JSON.stringify(appState.cart)),
-                total: total,
-                created_at: new Date().toLocaleTimeString('ar-EG')
+                total: total
             });
 
             appState.cart = [];
             appState.checkoutStep = 'cart';
             syncCloud();
             playBell();
-            alert('🎉 تم إرسال طلبك بنجاح للمتجر وسيتم التواصل معك قريباً!');
+            alert('🎉 تم إرسال طلبك بنجاح للمتجر!');
             render();
         }
 
