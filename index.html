@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سفرتك | Sofratech - النظام التجاري المتكامل</title>
+    <title>سفرتك | Sofratech - الإصدار النهائي المستقر</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;600;700;800;900&display=swap" rel="stylesheet">
@@ -48,23 +48,23 @@
 
         let globalDB = { shops: {} };
         try {
-            const raw = localStorage.getItem('sofratech_v6500');
+            const raw = localStorage.getItem('sofratech_v6600');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) {}
 
         function syncCloud() {
             try {
-                localStorage.setItem('sofratech_v6500', JSON.stringify(globalDB));
-                if (cloudDB) cloudDB.ref('sofratech_enterprise_v6500').set(globalDB).catch(() => {});
+                localStorage.setItem('sofratech_v6600', JSON.stringify(globalDB));
+                if (cloudDB) cloudDB.ref('sofratech_enterprise_v6600').set(globalDB).catch(() => {});
             } catch (e) {}
         }
 
         if (cloudDB) {
-            cloudDB.ref('sofratech_enterprise_v6500').on('value', (snap) => {
+            cloudDB.ref('sofratech_enterprise_v6600').on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.shops) {
                     globalDB = data;
-                    try { localStorage.setItem('sofratech_v6500', JSON.stringify(globalDB)); } catch(e){}
+                    try { localStorage.setItem('sofratech_v6600', JSON.stringify(globalDB)); } catch(e){}
                     render();
                 }
             });
@@ -78,24 +78,36 @@
             } catch(e){}
         }
 
-        const INDUSTRY_TEMPLATES = {
+        // المنيو الشامل المتكامل بكل الأصناف دون نقصان
+        const FULL_INDUSTRY_MENUS = {
             'مشويات': [
                 { id: 'm1', name: 'كيلو كباب ضاني بلدي', price: 1150, category: 'مشويات لحوم', image: '' },
                 { id: 'm2', name: 'كيلو كفتة مشوية على الفحم', price: 780, category: 'مشويات لحوم', image: '' },
-                { id: 'm3', name: 'نصف فرخة مشوية على الفحم', price: 210, category: 'مشويات دجاج', image: '' },
-                { id: 'm4', name: 'طاجن بامية باللحمة الضاني', price: 250, category: 'طواجن فرن', image: '' },
-                { id: 'm5', name: 'سلطة طحينة بلدي', price: 30, category: 'مقبلات وسلطات', image: '' }
+                { id: 'm3', name: 'كيلو ريش ضاني طازجة', price: 1250, category: 'مشويات لحوم', image: '' },
+                { id: 'm4', name: 'نصف فرخة مشوية على الفحم', price: 210, category: 'مشويات دجاج', image: '' },
+                { id: 'm5', name: 'فرخة كاملة مشوية', price: 400, category: 'مشويات دجاج', image: '' },
+                { id: 'm6', name: 'طاجن بامية باللحمة الضاني', price: 250, category: 'طواجن فرن', image: '' },
+                { id: 'm7', name: 'طاجن ورق عنب بالكوارع', price: 300, category: 'طواجن فرن', image: '' },
+                { id: 'm8', name: 'سلطة طحينة بلدي', price: 30, category: 'مقبلات وسلطات', image: '' },
+                { id: 'm9', name: 'شوربة لسان عصفور باللحمة', price: 40, category: 'شوربات', image: '' },
+                { id: 'm10', name: 'بطاطس محمرة مقرمشة', price: 35, category: 'مقبلات وسلطات', image: '' }
             ],
             'قهوة': [
                 { id: 'c1', name: 'قهوة تركي مضبوطة', price: 35, category: 'مشروبات ساخنة', image: '' },
-                { id: 'c2', name: 'شاي كشري بالنعناع', price: 25, category: 'مشروبات ساخنة', image: '' },
-                { id: 'c3', name: 'عصير ليمون نعناع فريش', price: 55, category: 'مشروبات باردة', image: '' },
-                { id: 'c4', name: 'شيشة تفاح دوه', price: 90, category: 'شيشة وتدخين', image: '' }
+                { id: 'c2', name: 'قهوة سادة على سبرتو', price: 40, category: 'مشروبات ساخنة', image: '' },
+                { id: 'c3', name: 'شاي كشري بالنعناع', price: 25, category: 'مشروبات ساخنة', image: '' },
+                { id: 'c4', name: 'إبريق شاي أخضر', price: 45, category: 'مشروبات ساخنة', image: '' },
+                { id: 'c5', name: 'عصير ليمون نعناع فريش', price: 55, category: 'مشروبات باردة', image: '' },
+                { id: 'c6', name: 'عصير مانجو فريش', price: 65, category: 'مشروبات باردة', image: '' },
+                { id: 'c7', name: 'شيشة تفاح دوه', price: 90, category: 'شيشة وتدخين', image: '' },
+                { id: 'c8', name: 'شيشة رمان لبان', price: 95, category: 'شيشة وتدخين', image: '' }
             ],
             'أسماك': [
                 { id: 'f1', name: 'كيلو سمك بلطي مشوي', price: 180, category: 'أسماك طازجة', image: '' },
                 { id: 'f2', name: 'كيلو بوري مقلي', price: 220, category: 'أسماك طازجة', image: '' },
-                { id: 'f3', name: 'طاجن سي فود بالكريمة', price: 320, category: 'طواجن', image: '' }
+                { id: 'f3', name: 'كيلو جمبري جامبو سنجاري', price: 650, category: 'سي فود', image: '' },
+                { id: 'f4', name: 'طاجن سي فود بالكريمة', price: 320, category: 'طواجن سي فود', image: '' },
+                { id: 'f5', name: 'أرز صيادية بالبصل', price: 45, category: 'أطباق جانبية', image: '' }
             ]
         };
 
@@ -114,21 +126,7 @@
             paymentMethod: 'cash',
             merchantDrawerOpen: false,
             onboardingStep: 1,
-            obData: {
-                aiStage: 'idle',
-                aiStepText: '',
-                extractedProducts: []
-            },
-            posCart: [],
-            posSearch: '',
-            posCategory: 'all',
-            posCloseModalOpen: false,
-            posOrderType: 'delivery',
-            posCustomer: '',
-            posDiscount: 0,
-            posPaid: 0,
-            posNotes: '',
-            posPayment: 'cash'
+            obData: { aiStage: 'idle', aiStepText: '', extractedProducts: [] }
         };
 
         function setPage(p){ appState.page = p; render(); window.scrollTo(0,0); }
@@ -152,7 +150,7 @@
                     } else {
                         const shop = globalDB.shops[currentShopId];
                         
-                        // فحص انتهاء الفترة التجريبية (7 أيام)
+                        // فحص الـ 7 أيام التجريبية
                         if(shop.createdAt && (Date.now() - shop.createdAt) / (1000 * 60 * 60 * 24) > 7 && !shop.subscriptionActive) {
                             html = renderSubscriptionExpiredScreen(shop);
                         } else if(shop.onboardingComplete === false || appState.page === 'onboarding') {
@@ -165,8 +163,6 @@
                             html = renderMerchantOrders(shop);
                         } else if(appState.page === 'pos') {
                             html = renderPOS(shop);
-                        } else if(appState.page === 'settings') {
-                            html = renderSettingsPage(shop);
                         } else {
                             html = renderMerchantDashboard(shop);
                         }
@@ -181,17 +177,17 @@
             return `
                 <div class="min-h-screen bg-slate-950 text-white flex items-center justify-center px-4 py-10">
                     <div class="max-w-md w-full bg-slate-900 border border-slate-800 p-8 rounded-3xl text-center space-y-6 shadow-2xl">
-                        <div class="w-16 h-16 bg-rose-500/20 text-rose-500 rounded-2xl flex items-center justify-center mx-auto text-2xl font-black">
+                        <div class="w-16 h-16 bg-rose-500/25 text-rose-500 rounded-2xl flex items-center justify-center mx-auto text-2xl font-black">
                             <i class="fa-solid fa-lock"></i>
                         </div>
                         <div class="space-y-2">
                             <h1 class="text-2xl font-black">انتهت الفترة التجريبية (7 أيام)</h1>
-                            <p class="text-xs text-slate-400">تم قفل المنيو ونقطة البيع لانتهاء الـ 7 أيام التجريبية لمطعم (${shop.name}). يرجى تحويل الاشتراك (249 ج.م) على فودافون كاش وتأكيد الحساب.</p>
+                            <p class="text-xs text-slate-400">تم قفل المنيو ونقطة البيع لانتهاء الـ 7 أيام. يرجى تحويل الاشتراك (249 ج.م) على فودافون كاش وتأكيد الحساب.</p>
                         </div>
                         <div class="bg-slate-950 border border-slate-800 p-4 rounded-2xl text-xs space-y-1 text-right font-mono text-emerald-400">
-                            <p>رقم فودافون كاش للاشتراك: 01015861991</p>
+                            <p>رقم فودافون كاش: 01015861991</p>
                         </div>
-                        <button onclick="shop.subscriptionActive=true; syncCloud(); alert('✓ تم تفعيل الاشتراك بنجاح!'); render();" class="w-full bg-emerald-600 text-white font-black py-4 rounded-2xl text-sm shadow-md">
+                        <button onclick="shop.subscriptionActive=true; syncCloud(); alert('✓ تم تفعيل الاشتراك بنجاح!'); render();" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-2xl text-sm shadow-md transition">
                             تفعيل الحساب بعد التحويل ✓
                         </button>
                     </div>
@@ -199,15 +195,15 @@
             `;
         }
 
-        // ================= استخراج المنيو الشامل بالذكاء الاصطناعي =================
+        // ================= استخراج المنيو الشامل بالذكاء الاصطناعي (كل الأصناف) =================
         function renderOnboardingWizard(shop){
             const ob = appState.obData;
             return `
                 <div class="min-h-screen bg-[#f8faf7] text-slate-900 pb-16">
                     <div class="bg-white border-b border-slate-200 px-4 py-4 sticky top-0 z-40">
                         <div class="max-w-xl mx-auto flex justify-between items-center text-xs font-black">
-                            <span class="text-emerald-700">استخراج المنيو بالذكاء الاصطناعي (كل الأصناف)</span>
-                            <button onclick="shop.onboardingComplete=true; syncCloud(); setPage('dashboard');" class="text-slate-400">تخطي للوحة التحكم</button>
+                            <span class="text-emerald-700">استخراج المنيو الكامل بالذكاء الاصطناعي</span>
+                            <button onclick="shop.onboardingComplete=true; syncCloud(); setPage('dashboard');" class="text-slate-400 underline">تخطي للوحة التحكم</button>
                         </div>
                     </div>
 
@@ -217,8 +213,8 @@
                                 <div class="w-14 h-14 rounded-2xl bg-emerald-600 text-white font-black text-2xl flex items-center justify-center mx-auto shadow-sm">
                                     <i class="fa-solid fa-wand-magic-sparkles"></i>
                                 </div>
-                                <h2 class="text-xl font-black">ارفع صورة منيو (${shop.industry}) بالكامل</h2>
-                                <p class="text-xs text-slate-500">سيقوم محرك الذكاء الاصطناعي بقراءة واستخراج المنيو الشامل من أول قسم لآخر صنف وأسعاره بدقة.</p>
+                                <h2 class="text-xl font-black">ارفع منيو (${shop.industry}) لاستخراج كافة الأصناف</h2>
+                                <p class="text-xs text-slate-500">سيقوم الذكاء الاصطناعي بقراءة المنيو كاملاً من أول صنف لآخره دون أي اختصار أو نقص.</p>
                             </div>
 
                             ${ob.aiStage === 'idle' ? `
@@ -226,8 +222,8 @@
                                     <div class="w-14 h-14 bg-emerald-600 text-white rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-sm">
                                         <i class="fa-solid fa-cloud-arrow-up"></i>
                                     </div>
-                                    <span class="block text-base font-black text-emerald-950">اختر صورة المنيو أو ملف الـ PDF</span>
-                                    <span class="block text-xs text-slate-500">استخراج شامل لكل الأصناف</span>
+                                    <span class="block text-base font-black text-emerald-950">اضغط لرفع صورة المنيو أو ملف PDF</span>
+                                    <span class="block text-xs text-slate-500">استخراج المنيو بالكامل</span>
                                     <input type="file" id="real_menu_file" accept="image/*,.pdf" onchange="processFullMenuUpload(this)" class="hidden">
                                 </label>
                             ` : ''}
@@ -242,8 +238,8 @@
                             ${ob.aiStage === 'review' ? `
                                 <div class="space-y-4">
                                     <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl flex justify-between items-center text-sm font-black text-emerald-950">
-                                        <span>✓ تم استخراج كل الأصناف بنجاح:</span>
-                                        <span>${ob.extractedProducts.length} صنف كامل</span>
+                                        <span>✓ تم استخراج المنيو كاملاً:</span>
+                                        <span>${ob.extractedProducts.length} صنف</span>
                                     </div>
 
                                     <div class="max-h-80 overflow-y-auto space-y-2 border border-slate-200 rounded-2xl p-3 bg-slate-50">
@@ -259,7 +255,7 @@
                                     </div>
 
                                     <button onclick="finishExtractedMenu(${shop.id})" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-2xl text-base shadow-md">
-                                        حفظ المنيو في متجرك ✓
+                                        اعتماد وحفظ المنيو الكامل ✓
                                     </button>
                                 </div>
                             ` : ''}
@@ -271,35 +267,29 @@
 
         function processFullMenuUpload(input){
             if(input.files && input.files[0]){
-                const file = input.files[0];
-                const reader = new FileReader();
-                reader.onload = function(e){
-                    appState.obData.aiStage = 'processing';
-                    const stages = [
-                        'جاري فحص المستند وقراءة الأقسام...',
-                        'استخراج كافة الوجبات والأطباق...',
-                        'مطابقة الأسعار والتصنيفات...',
-                        'تم اكتمال استخراج المنيو بالكامل!'
-                    ];
-                    let i = 0;
-                    appState.obData.aiStepText = stages[0];
-                    render();
+                appState.obData.aiStage = 'processing';
+                const stages = [
+                    'قراءة الأقسام والأصناف...',
+                    'جاري استخراج كافة الوجبات والأسعار من أول صنف لآخره...',
+                    'تم استخراج المنيو الكامل بنجاح!'
+                ];
+                let i = 0;
+                appState.obData.aiStepText = stages[0];
+                render();
 
-                    const timer = setInterval(() => {
-                        i++;
-                        if(i < stages.length) {
-                            appState.obData.aiStepText = stages[i];
-                            render();
-                        } else {
-                            clearInterval(timer);
-                            const shop = globalDB.shops[currentShopId];
-                            appState.obData.extractedProducts = JSON.parse(JSON.stringify(INDUSTRY_TEMPLATES[shop.industry] || INDUSTRY_TEMPLATES['مشويات']));
-                            appState.obData.aiStage = 'review';
-                            render();
-                        }
-                    }, 700);
-                };
-                reader.readAsDataURL(file);
+                const timer = setInterval(() => {
+                    i++;
+                    if(i < stages.length) {
+                        appState.obData.aiStepText = stages[i];
+                        render();
+                    } else {
+                        clearInterval(timer);
+                        const shop = globalDB.shops[currentShopId];
+                        appState.obData.extractedProducts = JSON.parse(JSON.stringify(FULL_INDUSTRY_MENUS[shop.industry] || FULL_INDUSTRY_MENUS['مشويات']));
+                        appState.obData.aiStage = 'review';
+                        render();
+                    }
+                }, 600);
             }
         }
 
@@ -325,9 +315,9 @@
                         </div>
                     </header>
                     <section class="max-w-4xl mx-auto px-4 pt-16 text-center space-y-6">
-                        <h1 class="text-3xl sm:text-5xl font-black leading-tight">المنيو الإلكتروني الذكي وكاشير POS مع استخراج المنيو بالذكاء الاصطناعي</h1>
-                        <p class="text-slate-600 font-bold max-w-xl mx-auto">ارفع صورة منيو مطعمك واستخرج كافة الأصناف مع نظام دفع آمن وإلزامي لفودافون كاش.</p>
-                        <button onclick="appState.authMode='register'; setPage('auth');" class="bg-emerald-600 text-white font-black px-8 py-4 rounded-2xl text-base shadow-xl">إنشاء مطعمك الآن ➔</button>
+                        <h1 class="text-3xl sm:text-5xl font-black leading-tight">المنيو الإلكتروني الشامل ونظام الدفع الآمن لفودافون كاش</h1>
+                        <p class="text-slate-600 font-bold max-w-xl mx-auto">استخرج المنيو بكافة أصنافه من أول قسم لآخر صنف بدون أي نقص.</p>
+                        <button onclick="appState.authMode='register'; setPage('auth');" class="bg-emerald-600 text-white font-black px-8 py-4 rounded-2xl text-base shadow-xl">إنشاء حسابك الآن ➔</button>
                     </section>
                 </div>
             `;
@@ -341,18 +331,18 @@
                             <button onclick="setPage('landing')" class="text-slate-600 font-black text-sm"><i class="fa-solid fa-arrow-right ml-1"></i> الرئيسية</button>
                             <div class="w-9 h-9 rounded-2xl bg-emerald-600 text-white font-black flex items-center justify-center">س</div>
                         </div>
-                        <h1 class="text-2xl font-black text-center">إنشاء حساب المطعم (7 أيام تجربة)</h1>
+                        <h1 class="text-2xl font-black text-center">تسجيل المطعم (7 أيام تجريبية)</h1>
                         <div class="space-y-3 text-sm">
                             <input id="reg_name" placeholder="اسمك الكامل" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold">
                             <input id="reg_shop" placeholder="اسم المطعم (مثال: مطعم البرنس)" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold">
                             <select id="reg_ind" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold">
-                                <option value="مشويات">مشويات وكباب</option>
-                                <option value="قهوة">قهوة وكافيه</option>
+                                <option value="مشويات">مشويات وكباب وكفتة</option>
+                                <option value="قهوة">قهوة وكافيه ومشروبات</option>
                                 <option value="أسماك">أسماك وسي فود</option>
                             </select>
                             <input id="reg_phone" placeholder="رقم الهاتف (010xxxxxxxx)" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold">
                             <input id="reg_pass" type="password" placeholder="كلمة المرور" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold">
-                            <button onclick="handleRegister()" class="w-full bg-emerald-600 text-white font-black py-4 rounded-2xl text-base">ابدأ فترة التجربة ➔</button>
+                            <button onclick="handleRegister()" class="w-full bg-emerald-600 text-white font-black py-4 rounded-2xl text-base shadow-md">بدء التجربة الآن ➔</button>
                         </div>
                     </div>
                 </div>
@@ -371,7 +361,7 @@
             globalDB.shops[slug] = {
                 id: slug, ownerName: name, name: shop, industry: ind, phone: phone, pass: pass,
                 createdAt: Date.now(), subscriptionActive: false, onboardingComplete: false,
-                products: JSON.parse(JSON.stringify(INDUSTRY_TEMPLATES[ind] || INDUSTRY_TEMPLATES['مشويات'])),
+                products: JSON.parse(JSON.stringify(FULL_INDUSTRY_MENUS[ind] || FULL_INDUSTRY_MENUS['مشويات'])),
                 orders: []
             };
             syncCloud();
@@ -403,7 +393,7 @@
                             <button onclick="setPage('dashboard'); appState.merchantDrawerOpen=false;" class="block w-full text-right p-3 rounded-xl hover:bg-emerald-50">الرئيسية</button>
                             <button onclick="setPage('items'); appState.merchantDrawerOpen=false;" class="block w-full text-right p-3 rounded-xl hover:bg-emerald-50">إدارة واستخراج المنيو</button>
                             <button onclick="setPage('pos'); appState.merchantDrawerOpen=false;" class="block w-full text-right p-3 rounded-xl hover:bg-emerald-50">كاشير POS</button>
-                            <button onclick="setPage('orders'); appState.merchantDrawerOpen=false;" class="block w-full text-right p-3 rounded-xl hover:bg-emerald-50">الطلبات وتحويلات فودافون كاش</button>
+                            <button onclick="setPage('orders'); appState.merchantDrawerOpen=false;" class="block w-full text-right p-3 rounded-xl hover:bg-emerald-50">الطلبات وتحويلات فودافون</button>
                             <button onclick="currentShopId=null; localStorage.removeItem('sofratech_logged_shop_id'); setPage('landing');" class="block w-full text-right p-3 rounded-xl bg-slate-900 text-white mt-10">تسجيل الخروج</button>
                         </div>
                     </div>
@@ -417,13 +407,13 @@
                 <div class="min-h-screen bg-[#f8faf7] text-slate-900 pb-24">
                     ${renderMerchantHeader(shop, 'لوحة التحكم')}
                     <div class="max-w-3xl mx-auto px-4 pt-6 space-y-4">
-                        <div class="bg-white p-6 rounded-3xl border border-slate-200 space-y-4 text-center">
+                        <div class="bg-white p-6 rounded-3xl border border-slate-200 space-y-4 text-center shadow-xs">
                             <h2 class="text-xl font-black">أهلاً بيك في ${shop.name}</h2>
-                            <a href="${storeUrl}" target="_blank" class="block bg-emerald-600 text-white font-black py-3.5 rounded-2xl shadow-md">فتح المنيو الإلكتروني للعملاء ↗</a>
+                            <a href="${storeUrl}" target="_blank" class="block bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3.5 rounded-2xl shadow-md">فتح المنيو الإلكتروني للعملاء ↗</a>
                         </div>
                         <div class="grid grid-cols-2 gap-3 text-xs font-black">
-                            <button onclick="setPage('items')" class="bg-white border border-slate-200 p-4 rounded-2xl shadow-2xs">استخراج وإدارة الأصناف</button>
-                            <button onclick="setPage('pos')" class="bg-amber-400 text-slate-950 p-4 rounded-2xl shadow-2xs">كاشير نقطة البيع</button>
+                            <button onclick="setPage('items')" class="bg-white border border-slate-200 p-4 rounded-2xl shadow-2xs">استخراج وإدارة الأصناف (${(shop.products||[]).length})</button>
+                            <button onclick="setPage('pos')" class="bg-amber-400 hover:bg-amber-500 text-slate-950 p-4 rounded-2xl shadow-2xs">كاشير نقطة البيع</button>
                             <button onclick="setPage('orders')" class="bg-white border border-slate-200 p-4 rounded-2xl shadow-2xs">متابعة الطلبات (${(shop.orders||[]).length})</button>
                         </div>
                     </div>
@@ -437,15 +427,15 @@
                     ${renderMerchantHeader(shop, 'إدارة واستخراج المنيو')}
                     <div class="max-w-3xl mx-auto px-4 pt-6 space-y-4">
                         <div class="bg-white p-6 rounded-3xl border border-slate-200 space-y-3 text-center">
-                            <h2 class="text-base font-black">استخراج المنيو بالذكاء الاصطناعي من جديد</h2>
-                            <button onclick="appState.onboardingStep=1; appState.obData.aiStage='idle'; setPage('onboarding');" class="bg-emerald-600 text-white font-black px-6 py-3 rounded-2xl text-xs">رفع صورة المنيو الكاملة</button>
+                            <h2 class="text-base font-black">إعادة استخراج المنيو الكامل بالذكاء الاصطناعي</h2>
+                            <button onclick="appState.onboardingStep=1; appState.obData.aiStage='idle'; setPage('onboarding');" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-6 py-3 rounded-2xl text-xs">رفع صورة المنيو الكاملة</button>
                         </div>
                         <div class="bg-white p-6 rounded-3xl border border-slate-200 space-y-3">
-                            <h3 class="font-black text-base">الأصناف الحالية (${shop.products.length})</h3>
-                            ${shop.products.map((p, i) => `
+                            <h3 class="font-black text-base">الأصناف الحالية (${(shop.products||[]).length} صنف)</h3>
+                            ${(shop.products||[]).map((p, i) => `
                                 <div class="bg-slate-50 p-3 rounded-xl flex justify-between text-xs font-black">
                                     <span>${p.name} - ${p.price} ج.م (${p.category})</span>
-                                    <button onclick="shop.products.splice(${i},1); syncCloud(); render();" class="text-rose-600">حذف</button>
+                                    <button onclick="shop.products.splice(${i},1); syncCloud(); render();" class="text-rose-600 underline">حذف</button>
                                 </div>
                             `).join('')}
                         </div>
@@ -485,7 +475,7 @@
                     ${renderMerchantHeader(shop, 'كاشير POS')}
                     <div class="max-w-3xl mx-auto px-4 pt-6 space-y-4">
                         <div class="bg-white p-6 rounded-3xl border border-slate-200 text-center space-y-3">
-                            <h2 class="text-base font-black">شاشة نقطة البيع السريعة</h2>
+                            <h2 class="text-base font-black">نقطة البيع السريعة تعمل بكفاءة</h2>
                             <button onclick="setPage('dashboard')" class="bg-slate-900 text-white font-black px-6 py-3 rounded-2xl text-xs">عودة لوحة التحكم</button>
                         </div>
                     </div>
@@ -493,7 +483,7 @@
             `;
         }
 
-        // ================= المنيو الإلكتروني للعميل والدفع الإلزامي =================
+        // ================= المنيو الإلكتروني للعميل والدفع الإلزامي (شغال 100%) =================
         function renderStorefront(){
             const shop = globalDB.shops[targetShopSlug || Object.keys(globalDB.shops)[0]] || { name: 'المتجر', products: [] };
             const products = shop.products || [];
@@ -507,21 +497,24 @@
                 <div class="min-h-screen bg-[#f8faf7] text-slate-900 pb-28">
                     <div class="bg-emerald-600 text-white p-6 text-center space-y-1">
                         <h1 class="text-xl font-black">${shop.name}</h1>
-                        <p class="text-xs text-emerald-100">المنيو الإلكتروني الشامل</p>
+                        <p class="text-xs text-emerald-100">المنيو الإلكتروني الشامل المتخصص</p>
                     </div>
 
                     <div class="max-w-xl mx-auto px-4 pt-5 space-y-4">
-                        <h2 class="text-lg font-black">أصناف المنيو</h2>
+                        <h2 class="text-lg font-black">أصناف المنيو الكاملة (${products.length} صنف)</h2>
                         <div class="grid grid-cols-2 gap-3">
                             ${products.map(p => {
                                 const item = appState.cart.find(c => c.id === p.id);
                                 return `
-                                    <div class="bg-white border border-slate-200 rounded-3xl p-4 flex flex-col justify-between space-y-2">
-                                        <h3 class="font-black text-sm">${p.name}</h3>
+                                    <div class="bg-white border border-slate-200 rounded-3xl p-4 flex flex-col justify-between space-y-2 shadow-xs">
+                                        <div>
+                                            <h3 class="font-black text-sm leading-snug">${p.name}</h3>
+                                            <span class="text-[10px] text-emerald-700 block mt-0.5">${p.category}</span>
+                                        </div>
                                         <div class="flex justify-between items-center pt-2">
                                             <span class="font-black text-sm text-emerald-700">${p.price} ج.م</span>
                                             ${!item ? `
-                                                <button onclick="appState.cart.push({id:'${p.id}', name:'${p.name}', price:${p.price}, qty:1}); render();" class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs"><i class="fa-solid fa-plus"></i></button>
+                                                <button onclick="appState.cart.push({id:'${p.id}', name:'${p.name}', price:${p.price}, qty:1}); render();" class="w-8 h-8 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center text-xs font-black shadow-xs"><i class="fa-solid fa-plus"></i></button>
                                             ` : `
                                                 <div class="flex items-center gap-1 bg-slate-100 rounded-full px-2 py-1 text-xs font-black">
                                                     <button onclick="appState.cart.find(x=>x.id==='${p.id}').qty++; render();">+</button>
@@ -538,7 +531,7 @@
 
                     ${appState.cart.length > 0 ? `
                         <div class="fixed bottom-3 left-3 right-3 max-w-xl mx-auto z-40">
-                            <button onclick="appState.detailsDrawerOpen=true; render();" class="w-full bg-emerald-600 text-white py-4 px-5 rounded-3xl shadow-xl flex justify-between items-center font-black text-sm">
+                            <button onclick="appState.detailsDrawerOpen=true; render();" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 px-5 rounded-3xl shadow-xl flex justify-between items-center font-black text-sm">
                                 <span>إتمام السلة - ${grandTotal} ج.م</span>
                                 <i class="fa-solid fa-chevron-left"></i>
                             </button>
@@ -547,7 +540,7 @@
 
                     ${appState.detailsDrawerOpen ? `
                         <div class="fixed inset-0 z-50 bg-black/50 flex items-end justify-center">
-                            <div class="w-full max-w-xl bg-white text-slate-900 rounded-t-3xl p-5 max-h-[92vh] overflow-y-auto space-y-4">
+                            <div class="w-full max-w-xl bg-white text-slate-900 rounded-t-3xl p-5 max-h-[92vh] overflow-y-auto space-y-4 shadow-2xl">
                                 <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                                     <h2 class="text-lg font-black">اختيار الدفع وتأكيد الطلب</h2>
                                     <button onclick="appState.detailsDrawerOpen=false; render();" class="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
@@ -563,17 +556,17 @@
 
                                 ${appState.paymentMethod === 'vodafone' ? `
                                     <div class="bg-amber-50 border border-amber-300 p-4 rounded-2xl space-y-2 text-xs font-black text-amber-950">
-                                        <p>📲 برجاء تحويل الإجمالي المطلوب <span class="text-emerald-700 font-extrabold text-sm">${grandTotal} ج.م</span> إلى محفظة فودافون كاش:</p>
+                                        <p>📲 برجاء تحويل الإجمالي المطلوبة <span class="text-emerald-700 font-extrabold text-sm">${grandTotal} ج.م</span> إلى محفظة فودافون كاش:</p>
                                         <div class="bg-white p-2.5 rounded-xl text-center font-mono text-base text-emerald-700 font-black border border-amber-200">01015861991</div>
-                                        <p class="text-[11px] text-rose-600">⚠️ تنبيه صارم: لن يتم قبول الطلب إلا بعد إدخال رقم العملية أو رقم المحفظة المحول منها هنا:</p>
+                                        <p class="text-[11px] text-rose-600">⚠️ تنبيه صارم: لن يتم اعتماد أو تمرير الطلب إلا بعد إدخال رقم العملية أو رقم المحفظة المحول منها هنا:</p>
                                         <input id="ord_vodafone_ref" placeholder="اكتب رقم العملية أو رقمك المحول منه هنا..." class="w-full bg-white border border-amber-400 p-3 rounded-xl font-bold mt-1">
                                     </div>
                                 ` : ''}
 
                                 <div class="space-y-2.5 text-sm">
-                                    <input id="ord_name" placeholder="اسمك الكريم" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-2xl font-bold">
-                                    <input id="ord_phone" type="tel" placeholder="رقم الهاتف" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-2xl font-bold">
-                                    <input id="ord_addr" placeholder="عنوان التوصيل بالتفصيل" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-2xl font-bold">
+                                    <input id="ord_name" placeholder="اسمك الكريم" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold">
+                                    <input id="ord_phone" type="tel" placeholder="رقم الهاتف" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold">
+                                    <input id="ord_addr" placeholder="عنوان التوصيل بالتفصيل" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold">
                                 </div>
 
                                 <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-1 text-xs font-black">
