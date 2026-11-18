@@ -21,7 +21,7 @@
 <body class="antialiased min-h-screen selection:bg-emerald-600 selection:text-white">
 
     <audio id="cloud-bell" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
-    <div id="app"></div>
+    <div id="app">جاري التحميل...</div>
 
     <script>
         const firebaseConfig = {
@@ -42,26 +42,15 @@
 
         let globalDB = { shops: {} };
         try {
-            const raw = localStorage.getItem('tablia_saas_v1025');
+            const raw = localStorage.getItem('tablia_saas_v1030');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) { globalDB = { shops: {} }; }
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_saas_v1025', JSON.stringify(globalDB));
-                if (cloudDB) cloudDB.ref('tablia_saas_enterprise_v1025').set(globalDB).catch(() => {});
+                localStorage.setItem('tablia_saas_v1030', JSON.stringify(globalDB));
+                if (cloudDB) cloudDB.ref('tablia_saas_enterprise_v1030').set(globalDB).catch(() => {});
             } catch (e) {}
-        }
-
-        if (cloudDB) {
-            cloudDB.ref('tablia_saas_enterprise_v1025').on('value', (snap) => {
-                const data = snap.val();
-                if (data && data.shops) {
-                    globalDB = data;
-                    try { localStorage.setItem('tablia_saas_v1025', JSON.stringify(globalDB)); } catch(e){}
-                    render();
-                }
-            }, (err) => { console.error(err); });
         }
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -81,6 +70,20 @@
             aiStep: 1,
             uploadedFileName: ''
         };
+
+        // جلب البيانات من السحابي فوراً للتأكد من ظهور المتاجر والمنيو للزبائن
+        if (cloudDB) {
+            cloudDB.ref('tablia_saas_enterprise_v1030').on('value', (snap) => {
+                const data = snap.val();
+                if (data && data.shops) {
+                    globalDB = data;
+                    try { localStorage.setItem('tablia_saas_v1030', JSON.stringify(globalDB)); } catch(e){}
+                }
+                render();
+            }, (err) => { render(); });
+        } else {
+            setTimeout(render, 100);
+        }
 
         function setPage(p){ appState.page = p; render(); window.scrollTo(0,0); }
 
@@ -258,19 +261,19 @@
                     ${appState.aiStep === 1 ? `
                         <div class="bg-white p-6 rounded-3xl border border-slate-200 space-y-5 text-center shadow-xl">
                             <div class="space-y-2">
-                                <h1 class="text-base font-black text-slate-900">ارفع صورة المنيو أو ملف PDF أو Excel، ثم راجع الأصناف واحفظها.[span_0](start_span)[span_0](end_span)</h1>
-                                <p class="text-slate-500 text-[11px]">صورة أو PDF أو Excel أو CSV · حتى 25 ميغابايت[span_1](start_span)[span_1](end_span)</p>
+                                <h1 class="text-base font-black text-slate-900">ارفع صورة المنيو أو ملف PDF أو Excel، ثم راجع الأصناف واحفظها.</h1>
+                                <p class="text-slate-500 text-[11px]">صورة أو PDF أو Excel أو CSV · حتى 25 ميغابايت</p>
                             </div>
                             <label class="border-2 border-dashed border-slate-300 hover:border-emerald-600 bg-slate-50 p-8 rounded-3xl flex flex-col items-center justify-center gap-3 cursor-pointer transition">
                                 <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl">
                                     <i class="fa-solid fa-file-arrow-up"></i>
                                 </div>
-                                <span class="font-black text-slate-900 text-sm">ارفع المنيو[span_2](start_span)[span_2](end_span)</span>
+                                <span class="font-black text-slate-900 text-sm">ارفع المنيو</span>
                                 <input type="file" accept="image/*,.pdf,.xlsx,.csv" onchange="handleAIFileUpload(event)" class="hidden">
                             </label>
                             ${appState.uploadedFileName ? `<div class="bg-emerald-50 border border-emerald-200 text-emerald-700 p-3 rounded-xl font-bold">✓ تم إرفاق الملف: ${appState.uploadedFileName}</div>` : ''}
                             <div class="grid grid-cols-2 gap-2 pt-2">
-                                <button onclick="setPage('builder')" class="bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl">رجوع[span_3](start_span)[span_3](end_span)</button>
+                                <button onclick="setPage('builder')" class="bg-slate-100 text-slate-700 font-bold py-3.5 rounded-xl">رجوع</button>
                                 <button onclick="proceedAIAnalysis()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3.5 rounded-xl shadow">التالي ➔</button>
                             </div>
                         </div>
@@ -428,7 +431,7 @@
         function renderStorefront(){
             const shopId = targetShopSlug || Object.keys(globalDB.shops)[0];
             const shop = globalDB.shops[shopId];
-            if(!shop) return `<div class="min-h-screen flex items-center justify-center text-slate-700">المتجر غير موجود</div>`;
+            if(!shop) return `<div class="min-h-screen flex items-center justify-center text-slate-700 p-6 text-center">عذراً، هذا المنيو غير موجود أو رابط المطعم غير صحيح.</div>`;
 
             const sub = getShopSubscriptionStatus(shop);
             if(!sub.active) {
@@ -456,11 +459,11 @@
                     <div class="fixed inset-0 z-50 bg-black/60 flex items-end justify-center">
                         <div class="bg-white w-full max-w-lg rounded-t-3xl max-h-[90vh] overflow-y-auto p-5 space-y-5 text-xs animate-slide-up">
                             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-                                <h2 class="font-black text-slate-900 text-sm">بيانات الطلب[span_4](start_span)[span_4](end_span)[span_5](start_span)[span_5](end_span)</h2>
+                                <h2 class="font-black text-slate-900 text-sm">بيانات الطلب</h2>
                                 <button onclick="appState.checkoutStep='cart'; render();" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-700">✕</button>
                             </div>
                             <div class="space-y-2">
-                                <label class="font-black text-slate-900 block">نوع الطلب[span_6](start_span)[span_6](end_span)</label>
+                                <label class="font-black text-slate-900 block">نوع الطلب</label>
                                 <div class="grid grid-cols-2 gap-2">
                                     ${['توصيل', 'استلام', 'محلي', 'طاولة'].map(t => `
                                         <button onclick="appState.orderType='${t}'; render();" class="py-3 rounded-2xl font-bold border ${appState.orderType===t?'border-emerald-600 bg-emerald-50/50 text-emerald-800 font-black':'border-slate-200 bg-white text-slate-700'}">${t}</button>
@@ -468,33 +471,33 @@
                                 </div>
                             </div>
                             <div class="space-y-2">
-                                <label class="font-black text-slate-900 block">طريقة الدفع[span_7](start_span)[span_7](end_span)</label>
+                                <label class="font-black text-slate-900 block">طريقة الدفع</label>
                                 <div class="space-y-2">
                                     <div onclick="appState.paymentMethod='نقداً'; render();" class="p-3.5 rounded-2xl border flex items-center justify-between cursor-pointer ${appState.paymentMethod==='نقداً'?'border-emerald-600 bg-emerald-50/50':'border-slate-200'}">
-                                        <span class="font-bold text-slate-900">نقداً[span_8](start_span)[span_8](end_span) 💰</span>
+                                        <span class="font-bold text-slate-900">نقداً 💰</span>
                                     </div>
                                     <div onclick="appState.paymentMethod='فودافون كاش'; render();" class="p-3.5 rounded-2xl border flex items-center justify-between cursor-pointer ${appState.paymentMethod==='فودافون كاش'?'border-emerald-600 bg-emerald-50/50':'border-slate-200'}">
-                                        <span class="font-bold text-slate-900">فودافون كاش[span_9](start_span)[span_9](end_span) 📱 (01015861991)</span>
+                                        <span class="font-bold text-slate-900">فودافون كاش 📱 (01015861991)</span>
                                     </div>
                                 </div>
                             </div>
                             <div class="space-y-3">
-                                <input id="cust_name" placeholder="الاسم[span_10](start_span)[span_10](end_span)" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold outline-none text-slate-900">
-                                <input id="cust_phone" placeholder="الهاتف[span_11](start_span)[span_11](end_span)" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold outline-none text-slate-900">
-                                <input id="cust_address" placeholder="العنوان[span_12](start_span)[span_12](end_span)" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold outline-none text-slate-900">
+                                <input id="cust_name" placeholder="الاسم" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold outline-none text-slate-900">
+                                <input id="cust_phone" placeholder="الهاتف" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold outline-none text-slate-900">
+                                <input id="cust_address" placeholder="العنوان" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold outline-none text-slate-900">
                                 <div class="grid grid-cols-2 gap-2">
-                                    <input id="cust_floor" placeholder="الدور[span_13](start_span)[span_13](end_span)" class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold outline-none text-slate-900">
-                                    <input id="cust_apartment" placeholder="الشقة[span_14](start_span)[span_14](end_span)" class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold outline-none text-slate-900">
+                                    <input id="cust_floor" placeholder="الدور" class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold outline-none text-slate-900">
+                                    <input id="cust_apartment" placeholder="الشقة" class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold outline-none text-slate-900">
                                 </div>
-                                <textarea id="cust_notes" placeholder="ملاحظة على الطلب[span_15](start_span)[span_15](end_span)" class="w-full h-16 bg-slate-50 border border-slate-200 p-3 rounded-2xl font-bold outline-none text-slate-900"></textarea>
+                                <textarea id="cust_notes" placeholder="ملاحظة على الطلب" class="w-full h-16 bg-slate-50 border border-slate-200 p-3 rounded-2xl font-bold outline-none text-slate-900"></textarea>
                             </div>
                             <div class="bg-slate-50 p-4 rounded-2xl space-y-2 border border-slate-200 text-slate-700 font-bold">
-                                <div class="flex justify-between"><span>المجموع[span_16](start_span)[span_16](end_span)</span><span>${cartSubtotal.toLocaleString()} ج.م</span></div>
-                                <div class="flex justify-between"><span>رسوم الخدمة[span_17](start_span)[span_17](end_span)</span><span>${serviceFee.toLocaleString()} ج.م</span></div>
-                                <div class="flex justify-between"><span>الضريبة[span_18](start_span)[span_18](end_span)</span><span>${taxFee.toLocaleString()} ج.م</span></div>
-                                <div class="flex justify-between text-sm font-black text-slate-900 pt-2 border-t border-slate-200"><span>الإجمالي[span_19](start_span)[span_19](end_span)</span><span class="text-emerald-600">${cartTotal.toLocaleString()} ج.م</span></div>
+                                <div class="flex justify-between"><span>المجموع</span><span>${cartSubtotal.toLocaleString()} ج.م</span></div>
+                                <div class="flex justify-between"><span>رسوم الخدمة</span><span>${serviceFee.toLocaleString()} ج.م</span></div>
+                                <div class="flex justify-between"><span>الضريبة</span><span>${taxFee.toLocaleString()} ج.م</span></div>
+                                <div class="flex justify-between text-sm font-black text-slate-900 pt-2 border-t border-slate-200"><span>الإجمالي</span><span class="text-emerald-600">${cartTotal.toLocaleString()} ج.م</span></div>
                             </div>
-                            <button onclick="confirmAndSendOrder('${shop.id}')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-2xl shadow-lg text-sm">تأكيد الطلب · ${cartTotal.toLocaleString()} ج.م[span_20](start_span)[span_20](end_span)</button>
+                            <button onclick="confirmAndSendOrder('${shop.id}')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-2xl shadow-lg text-sm">تأكيد الطلب · ${cartTotal.toLocaleString()} ج.م</button>
                         </div>
                     </div>
                 `;
@@ -505,7 +508,7 @@
                     <div class="fixed inset-0 z-50 bg-black/60 flex items-end justify-center">
                         <div class="bg-white w-full max-w-lg rounded-t-3xl max-h-[90vh] overflow-y-auto p-5 space-y-5 text-xs animate-slide-up">
                             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-                                <h2 class="font-black text-slate-900 text-sm">السلة[span_21](start_span)[span_21](end_span)</h2>
+                                <h2 class="font-black text-slate-900 text-sm">السلة</h2>
                                 <button onclick="appState.checkoutStep='none'; render();" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-700">✕</button>
                             </div>
                             <div class="space-y-3">
@@ -515,15 +518,15 @@
                                     return `
                                         <div class="bg-slate-50 p-3 rounded-2xl flex justify-between items-center border border-slate-200">
                                             <div class="flex items-center gap-2">
-                                                <button onclick="deleteCartItem('${name}')" class="bg-white border border-slate-200 px-3 py-1.5 rounded-xl font-bold text-slate-600 text-[11px]">حذف[span_22](start_span)[span_22](end_span)</button>
+                                                <button onclick="deleteCartItem('${name}')" class="bg-white border border-slate-200 px-3 py-1.5 rounded-xl font-bold text-slate-600 text-[11px]">حذف</button>
                                                 <div>
                                                     <span class="font-black text-slate-900 block">${name}</span>
-                                                    <span class="text-emerald-600 font-bold">${(item.price * qty).toLocaleString()} ج.م[span_23](start_span)[span_23](end_span)</span>
+                                                    <span class="text-emerald-600 font-bold">${(item.price * qty).toLocaleString()} ج.م</span>
                                                 </div>
                                             </div>
                                             <div class="flex items-center gap-2 bg-white border border-slate-200 px-2 py-1 rounded-xl font-bold">
                                                 <button onclick="updateCartQty('${name}', 1)">+</button>
-                                                <span class="w-5 text-center">${qty}[span_24](start_span)[span_24](end_span)</span>
+                                                <span class="w-5 text-center">${qty}</span>
                                                 <button onclick="updateCartQty('${name}', -1)">−</button>
                                             </div>
                                         </div>
@@ -531,7 +534,7 @@
                                 }).join('')}
                             </div>
                             <div class="space-y-2">
-                                <h3 class="font-black text-slate-900">يكمل طلبك[span_25](start_span)[span_25](end_span)</h3>
+                                <h3 class="font-black text-slate-900">يكمل طلبك</h3>
                                 <div class="grid grid-cols-3 gap-2">
                                     {(shop.products || []).slice(0, 3).map(p => `
                                         <div onclick="addToCart('${p.name}')" class="bg-slate-50 p-2 rounded-2xl border border-slate-200 text-center cursor-pointer">
@@ -543,10 +546,10 @@
                                 </div>
                             </div>
                             <div class="bg-slate-50 p-3 rounded-2xl flex justify-between font-black text-sm text-slate-900">
-                                <span>الإجمالي[span_26](start_span)[span_26](end_span)</span>
-                                <span class="text-emerald-600">${cartSubtotal.toLocaleString()} ج.م[span_27](start_span)[span_27](end_span)</span>
+                                <span>الإجمالي</span>
+                                <span class="text-emerald-600">${cartSubtotal.toLocaleString()} ج.م</span>
                             </div>
-                            <button onclick="appState.checkoutStep='details'; render();" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-2xl shadow-lg text-sm">متابعة للتفاصيل[span_28](start_span)[span_28](end_span)</button>
+                            <button onclick="appState.checkoutStep='details'; render();" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-2xl shadow-lg text-sm">متابعة للتفاصيل</button>
                         </div>
                     </div>
                 `;
@@ -562,7 +565,7 @@
                     </header>
                     <div class="max-w-xl mx-auto px-4 pt-4 space-y-4">
                         <div class="flex items-center gap-2">
-                            <button onclick="appState.selectedCategory='المفضلة'; render();" class="bg-white border border-slate-200 px-4 py-2.5 rounded-2xl font-bold text-xs shadow-xs flex items-center gap-1">♡ المفضلة[span_29](start_span)[span_29](end_span)</button>
+                            <button onclick="appState.selectedCategory='المفضلة'; render();" class="bg-white border border-slate-200 px-4 py-2.5 rounded-2xl font-bold text-xs shadow-xs flex items-center gap-1">♡ المفضلة</button>
                             <div class="relative flex-1">
                                 <input value="${appState.searchQuery}" oninput="appState.searchQuery=this.value; render();" placeholder="ابحث عن صنف..." class="w-full bg-white border border-slate-200 py-2.5 pr-9 pl-3 rounded-2xl text-xs font-bold outline-none shadow-xs">
                                 <i class="fa-solid fa-magnifying-glass absolute right-3 top-3 text-slate-400 text-xs"></i>
@@ -588,7 +591,7 @@
                                         <div class="space-y-1">
                                             <h3 class="font-black text-xs text-slate-900 truncate">${p.name}</h3>
                                             <div class="flex justify-between items-center pt-1">
-                                                <span class="font-black text-xs text-slate-900">${p.price.toLocaleString()} ج.م[span_30](start_span)[span_30](end_span)</span>
+                                                <span class="font-black text-xs text-slate-900">${p.price.toLocaleString()} ج.م</span>
                                                 <button onclick="addToCart('${p.name}')" class="w-9 h-9 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full flex items-center justify-center text-base font-black shadow-md">+</button>
                                             </div>
                                         </div>
@@ -600,8 +603,8 @@
                     ${cartCount > 0 ? `
                         <div class="fixed bottom-3 left-3 right-3 max-w-xl mx-auto z-30">
                             <button onclick="appState.checkoutStep='cart'; render();" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 px-5 rounded-3xl shadow-xl flex items-center justify-between font-black text-sm transition">
-                                <span>السلة · ${cartCount}[span_31](start_span)[span_31](end_span)</span>
-                                <span>${cartTotal.toLocaleString()} ج.م[span_32](start_span)[span_32](end_span)</span>
+                                <span>السلة · ${cartCount}</span>
+                                <span>${cartTotal.toLocaleString()} ج.م</span>
                             </button>
                         </div>
                     ` : ''}
@@ -671,8 +674,6 @@
             alert('🎉 تم إرسال طلبك بنجاح للمتجر وسيتم التواصل معك قريباً!');
             render();
         }
-
-        render();
     </script>
 </body>
 </html>
