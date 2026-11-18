@@ -576,7 +576,7 @@
             }
         }
 
-        // ================= 3. رحلة التأسيس + استخراج الذكاء الاصطناعي الحقيقي من صورة المستخدم =================
+        // ================= 3. رحلة التأسيس =================
         function renderOnboardingWizard(shop){
             const step = appState.onboardingStep;
             const ob = appState.obData;
@@ -796,7 +796,6 @@
             `;
         }
 
-        // معالجة وحفظ صورة المنيو الحقيقية المرفوعة من جهاز التاجر واستخراج أصناف حقيقية
         function processRealUploadedMenu(input){
             if(input.files && input.files[0]){
                 const file = input.files[0];
@@ -816,7 +815,6 @@
                             render();
                         } else {
                             clearInterval(timer);
-                            // توليد أصناف حقيقية مربوطة بالصورة المرفوعة
                             appState.obData.extractedProducts = [
                                 { id: 'ai_1', name: 'وجبة مميزة مستخرجة من صورتك (1)', price: 150, category: 'مشويات', image: base64Img },
                                 { id: 'ai_2', name: 'طبق رئيسي من المنيو المرفوع', price: 95, category: 'وجبات', image: base64Img },
@@ -930,7 +928,7 @@
         function renderMerchantDashboard(shop){
             const products = shop.products || [];
             const orders = shop.orders || [];
-            const todaySales = orders.reduce((s, o) => s + (o.total || 0), 0);
+            const todaySales = orders.reduce((s, o) => s + (o.status === 'مؤكد' || o.status === 'جاهز' ? (o.total || 0) : 0), 0);
             const storeUrl = location.origin + location.pathname + `?view=store&shop=${shop.id}`;
 
             const chartBars = [
@@ -1040,7 +1038,7 @@
                                 <p class="text-sm text-slate-400 pt-2">لا توجد طلبات بعد ستظهر هنا أول ما يطلب زبائنك من المنيو</p>
                             ` : orders.slice(0, 3).map(o => `
                                 <div class="bg-slate-50 p-3 rounded-2xl flex justify-between items-center text-xs mt-2">
-                                    <span>#${o.id} • ${o.customerName}</span>
+                                    <span>#${o.id} • ${o.customerName} (${o.status})</span>
                                     <span class="text-emerald-700 font-black">${o.total} ج.م</span>
                                 </div>
                             `).join('')}
@@ -1174,7 +1172,7 @@
                                 <p class="text-sm text-slate-500">اطلب من المنيو لتظهر طلباتك هنا</p>
                             ` : custOrders.map(o => `
                                 <div class="bg-white text-slate-900 p-4 rounded-3xl border border-slate-200 text-right space-y-1">
-                                    <div class="flex justify-between font-black"><span>طلب #${o.id}</span><span class="text-emerald-700">${o.total} ج.م</span></div>
+                                    <div class="flex justify-between font-black"><span>طلب #${o.id} (${o.status})</span><span class="text-emerald-700">${o.total} ج.م</span></div>
                                     <p class="text-xs text-slate-500">${o.items.map(x=>`${x.qty}x ${x.name}`).join('، ')}</p>
                                 </div>
                             `).join('')}
@@ -1398,6 +1396,14 @@
                                     </div>
                                 </div>
 
+                                ${appState.paymentMethod === 'vodafone' ? `
+                                    <div class="bg-amber-50 border border-amber-300 p-4 rounded-2xl space-y-2 text-xs font-black text-amber-950">
+                                        <p>📲 برجاء تحويل مبلغ <span class="text-emerald-700 font-extrabold text-sm">${grandTotal.toLocaleString('en-US', {minimumFractionDigits: 2})} ج.م</span> إلى محفظة فودافون كاش:</p>
+                                        <div class="bg-white p-2.5 rounded-xl text-center font-mono text-base text-emerald-700 font-black border border-amber-200">01015861991</div>
+                                        <input id="ord_vodafone_ref" placeholder="ادخل رقم المحفظة المحول منها أو رقم عملية التحويل" class="w-full bg-white border border-amber-300 p-3 rounded-xl font-bold mt-2">
+                                    </div>
+                                ` : ''}
+
                                 <div class="space-y-2.5 text-sm">
                                     <input id="ord_cust_name" placeholder="الاسم" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold">
                                     <input id="ord_cust_phone" type="tel" placeholder="الهاتف" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-bold">
@@ -1430,7 +1436,7 @@
                                 </div>
 
                                 <button onclick="confirmCustomerOrder('${shop.id}', ${grandTotal}, ${isDemo})" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-2xl text-base shadow-md">
-                                    تأكيد الطلب - ${grandTotal.toLocaleString('en-US', {minimumFractionDigits: 2})} ج.م
+                                    ${appState.paymentMethod === 'vodafone' ? 'إرسال طلب التحويل للمراجعة ➔' : `تأكيد الطلب - ${grandTotal.toLocaleString('en-US', {minimumFractionDigits: 2})} ج.م`}
                                 </button>
                             </div>
                         </div>
@@ -1462,11 +1468,23 @@
             const phone = document.getElementById('ord_cust_phone').value.trim();
             if(!name || !phone){ alert('يرجى إدخال الاسم ورقم الهاتف!'); return; }
 
+            let vodafoneRef = '';
+            let initialStatus = 'جديد';
+
+            if(appState.paymentMethod === 'vodafone'){
+                const refInput = document.getElementById('ord_vodafone_ref');
+                vodafoneRef = refInput ? refInput.value.trim() : '';
+                if(!vodafoneRef){ alert('يرجى إدخال رقم المحفظة المحول منها أو رقم عملية التحويل ليتسنى للتاجر تأكيد الطلب!'); return; }
+                initialStatus = 'بانتظار تأكيد التحويل';
+            }
+
             const newOrd = {
                 id: Math.floor(1000 + Math.random() * 9000),
                 source: 'المنيو',
                 type: appState.orderType,
-                status: 'جديد',
+                status: initialStatus,
+                paymentMethod: appState.paymentMethod,
+                vodafoneRef: vodafoneRef,
                 customerName: name,
                 phone: phone,
                 items: JSON.parse(JSON.stringify(appState.cart)),
@@ -1486,7 +1504,7 @@
             appState.cart = [];
             appState.detailsDrawerOpen = false;
             playBell();
-            alert('✓ تم تأكيد طلبك بنجاح!');
+            alert(appState.paymentMethod === 'vodafone' ? '✓ تم إرسال طلبك! بانتظار مراجعة تحويل فودافون كاش من قِبل المطعم.' : '✓ تم تأكيد طلبك بنجاح!');
             render();
         }
 
@@ -1682,7 +1700,7 @@
                 id: Math.floor(1000 + Math.random() * 9000),
                 source: 'الكاشير',
                 type: appState.posOrderType,
-                status: 'جديد',
+                status: 'مؤكد',
                 customerName: appState.posCustomer || 'عميل كاشير',
                 phone: shop.phone,
                 items: JSON.parse(JSON.stringify(appState.posCart)),
@@ -1697,7 +1715,7 @@
             render();
         }
 
-        // ================= 8. صفحة الطلبات للتاجر =================
+        // ================= 8. صفحة الطلبات للتاجر مع زر تأكيد التحويل =================
         function renderMerchantOrders(shop){
             const orders = shop.orders || [];
             const filtered = orders.filter(o => {
@@ -1718,7 +1736,7 @@
                         </div>
 
                         <div class="flex gap-2 overflow-x-auto hide-scrollbar">
-                            ${['الكل', 'جديد', 'قيد التحضير', 'جاهز'].map(st => `
+                            ${['الكل', 'بانتظار تأكيد التحويل', 'جديد', 'قيد التحضير', 'جاهز'].map(st => `
                                 <button onclick="appState.orderStatusFilter='${st}'; render();" class="px-4 py-2 rounded-2xl text-xs font-black border ${appState.orderStatusFilter===st ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-800 border-slate-200'}">${st}</button>
                             `).join('')}
                         </div>
@@ -1747,7 +1765,8 @@
                                         <div class="flex justify-between items-center">
                                             <div>
                                                 <span class="font-black text-base">#${ord.id} • ${ord.customerName}</span>
-                                                <span class="block text-xs text-slate-500">${ord.phone} • ${ord.source}</span>
+                                                <span class="block text-xs text-slate-500">${ord.phone} • ${ord.source} • الحالة: <b class="text-amber-600">${ord.status}</b></span>
+                                                ${ord.paymentMethod === 'vodafone' ? `<span class="block text-xs text-emerald-700 font-black mt-0.5">فودافون كاش - مرجع التحويل: ${ord.vodafoneRef || 'بدون'}</span>` : ''}
                                             </div>
                                             <span class="text-base font-black text-emerald-700">${ord.total} ج.م</span>
                                         </div>
@@ -1755,8 +1774,12 @@
                                             ${(ord.items||[]).map(i => `${i.qty}x ${i.name}`).join('، ')}
                                         </div>
                                         <div class="flex gap-2 text-xs font-black">
-                                            <button onclick="shop.orders[${idx}].status='قيد التحضير'; syncCloud(); render();" class="flex-1 bg-emerald-50 text-emerald-800 py-2.5 rounded-2xl">قيد التحضير</button>
-                                            <button onclick="shop.orders[${idx}].status='جاهز'; syncCloud(); render();" class="flex-1 bg-emerald-600 text-white py-2.5 rounded-2xl">جاهز ✓</button>
+                                            ${ord.status === 'بانتظار تأكيد التحويل' ? `
+                                                <button onclick="shop.orders[${idx}].status='جديد'; syncCloud(); render();" class="flex-1 bg-amber-500 text-slate-950 py-2.5 rounded-2xl">تأكيد استلام التحويل ✓</button>
+                                            ` : `
+                                                <button onclick="shop.orders[${idx}].status='قيد التحضير'; syncCloud(); render();" class="flex-1 bg-emerald-50 text-emerald-800 py-2.5 rounded-2xl">قيد التحضير</button>
+                                                <button onclick="shop.orders[${idx}].status='جاهز'; syncCloud(); render();" class="flex-1 bg-emerald-600 text-white py-2.5 rounded-2xl">جاهز ✓</button>
+                                            `}
                                         </div>
                                     </div>
                                 `).join('')}
@@ -1791,7 +1814,7 @@
                             </div>
                             <input readonly value="${storeUrl}" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-2xl text-center text-xs font-mono font-bold select-all">
                             <div class="grid grid-cols-3 gap-2 text-xs font-black">
-                                <a href="${qrImg}" download="menu-qr.png" target="_blank" class="bg-emerald-600 text-white py-3 rounded-2xl">PNG</a>
+                                <a href="${qrImg}" download="menu-qr.png" target="_blank" class="box bg-emerald-600 text-white py-3 rounded-2xl text-center">PNG</a>
                                 <button onclick="alert('تم تجهيز ملف SVG للتحميل')" class="bg-white border border-slate-200 text-slate-900 py-3 rounded-2xl">SVG</button>
                                 <button onclick="window.print()" class="bg-white border border-slate-200 text-slate-900 py-3 rounded-2xl">PDF</button>
                             </div>
