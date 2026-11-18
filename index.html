@@ -42,23 +42,23 @@
 
         let globalDB = { restaurants: {} };
         try {
-            const raw = localStorage.getItem('tablia_multitenant_2030_v80');
+            const raw = localStorage.getItem('tablia_multitenant_2030_v90');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) {}
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_multitenant_2030_v80', JSON.stringify(globalDB));
-                if (cloudDB) cloudDB.ref('tablia_multitenant_enterprise_2030_v80').set(globalDB).catch(() => {});
+                localStorage.setItem('tablia_multitenant_2030_v90', JSON.stringify(globalDB));
+                if (cloudDB) cloudDB.ref('tablia_multitenant_enterprise_2030_v90').set(globalDB).catch(() => {});
             } catch (e) {}
         }
 
         if (cloudDB) {
-            cloudDB.ref('tablia_multitenant_enterprise_2030_v80').on('value', (snap) => {
+            cloudDB.ref('tablia_multitenant_enterprise_2030_v90').on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.restaurants) {
                     globalDB = data;
-                    try { localStorage.setItem('tablia_multitenant_2030_v80', JSON.stringify(globalDB)); } catch(e){}
+                    try { localStorage.setItem('tablia_multitenant_2030_v90', JSON.stringify(globalDB)); } catch(e){}
                     render();
                 }
             });
@@ -144,30 +144,31 @@
 
         function renderAuthScreen(){
             if(appState.authStep === 'verify') {
+                const phoneWithoutZero = appState.tempRegData.phone.startsWith('0') ? appState.tempRegData.phone.substring(1) : appState.tempRegData.phone;
+                const fullPhone = '20' + phoneWithoutZero;
+                const whatsappMsg = encodeURIComponent(`مرحباً بك في منصة سفرتك 🚀\nرمز التحقق (OTP) الخاص بك هو: ${appState.generatedOtp}`);
+                const waLink = `https://wa.me/${fullPhone}?text=${whatsappMsg}`;
+
                 return `
-                    <div class="max-w-md mx-auto px-4 py-12 space-y-6 text-xs">
-                        <div class="text-center space-y-2">
-                            <h1 class="text-2xl font-black text-white">تأكيد رقم الهاتف 📱</h1>
-                            <p class="text-slate-400">تم إرسال رسالة SMS حقيقية إلى تطبيق الرسائل في هاتفك من خلال منصة <b>سفرتك</b></p>
+                    <div class="max-w-md mx-auto px-4 py-10 space-y-5 text-xs">
+                        <div class="text-center space-y-1">
+                            <h1 class="text-xl font-black text-white">تأكيد عبر واتساب 📱</h1>
+                            <p class="text-slate-400">تم تجهيز كود التحقق لإرساله عبر الواتساب لرقمك</p>
                         </div>
                         
-                        <!-- صندوق مشابه تماماً لصورة الرسالة الواردة -->
-                        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3 shadow-2xl">
-                            <div class="flex justify-between text-[10px] text-slate-500 border-b border-slate-900 pb-2">
-                                <span>سفرتك | SMS</span>
-                                <span>الآن</span>
-                            </div>
-                            <div class="bg-slate-900 p-3.5 rounded-xl text-slate-100 font-mono text-sm tracking-wide">
-                                <b>${appState.generatedOtp}</b> is your one time password for Safratak
-                            </div>
+                        <div class="bg-emerald-950/40 border border-emerald-500/40 p-5 rounded-3xl space-y-4 text-center">
+                            <div class="text-emerald-400 font-bold text-sm"><i class="fa-brands fa-whatsapp text-lg"></i> تم توليد كود التحقق بنجاح</div>
+                            <a href="${waLink}" target="_blank" class="block w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl shadow transition">
+                                اضغط هنا لفتح واتساب واستلام الكود 💬
+                            </a>
                         </div>
 
                         <div class="bg-slate-900 p-6 rounded-3xl space-y-4 shadow-xl border border-slate-800 text-center">
                             <div>
-                                <label class="block text-slate-300 mb-1 font-bold">أدخل كود التحقق الوارد في الرسالة</label>
+                                <label class="block text-slate-300 mb-1 font-bold">أدخل كود التحقق الوارد في الواتساب</label>
                                 <input id="otp_input" placeholder="0000" maxlength="4" class="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl text-center text-white font-black text-lg tracking-widest outline-none">
                             </div>
-                            <button onclick="verifyOtpAndRegister()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3.5 rounded-xl shadow transition">تأكيد الكود وإنشاء المطعم ✓</button>
+                            <button onclick="verifyOtpAndRegister()" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-3.5 rounded-xl shadow transition">تأكيد الكود وإنشاء المطعم ✓</button>
                             <button onclick="appState.authStep='register'; render();" class="text-slate-400 hover:text-white">العودة لتعديل البيانات</button>
                         </div>
                     </div>
@@ -178,7 +179,7 @@
                 <div class="max-w-md mx-auto px-4 py-12 space-y-6 text-xs">
                     <div class="text-center space-y-2">
                         <h1 class="text-2xl font-black text-white">منصة سفرتك | Tablia OS</h1>
-                        <p class="text-slate-400">أنشئ منيو مطعمك باحترافية تامة 🚀</p>
+                        <p class="text-slate-400">أنشئ منيو مطعمك وتأكد عبر واتساب 🚀</p>
                     </div>
                     <div class="bg-slate-900 p-6 rounded-3xl space-y-4 shadow-xl border border-slate-800">
                         <div>
@@ -193,13 +194,15 @@
                             <label class="block text-slate-300 mb-1 font-bold">كلمة السر</label>
                             <input id="reg_pass" type="password" placeholder="••••" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold outline-none">
                         </div>
-                        <button onclick="requestSmsOtp()" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-3.5 rounded-xl shadow transition">إرسال رسالة SMS من سفرتك ➔</button>
+                        <button onclick="requestWhatsappOtp()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3.5 rounded-xl shadow transition flex items-center justify-center gap-2">
+                            <i class="fa-brands fa-whatsapp text-sm"></i> إرسال كود التحقق عبر واتساب ➔
+                        </button>
                     </div>
                 </div>
             `;
         }
 
-        function requestSmsOtp(){
+        function requestWhatsappOtp(){
             const name = document.getElementById('reg_name').value.trim(); 
             const phone = document.getElementById('reg_phone').value.trim(); 
             const pass = document.getElementById('reg_pass').value.trim();
