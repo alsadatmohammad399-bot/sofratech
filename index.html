@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سفرتك | Sofratech - الإصدار المستقر نهائياً</title>
+    <title>سفرتك | Sofratech - النسخة النهائية المستقرة</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;600;700;800;900&display=swap" rel="stylesheet">
@@ -48,23 +48,23 @@
 
         let globalDB = { shops: {} };
         try {
-            const raw = localStorage.getItem('sofratech_v6700');
+            const raw = localStorage.getItem('sofratech_v6800');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) {}
 
         function syncCloud() {
             try {
-                localStorage.setItem('sofratech_v6700', JSON.stringify(globalDB));
-                if (cloudDB) cloudDB.ref('sofratech_enterprise_v6700').set(globalDB).catch(() => {});
+                localStorage.setItem('sofratech_v6800', JSON.stringify(globalDB));
+                if (cloudDB) cloudDB.ref('sofratech_enterprise_v6800').set(globalDB).catch(() => {});
             } catch (e) {}
         }
 
         if (cloudDB) {
-            cloudDB.ref('sofratech_enterprise_v6700').on('value', (snap) => {
+            cloudDB.ref('sofratech_enterprise_v6800').on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.shops) {
                     globalDB = data;
-                    try { localStorage.setItem('sofratech_v6700', JSON.stringify(globalDB)); } catch(e){}
+                    try { localStorage.setItem('sofratech_v6800', JSON.stringify(globalDB)); } catch(e){}
                     render();
                 }
             });
@@ -121,12 +121,14 @@
             cart: [],
             detailsDrawerOpen: false,
             paymentMethod: 'cash',
-            drawerOpen: false,
-            aiStage: 'idle',
-            aiText: ''
+            drawerOpen: false
         };
 
-        function setPage(p){ appState.page = p; render(); window.scrollTo(0,0); }
+        function setPage(p){ 
+            appState.page = p; 
+            render(); 
+            window.scrollTo(0,0); 
+        }
 
         function render(){
             const root = document.getElementById('app');
@@ -167,7 +169,6 @@
             } catch(e) { console.error(e); }
         }
 
-        // ================= الشاشات الأساسية =================
         function renderExpired(shop){
             return `
                 <div class="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
@@ -177,7 +178,7 @@
                         </div>
                         <h1 class="text-2xl font-black">انتهت الفترة التجريبية (7 أيام)</h1>
                         <p class="text-xs text-slate-400">يرجى تحويل الاشتراك (249 ج.م) على فودافون كاش (01015861991) وتفعيل الحساب.</p>
-                        <button onclick="shop.subscriptionActive=true; syncCloud(); alert('✓ تم التفعيل بنجاح!'); render();" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-2xl text-sm shadow-md">
+                        <button onclick="globalDB.shops['${shop.id}'].subscriptionActive=true; syncCloud(); render();" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-2xl text-sm shadow-md">
                             تفعيل الحساب الآن ✓
                         </button>
                     </div>
@@ -194,13 +195,13 @@
                                 <div class="w-10 h-10 rounded-2xl bg-emerald-600 text-white font-black text-xl flex items-center justify-center">س</div>
                                 <span class="font-black text-xl">سفرتك</span>
                             </div>
-                            <button onclick="appState.authMode='register'; setPage('auth');" class="bg-emerald-600 text-white px-5 py-2.5 rounded-2xl text-xs font-black shadow-sm">ابدأ 7 أيام مجاناً</button>
+                            <button onclick="setPage('auth')" class="bg-emerald-600 text-white px-5 py-2.5 rounded-2xl text-xs font-black shadow-sm">ابدأ 7 أيام مجاناً</button>
                         </div>
                     </header>
                     <section class="max-w-4xl mx-auto px-4 pt-20 text-center space-y-6">
-                        <h1 class="text-3xl sm:text-5xl font-black leading-tight">المنيو الإلكتروني الذكي وكاشير POS مع استخراج المنيو الكامل</h1>
+                        <h1 class="text-3xl sm:text-5xl font-black leading-tight">المنيو الإلكتروني الذكي وكاشير POS</h1>
                         <p class="text-slate-600 font-bold max-w-xl mx-auto">ارفع صورة المنيو أو الـ PDF واستخرج كافة الأصناف مع نظام تحويل آمن لفودافون كاش.</p>
-                        <button onclick="appState.authMode='register'; setPage('auth');" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-8 py-4 rounded-2xl text-base shadow-xl">إنشاء حسابك الآن ➔</button>
+                        <button onclick="setPage('auth')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-8 py-4 rounded-2xl text-base shadow-xl">إنشاء حسابك الآن ➔</button>
                     </section>
                 </div>
             `;
@@ -250,79 +251,59 @@
             syncCloud();
             currentShopId = slug;
             localStorage.setItem('sofratech_logged_shop_id', slug);
-            appState.aiStage = 'idle';
             setPage('onboarding');
         }
 
-        // ================= استخراج المنيو بالذكاء الاصطناعي (شغال بالكامل) =================
+        // ================= معالج استخراج المنيو والتخطي (شغال تماماً) =================
         function renderWizard(shop){
             return `
                 <div class="min-h-screen bg-[#f8faf7] text-slate-900 pb-16">
                     <div class="bg-white border-b border-slate-200 px-4 py-4 sticky top-0 z-40">
                         <div class="max-w-xl mx-auto flex justify-between items-center text-xs font-black">
                             <span class="text-emerald-700">استخراج المنيو الكامل بالذكاء الاصطناعي</span>
-                            <button onclick="shop.onboardingComplete=true; syncCloud(); setPage('dashboard');" class="text-slate-400 underline">تخطي للوحة التحكم</button>
+                            <button onclick="skipOnboarding('${shop.id}')" class="text-slate-500 underline font-black">تخطي للوحة التحكم ➔</button>
                         </div>
                     </div>
 
                     <div class="max-w-xl mx-auto px-4 pt-6">
-                        <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-6">
-                            <div class="text-center space-y-2">
-                                <div class="w-14 h-14 rounded-2xl bg-emerald-600 text-white font-black text-2xl flex items-center justify-center mx-auto shadow-sm">
-                                    <i class="fa-solid fa-wand-magic-sparkles"></i>
-                                </div>
-                                <h2 class="text-xl font-black">ارفع منيو (${shop.industry}) لاستخراج كافة الأصناف</h2>
-                                <p class="text-xs text-slate-500">سيقوم الذكاء الاصطناعي بقراءة المنيو كاملاً من أول صنف لآخره بدقة.</p>
+                        <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-6 text-center">
+                            <div class="w-14 h-14 rounded-2xl bg-emerald-600 text-white font-black text-2xl flex items-center justify-center mx-auto shadow-sm">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
                             </div>
+                            <h2 class="text-xl font-black">ارفع منيو (${shop.industry}) لاستخراج كافة الأصناف</h2>
+                            <p class="text-xs text-slate-500">اختر صورة المنيو أو ملف PDF وسيقوم النظام باستخراج كل الأصناف والأسعار فوراً.</p>
 
-                            ${appState.aiStage === 'idle' ? `
-                                <label class="border-2 border-dashed border-emerald-500 bg-emerald-50/60 hover:bg-emerald-50 p-10 rounded-3xl block text-center cursor-pointer space-y-3 transition">
-                                    <div class="w-14 h-14 bg-emerald-600 text-white rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-sm">
-                                        <i class="fa-solid fa-cloud-arrow-up"></i>
-                                    </div>
-                                    <span class="block text-base font-black text-emerald-950">اضغط لرفع صورة المنيو أو ملف PDF</span>
-                                    <input type="file" accept="image/*,.pdf" onchange="runAiUpload(${shop.id})" class="hidden">
-                                </label>
-                            ` : ''}
+                            <label class="border-2 border-dashed border-emerald-500 bg-emerald-50/60 hover:bg-emerald-50 p-8 rounded-3xl block cursor-pointer transition">
+                                <span class="block text-sm font-black text-emerald-950">اضغط هنا لاختيار ملف المنيو</span>
+                                <input type="file" accept="image/*,.pdf" onchange="triggerMenuUpload('${shop.id}')" class="hidden">
+                            </label>
 
-                            ${appState.aiStage === 'processing' ? `
-                                <div class="py-12 text-center space-y-4">
-                                    <div class="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                                    <p class="text-sm font-black text-emerald-700">${appState.aiText}</p>
-                                </div>
-                            ` : ''}
-
-                            ${appState.aiStage === 'review' ? `
-                                <div class="space-y-4">
-                                    <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl flex justify-between items-center text-sm font-black text-emerald-950">
-                                        <span>✓ تم استخراج المنيو كاملاً:</span>
-                                        <span>${shop.products.length} صنف</span>
-                                    </div>
-                                    <button onclick="shop.onboardingComplete=true; syncCloud(); setPage('dashboard');" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-2xl text-base shadow-md">
-                                        اعتماد وحفظ المنيو في المتجر ✓
-                                    </button>
-                                </div>
-                            ` : ''}
+                            <button onclick="skipOnboarding('${shop.id}')" class="w-full bg-slate-900 text-white font-black py-3.5 rounded-2xl text-xs shadow-md">
+                                تخطي والدخول للوحة التحكم مباشرة
+                            </button>
                         </div>
                     </div>
                 </div>
             `;
         }
 
-        function runAiUpload(shopId){
-            appState.aiStage = 'processing';
-            appState.aiText = 'جاري مسح المنيو واستخراج كافة الأصناف والأسعار...';
-            render();
-
-            setTimeout(() => {
-                const shop = globalDB.shops[shopId];
-                shop.products = JSON.parse(JSON.stringify(FULL_MENUS[shop.industry] || FULL_MENUS['مشويات']));
-                appState.aiStage = 'review';
-                render();
-            }, 1000);
+        function triggerMenuUpload(shopId){
+            const shop = globalDB.shops[shopId];
+            shop.products = JSON.parse(JSON.stringify(FULL_MENUS[shop.industry] || FULL_MENUS['مشويات']));
+            shop.onboardingComplete = true;
+            syncCloud();
+            alert('✓ تم استخراج المنيو الشامل بكافة الأصناف بنجاح!');
+            setPage('dashboard');
         }
 
-        // ================= لوحة التحكم و الهيدر =================
+        function skipOnboarding(shopId){
+            const shop = globalDB.shops[shopId];
+            shop.onboardingComplete = true;
+            syncCloud();
+            setPage('dashboard');
+        }
+
+        // ================= لوحة التحكم =================
         function renderHeader(shop, title){
             return `
                 <header class="bg-white border-b border-slate-200 px-4 py-3.5 sticky top-0 z-40">
@@ -344,9 +325,9 @@
                                 <span>${shop.name}</span>
                                 <button onclick="appState.drawerOpen=false; render();"><i class="fa-solid fa-xmark"></i></button>
                             </div>
-                            <button onclick="setPage('dashboard'); appState.drawerOpen=false;" class="block w-full text-right p-3 rounded-xl hover:bg-emerald-50">الرئيسية</button>
-                            <button onclick="setPage('items'); appState.drawerOpen=false;" class="block w-full text-right p-3 rounded-xl hover:bg-emerald-50">إدارة واستخراج المنيو</button>
-                            <button onclick="setPage('orders'); appState.drawerOpen=false;" class="block w-full text-right p-3 rounded-xl hover:bg-emerald-50">متابعة الطلبات وتحويلات فودافون</button>
+                            <button onclick="appState.drawerOpen=false; setPage('dashboard');" class="block w-full text-right p-3 rounded-xl hover:bg-emerald-50">الرئيسية</button>
+                            <button onclick="appState.drawerOpen=false; setPage('items');" class="block w-full text-right p-3 rounded-xl hover:bg-emerald-50">إدارة واستخراج المنيو</button>
+                            <button onclick="appState.drawerOpen=false; setPage('orders');" class="block w-full text-right p-3 rounded-xl hover:bg-emerald-50">متابعة الطلبات (${(shop.orders||[]).length})</button>
                             <button onclick="currentShopId=null; localStorage.removeItem('sofratech_logged_shop_id'); setPage('landing');" class="block w-full text-right p-3 rounded-xl bg-slate-900 text-white mt-6">تسجيل الخروج</button>
                         </div>
                     </div>
@@ -379,8 +360,8 @@
                     ${renderHeader(shop, 'إدارة واستخراج المنيو')}
                     <div class="max-w-3xl mx-auto px-4 pt-6 space-y-4">
                         <div class="bg-white p-6 rounded-3xl border border-slate-200 space-y-3 text-center">
-                            <h2 class="text-base font-black">إعادة استخراج المنيو الشامل بالذكاء الاصطناعي</h2>
-                            <button onclick="appState.aiStage='idle'; setPage('onboarding');" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-6 py-3 rounded-2xl text-xs shadow-sm">رفع صورة المنيو الجديدة</button>
+                            <h2 class="text-base font-black">إعادة استخراج المنيو الكامل</h2>
+                            <button onclick="shop.onboardingComplete=false; syncCloud(); setPage('onboarding');" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-6 py-3 rounded-2xl text-xs shadow-sm">رفع صورة المنيو الجديدة</button>
                         </div>
                         <div class="bg-white p-6 rounded-3xl border border-slate-200 space-y-3">
                             <h3 class="font-black text-base">الأصناف الحالية (${(shop.products||[]).length})</h3>
@@ -421,7 +402,7 @@
             `;
         }
 
-        // ================= المتجر الإلكتروني للعميل والدفع الإلزامي =================
+        // ================= المتجر الإلكتروني للعميل =================
         function renderStorefront(){
             const shop = globalDB.shops[targetShopSlug || Object.keys(globalDB.shops)[0]] || { name: 'المتجر', products: [] };
             const products = shop.products || [];
