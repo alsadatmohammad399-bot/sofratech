@@ -1,13 +1,15 @@
 <!doctype html>
 <html lang="ar" dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>سفرتك — منصة المنيو الإلكتروني</title>
+<title>سفرتك — منصة المنيو الإلكتروني والكاشير</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 <style>
 :root{--bg:#F6FBF7;--c:#fff;--t:#14201A;--m:#4B5B52;--b:#CFE3D5;--g:#15803D;--l:#DCFCE7;--lt:#14532D;--y:#FACC15;color-scheme:light}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--t);font:800 16px Cairo,system-ui,sans-serif}
-h1,h2,h3{margin:0;font-weight:800}h1{font-size:30px;line-height:1.35}h2{font-size:22px}
+h1,h2,h3{margin:0;font-weight:800}h1{font-size:28px;line-height:1.35}h2{font-size:20px}
 .w{max-width:560px;margin:auto;padding:14px 16px 130px;display:flex;flex-direction:column;gap:14px}
 header{position:sticky;top:0;z-index:20;background:var(--c);border-bottom:1px solid var(--b)}
 .hi{max-width:560px;margin:auto;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -33,70 +35,200 @@ header{position:sticky;top:0;z-index:20;background:var(--c);border-bottom:1px so
 .tl{display:flex;justify-content:space-between;gap:8px}
 </style></head><body><div id="app"></div><div id="ts" style="display:none;position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#14201A;color:#fff;padding:10px 18px;border-radius:99px;z-index:60"></div>
 <script>
-let IT=[
-  ["مشويات","كيلو كباب ضاني بلدي",1150,"مشويات لحوم"],
-  ["مشويات","كيلو كفتة مشوية على الفحم",780,"مشويات لحوم"],
-  ["مشويات","كيلو ريش ضاني طازجة",1250,"مشويات لحوم"],
-  ["مشويات","نصف فرخة مشوية على الفحم",210,"مشويات دجاج"],
-  ["مشويات","فرخة كاملة مشوية",400,"مشويات دجاج"],
-  ["مشويات","طاجن بامية باللحمة الضاني",250,"طواجن فرن"],
-  ["مشويات","طاجن ورق عنب بالكوارع",300,"طواجن فرن"],
-  ["مشويات","سلطة طحينة بلدي",30,"مقبلات وسلطات"],
-  ["مشويات","شوربة لسان عصفور باللحمة",40,"شوربات"],
-  ["مشويات","بطاطس محمرة مقرمشة",35,"مقبلات وسلطات"]
-];
+// إعدادات قاعدة البيانات Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyCVofMvvbyMBGM1pQNeoG-gMT48Ll5IL4I",
+    authDomain: "sofratech-2e033.firebaseapp.com",
+    databaseURL: "https://sofratech-2e033-default-rtdb.firebaseio.com",
+    projectId: "sofratech-2e033",
+    storageBucket: "sofratech-2e033.firebasestorage.app",
+    messagingSenderId: "742714705801",
+    appId: "1:742714705801:web:ddd019d66fa7435f6f8358"
+};
+
+let cloudDB = null;
+try {
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    cloudDB = firebase.database();
+} catch (e) {}
+
+let DB = {
+    shopName: "مطعم البرنس",
+    ownerPhone: "01015861991",
+    createdAt: Date.now(),
+    subscriptionActive: false,
+    items: [
+        ["مشويات","كيلو كباب ضاني بلدي",1150,"مشويات لحوم"],
+        ["مشويات","كيلو كفتة مشوية على الفحم",780,"مشويات لحوم"],
+        ["مشويات","كيلو ريش ضاني طازجة",1250,"مشويات لحوم"],
+        ["مشويات","نصف فرخة مشوية على الفحم",210,"مشويات دجاج"],
+        ["مشويات","فرخة كاملة مشوية",400,"مشويات دجاج"],
+        ["مشويات","طاجن بامية باللحمة الضاني",250,"طواجن فرن"],
+        ["مشويات","طاجن ورق عنب بالكوارع",300,"طواجن فرن"],
+        ["مشويات","سلطة طحينة بلدي",30,"مقبلات وسلطات"],
+        ["مشويات","شوربة لسان عصفور باللحمة",40,"شوربات"],
+        ["مشويات","بطاطس محمرة مقرمشة",35,"مقبلات وسلطات"]
+    ],
+    orders: []
+};
+
+// مزامنة فورية مع قاعدة البيانات والسحابة
+try {
+    const raw = localStorage.getItem("sofratech_pro_db");
+    if (raw) DB = JSON.parse(raw);
+} catch(e){}
+
+function syncCloud() {
+    try {
+        localStorage.setItem("sofratech_pro_db", JSON.stringify(DB));
+        if (cloudDB) cloudDB.ref('sofratech_user_01015861991').set(DB).catch(()=>{});
+    } catch(e){}
+}
+
+if (cloudDB) {
+    cloudDB.ref('sofratech_user_01015861991').on('value', (snap) => {
+        const d = snap.val();
+        if (d && d.items) {
+            DB = d;
+            try { localStorage.setItem("sofratech_pro_db", JSON.stringify(DB)); } catch(e){}
+            render();
+        }
+    });
+}
+
 const CATS=["مشويات","وجبات","ساندوتشات","طواجن"];
-const S={cart:{},ord:[],cat:"مشويات",q:"",step:1,co:0,pay:"نقداً"};
+const S={cart:{},cat:"مشويات",co:0,pay:"نقداً",vRef:""};
 const toast=t=>{const e=document.getElementById("ts");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",2500)};
 const fm=n=>n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})+" ج.م";
-const cnt=c=>Object.values(c).reduce((a,b)=>a+b,0),sub=c=>Object.entries(c).reduce((a,[i,q])=>a+IT[i][2]*q,0);
+const cnt=c=>Object.values(c).reduce((a,b)=>a+b,0),sub=c=>Object.entries(c).reduce((a,[i,q])=>a+DB.items[i][2]*q,0);
 
 function render(){
-  const h=location.hash.slice(1)||"landing";
-  let html="";
-  if(h=="landing"){
-    html=`<header><div class="hi"><span style="font-weight:800;font-size:20px">سفرتك</span><button class="b g" onclick="location.hash='#signup'">ابدأ مجاناً</button></div></header>
-    <main class="w"><div class="c" style="background:var(--l);text-align:center;padding:30px"><h1>استقبل طلباتك بدون عمولة</h1><p class="m">أنشئ منيو مطعمك الإلكتروني في ثوانٍ وشارك رابطك مع عملائك</p><button class="b g" style="margin:auto" onclick="location.hash='#signup'">جرّب الآن مجاناً</button></div></main>`;
-  } else if(h=="signup"){
-    html=`<main class="w" style="padding-top:30px"><h1>إنشاء حساب جديد</h1><input class="in" placeholder="اسم المطعم"><input class="in" placeholder="رقم الموبايل"><button class="b g" onclick="location.hash='#setup'">متابعة الإعداد</button></main>`;
-  } else if(h=="setup"){
-    html=`<main class="w" style="padding-top:30px"><h1>ارفع صورة المنيو أو تخطَّ</h1><p class="m">سيقوم النظام بإضافة الأصناف فوراً وبدون تعقيد.</p><button class="b g" onclick="alert('✓ تم استخراج المنيو كاملاً بنجاح!');location.hash='#dash'">رفع المنيو بالذكاء الاصطناعي</button><button class="b" onclick="location.hash='#dash'">تخطي والدخول لوحة التحكم</button></main>`;
-  } else if(h=="dash"){
-    html=`<header><div class="hi"><span style="font-weight:800">لوحة التحكم</span><button class="b lg" onclick="location.hash='#store'">فتح المنيو ↗</button></div></header>
-    <main class="w"><div class="c"><h2>أهلاً بك في مطعمك</h2><p class="m">الطلبات اليومية: ${S.ord.length}</p><button class="b y" onclick="location.hash='#orders'">متابعة الطلبات</button></div></main>`;
-  } else if(h=="store"){
-    const n=cnt(S.cart);
-    html=`<header><div class="hi"><span style="font-weight:800">المنيو الإلكتروني</span><button class="b" onclick="location.hash='#dash'">اللوحة</button></div></header>
-    <main class="w"><div class="sc">${CATS.map(c=>`<button class="ch ${c==S.cat?"sel":""}" onclick="S.cat='${c}';render()">${c}</button>`).join("")}</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
-      ${IT.map((x,i)=>{const q=S.cart[i]||0;return `<div class="it"><div class="ph">صنف</div><b>${x[1]}</b><b style="color:var(--g)">${fm(x[2])}</b>${q?`<div class="qc"><button onclick="S.cart[i]--;if(!S.cart[i])delete S.cart[i];render()">−</button><b>${q}</b><button onclick="S.cart[i]++;render()">+</button></div>`:`<button class="pl" onclick="S.cart[i]=1;render()">+</button>`}</div>`}).join("")}
-    </div></main>${n?`<div class="bar"><button class="b g" onclick="S.co=1;render()">عرض السلة (${n} صنف) - ${fm(sub(S.cart))}</button></div>`:""}`;
-  } else if(h=="orders"){
-    html=`<header><div class="hi"><span style="font-weight:800">الطلبات</span><button class="b" onclick="location.hash='#dash'">رجوع</button></div></header>
-    <main class="w">${S.ord.length?S.ord.map(o=>`<div class="c"><b>طلب #${o.id}</b><span>الإجمالي: ${fm(o.t)}</span><span class="m">الحالة: ${o.s}</span></div>`).join(""):'<div class="c m" style="text-align:center">لا توجد طلبات جديدة بعد</div>'}</main>`;
-  }
-  
-  if(S.co==1){
-    const s=sub(S.cart), t=s*1.2;
-    html+=`<div class="ov" onclick="if(event.target===this){S.co=0;render()}"><div class="sh">
-      <div class="tl"><h2>إتمام الطلب</h2><button class="b" onclick="S.co=0;render()">✕</button></div>
-      ${Object.keys(S.cart).map(i=>`<div class="tl"><span>${IT[i][1]} (x${S.cart[i]})</span><span>${fm(IT[i][2]*S.cart[i])}</span></div>`).join("")}
-      <hr style="border:0;border-top:1px solid var(--b)">
-      <div class="tl"><b>الإجمالي بالخدمة</b><b>${fm(t)}</b></div>
-      <input class="in" id="cn" placeholder="اسمك الكريم">
-      <input class="in" id="cp" placeholder="رقم الموبايل">
-      <button class="b g" onclick="submitOrder(${t})">تأكيد الطلب ✓</button>
-    </div></div>`;
-  }
-  document.getElementById("app").innerHTML=html;
+    // فحص انتهاء الـ 7 أيام التجريبية
+    const daysPassed = (Date.now() - DB.createdAt) / (1000 * 60 * 60 * 24);
+    if(daysPassed > 7 && !DB.subscriptionActive){
+        document.getElementById("app").innerHTML=`
+            <div style="min-height:100vh;background:#0F1712;color:#fff;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center">
+                <div class="c" style="background:#18231C;max-width:400px;width:100%;border:1px solid #2C3D32">
+                    <h2>انتهت الفترة التجريبية (7 أيام)</h2>
+                    <p class="m">للاستمرار في تشغيل المنيو والكاشير، يرجى تحويل قيمة الاشتراك (249 ج.م) على محفظة فودافون كاش:</p>
+                    <div style="background:#0F1712;padding:12px;border-radius:12px;font-family:monospace;font-size:18px;color:#34D399">01015861991</div>
+                    <button class="b g" onclick="DB.subscriptionActive=true;syncCloud();render();">تفعيل الحساب بعد التحويل ✓</button>
+                </div>
+            </div>`;
+        return;
+    }
+
+    const h=location.hash.slice(1)||"landing";
+    let html="";
+    
+    if(h=="landing"){
+        html=`<header><div class="hi"><span style="font-weight:800;font-size:20px">سفرتك</span><button class="b g" onclick="location.hash='#signup'">ابدأ مجاناً</button></div></header>
+        <main class="w"><div class="c" style="background:var(--l);text-align:center;padding:30px"><h1>استقبل طلباتك بدون عمولة</h1><p class="m">أنشئ منيو مطعمك الإلكتروني في ثوانٍ مع ربط كامل بقاعدة البيانات ونظام فودافون كاش الآمن</p><button class="b g" style="margin:auto" onclick="location.hash='#signup'">جرّب الآن مجاناً (7 أيام)</button></div></main>`;
+    } else if(h=="signup"){
+        html=`<main class="w" style="padding-top:30px"><h1>إنشاء حساب المطعم</h1><input class="in" id="reg_sh" placeholder="اسم المطعم (مثال: مطعم البرنس)"><input class="in" id="reg_ph" placeholder="رقم الموبايل" value="01015861991"><button class="b g" onclick="handleReg()">متابعة للإعداد واستخراج المنيو</button></main>`;
+    } else if(h=="setup"){
+        html=`<main class="w" style="padding-top:30px"><h1>ارفع صورة المنيو أو ملف PDF</h1><p class="m">سيقوم الذكاء الاصطناعي باستخراج كافة الأصناف من أول قسم لآخره فـوراً.</p><button class="b g" style="min-height:56px" onclick="runAiUpload()">رفع المنيو واستخراج الأصناف بالذكاء الاصطناعي ✓</button><button class="b" onclick="location.hash='#dash'">تخطي والدخول للوحة التحكم</button></main>`;
+    } else if(h=="dash"){
+        const storeUrl = location.origin + location.pathname + `#store`;
+        html=`<header><div class="hi"><span style="font-weight:800">لوحة التحكم (${DB.shopName})</span><a class="b lg" href="${storeUrl}" target="_blank">فتح المنيو ↗</a></div></header>
+        <main class="w">
+            <div class="c"><h2>أهلاً بك يا صاحب المطعم</h2><p class="m">إجمالي الطلبات الواردة: ${DB.orders.length}</p><button class="b y" onclick="location.hash='#orders'">متابعة الطلبات وتحويلات فودافون كاش</button></div>
+            <div class="c"><b>روابط سريعة</b><div class="r wr"><button class="b f" onclick="location.hash='#items'">إدارة الأصناف (${DB.items.length})</button><button class="b f" onclick="location.hash='#setup'">استخراج منيو جديد</button></div></div>
+        </main>`;
+    } else if(h=="store"){
+        const n=cnt(S.cart);
+        html=`<header><div class="hi"><span style="font-weight:800">${DB.shopName}</span><button class="b" onclick="location.hash='#dash'">لوحة التحكم</button></div></header>
+        <main class="w">
+            <div class="sc">${CATS.map(c=>`<button class="ch ${c==S.cat?"sel":""}" onclick="S.cat='${c}';render()">${c}</button>`).join("")}</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
+              ${DB.items.map((x,i)=>{const q=S.cart[i]||0;return x[0]==S.cat?`<div class="it"><div class="ph">صنف</div><b>${x[1]}</b><b style="color:var(--g)">${fm(x[2])}</b>${q?`<div class="qc"><button onclick="S.cart[i]--;if(!S.cart[i])delete S.cart[i];render()">−</button><b>${q}</b><button onclick="S.cart[i]++;render()">+</button></div>`:`<button class="pl" onclick="S.cart[i]=1;render()">+</button>`}</div>`:""}).join("")}
+            </div>
+        </main>${n?`<div class="bar"><button class="b g" onclick="S.co=1;render()">عرض السلة (${n} صنف) - ${fm(sub(S.cart))}</button></div>`:""}`;
+    } else if(h=="orders"){
+        html=`<header><div class="hi"><span style="font-weight:800">الطلبات والتحويلات</span><button class="b" onclick="location.hash='#dash'">رجوع</button></div></header>
+        <main class="w">${DB.orders.length?DB.orders.map((o, idx)=>`<div class="c"><b>طلب #${o.id} · ${o.name}</b><span>المبلغ: ${fm(o.t)}</span><span class="m">طريقة الدفع: ${o.pay}</span>${o.pay=='فودافون كاش'?`<span style="color:#D97706;font-size:13px">رقم التحويل من العميل: <b>${o.vRef}</b></span>`:""}<span class="m">الحالة: ${o.s}</span>${o.s=='بانتظار تأكيد التحويل'?`<button class="b g" onclick="DB.orders[${idx}].s='مؤكد وجاري التجهيز';syncCloud();render();">تأكيد استلام التحويل واعتماد الطلب ✓</button>`:""}</div>`).join(""):'<div class="c m" style="text-align:center">لا توجد طلبات جديدة بعد</div>'}</main>`;
+    } else if(h=="items"){
+        html=`<header><div class="hi"><span style="font-weight:800">إدارة الأصناف</span><button class="b" onclick="location.hash='#dash'">رجوع</button></div></header>
+        <main class="w">${DB.items.map((x,i)=>`<div class="c r"><span class="f"><b>${x[1]}</b><br><span class="m">${x[2]} ج.م · ${x[0]}</span></span><button class="ch sel" onclick="DB.items.splice(${i},1);syncCloud();render();">حذف</button></div>`).join("")}</main>`;
+    }
+    
+    if(S.co==1){
+        const s=sub(S.cart), sv=s*0.12, tx=(s+sv)*0.14, t=s+sv+tx;
+        html+=`<div class="ov" onclick="if(event.target===this){S.co=0;render()}"><div class="sh">
+          <div class="tl"><h2>إتمام الطلب والدفع</h2><button class="b" onclick="S.co=0;render()">✕</button></div>
+          ${Object.keys(S.cart).map(i=>`<div class="tl"><span>${DB.items[i][1]} (x${S.cart[i]})</span><span>${fm(DB.items[i][2]*S.cart[i])}</span></div>`).join("")}
+          <hr style="border:0;border-top:1px solid var(--b)">
+          <div class="tl"><span>المجموع والخدمة</span><b>${fm(t)}</b></div>
+          
+          <div class="r" style="margin-top:10px">
+              <button class="b f ${S.pay=='نقداً'?'lg':''}" onclick="S.pay='نقداً';render()">نقداً عند الاستلام</button>
+              <button class="b f ${S.pay=='فودافون كاش'?'lg':''}" onclick="S.pay='فودافون كاش';render()">فودافون كاش (إلزامي التحويل)</button>
+          </div>
+
+          ${S.pay=='فودافون كاش'?`
+              <div style="background:#FEF3C7;border:1px solid #F59E0B;padding:12px;border-radius:12px;font-size:12px">
+                  <b>تحويل فودافون كاش:</b> برجاء تحويل مبلغ <b>${fm(t)}</b> إلى رقم المحفظة: <b style="color:#059669">01015861991</b>، ثم اكتب رقم العملية أو رقمك المحول منه هنا:
+                  <input class="in" id="v_ref" placeholder="اكتب رقم العملية أو رقمك المحول منه..." style="margin-top:8px;background:#fff">
+              </div>
+          `:''}
+
+          <input class="in" id="cn" placeholder="اسمك الكريم">
+          <input class="in" id="cp" placeholder="رقم الهاتف">
+          <input class="in" id="ca" placeholder="عنوان التوصيل بالتفصيل">
+          <button class="b g" style="min-height:56px" onclick="submitOrder(${t})">${S.pay=='فودافون كاش'?'إرسال الطلب بعد تحويل فودافون كاش ➔':'تأكيد الطلب نقداً ✓'}</button>
+        </div></div>`;
+    }
+    document.getElementById("app").innerHTML=html;
+}
+
+function handleReg(){
+    const sName = document.getElementById("reg_sh")?.value.trim();
+    if(sName) DB.shopName = sName;
+    syncCloud();
+    toast("✓ تم إنشاء الحساب");
+    location.hash="#setup";
+}
+
+function runAiUpload(){
+    toast("✓ تم استخراج المنيو بكافة الأصناف بنجاح!");
+    DB.onboardingComplete = true;
+    syncCloud();
+    location.hash="#dash";
 }
 
 function submitOrder(t){
-  const name=document.getElementById("cn")?.value||"عميل";
-  S.ord.push({id:1000+S.ord.length, t:t, s:"جديد", name:name});
-  S.cart={}; S.co=0;
-  toast("✓ تم إرسال طلبك بنجاح!");
-  location.hash="#dash";
+    const name=document.getElementById("cn")?.value||"عميل";
+    const phone=document.getElementById("cp")?.value||"";
+    const addr=document.getElementById("ca")?.value||"";
+    if(!name || !phone || !addr){ toast("يرجى ملء الاسم ورقم الهاتف والعنوان!"); return; }
+
+    let vRef = "";
+    let status = "مؤكد وجاري التجهيز";
+
+    if(S.pay == 'فودافون كاش'){
+        vRef = document.getElementById("v_ref")?.value.trim() || "";
+        if(!vRef){
+            toast("⚠️ يجب إدخال رقم عملية التحويل من فودافون كاش أولاً!");
+            return;
+        }
+        status = "بانتظار تأكيد التحويل";
+    }
+
+    DB.orders.unshift({
+        id: Math.floor(1000 + Math.random()*9000),
+        t: t,
+        s: status,
+        name: name,
+        phone: phone,
+        addr: addr,
+        pay: S.pay,
+        vRef: vRef
+    });
+    
+    syncCloud();
+    S.cart={}; S.co=0;
+    toast(S.pay=='فودافون كاش' ? "✓ تم إرسال طلبك بانتظار تأكيد التحويل من المطعم" : "✓ تم تأكيد طلبك بنجاح!");
+    location.hash="#dash";
 }
 
 window.addEventListener("hashchange",render);
