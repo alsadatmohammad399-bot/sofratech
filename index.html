@@ -21,7 +21,7 @@
 <body class="antialiased min-h-screen selection:bg-emerald-600 selection:text-white">
 
     <audio id="cloud-bell" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
-    <div id="app">جاري التحميل...</div>
+    <div id="app"></div>
 
     <script>
         const firebaseConfig = {
@@ -42,14 +42,14 @@
 
         let globalDB = { shops: {} };
         try {
-            const raw = localStorage.getItem('tablia_saas_v1030');
+            const raw = localStorage.getItem('tablia_saas_v1035');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) { globalDB = { shops: {} }; }
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_saas_v1030', JSON.stringify(globalDB));
-                if (cloudDB) cloudDB.ref('tablia_saas_enterprise_v1030').set(globalDB).catch(() => {});
+                localStorage.setItem('tablia_saas_v1035', JSON.stringify(globalDB));
+                if (cloudDB) cloudDB.ref('tablia_saas_enterprise_v1035').set(globalDB).catch(() => {});
             } catch (e) {}
         }
 
@@ -71,18 +71,45 @@
             uploadedFileName: ''
         };
 
-        // جلب البيانات من السحابي فوراً للتأكد من ظهور المتاجر والمنيو للزبائن
+        // تشغيل العرض فورا بالبيانات المحلية لضمان عدم التعليق نهائياً
+        let isRenderedOnce = false;
+        function safeRender() {
+            if (!isRenderedOnce) {
+                isRenderedOnce = true;
+                render();
+            }
+        }
+
         if (cloudDB) {
-            cloudDB.ref('tablia_saas_enterprise_v1030').on('value', (snap) => {
+            cloudDB.ref('tablia_saas_enterprise_v1035').once('value').then((snap) => {
                 const data = snap.val();
                 if (data && data.shops) {
                     globalDB = data;
-                    try { localStorage.setItem('tablia_saas_v1030', JSON.stringify(globalDB)); } catch(e){}
+                    try { localStorage.setItem('tablia_saas_v1035', JSON.stringify(globalDB)); } catch(e){}
                 }
-                render();
-            }, (err) => { render(); });
+                safeRefetchListener();
+                safeRender();
+            }).catch(() => {
+                safeRender();
+            });
         } else {
-            setTimeout(render, 100);
+            setTimeout(safeRender, 50);
+        }
+
+        // لو ما فتحتش خلال نص ثانية، افتحها إجباري عشان مفيش شاشة بيضاء تححصل
+        setTimeout(safeRender, 500);
+
+        function safeRefetchListener() {
+            if (cloudDB) {
+                cloudDB.ref('tablia_saas_enterprise_v1035').on('value', (snap) => {
+                    const data = snap.val();
+                    if (data && data.shops) {
+                        globalDB = data;
+                        try { localStorage.setItem('tablia_saas_v1035', JSON.stringify(globalDB)); } catch(e){}
+                        render();
+                    }
+                });
+            }
         }
 
         function setPage(p){ appState.page = p; render(); window.scrollTo(0,0); }
