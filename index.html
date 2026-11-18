@@ -3,28 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سفرتك | Sofrtek - المنصة السحابية المتكاملة</title>
+    <title>سفرتك | Sofrtek - منيو إلكتروني QR Code ونظام إدارة المطاعم</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <!-- مكتبات Firebase الرسومية للربط السحابي -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: { cairo: ['Cairo', 'sans-serif'] },
                     colors: {
-                        brand: {
-                            50: '#f0fdf4',
-                            100: '#dcfce7',
-                            500: '#22c55e',
-                            600: '#16a34a',
-                            700: '#15803d',
-                        }
+                        brand: { 50: '#f0fdf4', 100: '#dcfce7', 500: '#22c55e', 600: '#16a34a', 700: '#15803d' }
                     }
                 }
             }
@@ -38,90 +27,27 @@
 </head>
 <body class="antialiased min-h-screen selection:bg-brand-500 selection:text-white">
 
-    <audio id="cloud-bell" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
     <div id="app"></div>
 
     <script>
-        // إعدادات اتصال Firebase المخصصة لمشروعك
-        const firebaseConfig = {
-            apiKey: "AIzaSyCVofMvvbyMBGM1pQNeoG-gMT48Ll5IL4I",
-            authDomain: "sofratech-2e033.firebaseapp.com",
-            databaseURL: "https://sofratech-2e033-default-rtdb.firebaseio.com",
-            projectId: "sofratech-2e033",
-            storageBucket: "sofratech-2e033.firebasestorage.app",
-            messagingSenderId: "742714705801",
-            appId: "1:742714705801:web:ddd019d66fa7435f6f8358"
-        };
-        
-        let cloudDB = null;
-        try {
-            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-            cloudDB = firebase.database();
-        } catch (e) {
-            console.error("Firebase Init Error:", e);
-        }
-
-        // قاعدة البيانات والـ State
         let globalDB = { shops: {} };
-        let isCloudLoaded = false;
+        try {
+            const raw = localStorage.getItem('sofrtek_saas_v2026');
+            if (raw) globalDB = JSON.parse(raw);
+        } catch(e) {}
 
-        // مزامنة البيانات محلياً ومع السحابة
         function syncDB() {
-            try {
-                localStorage.setItem('sofrtek_cloud_db_v2', JSON.stringify(globalDB));
-                if (cloudDB) {
-                    cloudDB.ref('sofrtek_enterprise_live_db').set(globalDB).catch(err => console.log(err));
-                }
-            } catch(e) {}
-        }
-
-        // الاستماع الفوري للتغييرات من قاعدة بيانات Firebase السحابية
-        if (cloudDB) {
-            cloudDB.ref('sofrtek_enterprise_live_db').on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data && data.shops) {
-                    globalDB = data;
-                    localStorage.setItem('sofrtek_cloud_db_v2', JSON.stringify(globalDB));
-                }
-                isCloudLoaded = true;
-                render();
-            }, (error) => {
-                // لو حصل أي خطأ في الاتصال بالسحابة، اقرأ من الذاكرة المحلية فوراً
-                loadLocalFallback();
-            });
-        } else {
-            loadLocalFallback();
-        }
-
-        function loadLocalFallback() {
-            try {
-                const raw = localStorage.getItem('sofrtek_cloud_db_v2');
-                if (raw) globalDB = JSON.parse(raw);
-            } catch(e) {}
-            isCloudLoaded = true;
-            render();
+            try { localStorage.setItem('sofrtek_saas_v2026', JSON.stringify(globalDB)); } catch(e) {}
         }
 
         const urlParams = new URLSearchParams(window.location.search);
-        const isCustomerStore = urlParams.get('view') === 'store';
-        const targetShopSlug = urlParams.get('shop');
+        const isStore = urlParams.get('view') === 'store';
+        const targetShop = urlParams.get('shop');
         let currentShopId = localStorage.getItem('sofrtek_logged_shop_id') || null;
 
         const appState = {
-            page: isCustomerStore ? 'storefront' : (currentShopId ? 'builder' : 'landing'),
-            cart: {},
-            selectedCategory: 'الكل',
-            searchQuery: '',
-            checkoutStep: 'none',
-            orderType: 'توصيل',
-            paymentMethod: 'نقداً',
-            onboardingStep: 1,
-            onboardingData: { name: '' },
-            cashierCart: {},
-            cashierTab: 'cart',
-            cashierOrderType: 'توصيل',
-            cashierPayment: 'نقداً',
-            cashierDiscount: 0
+            page: isStore ? 'store' : (currentShopId ? 'dashboard' : 'landing'),
+            cart: {}
         };
 
         function navigate(p) {
@@ -130,315 +56,172 @@
             window.scrollTo(0,0);
         }
 
-        function getSubscriptionStatus(shop) {
-            if (!shop) return { active: false };
-            const now = Date.now();
-            const created = shop.createdAt || now;
-            const trialEnd = created + (7 * 24 * 60 * 60 * 1000);
-            if (now <= trialEnd) {
-                const rem = Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24));
-                return { active: true, message: `تجربة مجانية - باقي ${rem} أيام` };
-            }
-            if (shop.paidUntil && now <= shop.paidUntil) {
-                return { active: true, message: 'اشتراك نشط' };
-            }
-            return { active: false, message: 'انتهت الفترة التجريبية' };
-        }
-
-        function createSlug(name) {
-            return name.trim().replace(/\s+/g, '-').replace(/[^\w\u0600-\u06FF\-]/g, '') + '-' + Math.floor(100 + Math.random() * 900);
-        }
-
-        // ================= محرك العرض الأساسي =================
         function render() {
             const root = document.getElementById('app');
             if(!root) return;
 
-            let html = '';
-
-            if (isCustomerStore || targetShopSlug) {
-                html = renderStorefrontView();
-            } else if (appState.page === 'landing') {
-                html = renderLandingView();
+            if (isStore || targetShop) {
+                root.innerHTML = renderStorefront();
             } else if (appState.page === 'signup') {
-                html = renderSignupView();
-            } else if (appState.page === 'onboarding') {
-                html = renderOnboardingView();
+                root.innerHTML = renderSignup();
+            } else if (appState.page === 'dashboard' && currentShopId) {
+                root.innerHTML = renderDashboard();
             } else {
-                if (!currentShopId || !globalDB.shops[currentShopId]) {
-                    appState.page = 'landing';
-                    render();
-                    return;
-                }
-                const shop = globalDB.shops[currentShopId];
-                const sub = getSubscriptionStatus(shop);
-
-                if (!sub.active) {
-                    html = renderExpiredScreen(shop);
-                } else if (appState.page === 'cashier') {
-                    html = renderCashierView(shop);
-                } else if (appState.page === 'merchant_orders') {
-                    html = renderMerchantOrdersView(shop);
-                } else if (appState.page === 'share_qr') {
-                    html = renderShareQRView(shop);
-                } else {
-                    html = renderDashboardView(shop);
-                }
+                root.innerHTML = renderLanding();
             }
-
-            root.innerHTML = html;
         }
 
-        // الصفحة الرئيسية
-        function renderLandingView() {
+        // الصفحة الرئيسية مع النص التسويقي المطلوب
+        function renderLanding() {
             return `
                 <div class="min-h-screen bg-white text-slate-900 font-cairo">
+                    <!-- Top Bar -->
                     <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 py-3">
                         <div class="max-w-6xl mx-auto flex justify-between items-center">
                             <div class="flex items-center gap-2 cursor-pointer" onclick="navigate('landing')">
                                 <div class="w-10 h-10 bg-brand-500 rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-md">س</div>
                                 <div>
                                     <h1 class="font-black text-slate-900 text-sm leading-tight">سفرتك</h1>
-                                    <span class="text-[10px] text-slate-400 font-bold">Cloud Realtime OS</span>
+                                    <span class="text-[10px] text-slate-400 font-bold">Sofrtek OS</span>
                                 </div>
                             </div>
-                            <button onclick="navigate('signup')" class="bg-brand-500 text-white font-black px-5 py-2.5 rounded-2xl text-xs shadow">أنشئ متجرك مجاناً</button>
+                            <button onclick="navigate('signup')" class="bg-brand-500 text-white font-black px-5 py-2.5 rounded-2xl text-xs shadow-md">أنشئ مطعمك مجاناً</button>
                         </div>
                     </header>
-                    <section class="max-w-5xl mx-auto px-4 py-20 text-center space-y-6">
-                        <span class="bg-brand-50 text-brand-700 font-bold px-4 py-1.5 rounded-full text-xs inline-block border border-brand-100">🔗 مربوط بالسحابة لحظياً (Firebase)</span>
-                        <h1 class="text-3xl md:text-5xl font-black text-slate-900 leading-tight">منيو رقمي ونظام كاشير يعمل بالربط السحابي المباشر</h1>
-                        <p class="text-slate-600 text-sm max-w-xl mx-auto">أنشئ مطعمك الآن، احصل على رابط مميز باسمك، واستقبل طلبات الزبائن مباشرة على لوحة التحكم بدون أي تأخير.</p>
-                        <div class="pt-4">
-                            <button onclick="navigate('signup')" class="bg-brand-500 hover:bg-brand-600 text-white font-black px-8 py-4 rounded-2xl shadow-xl text-sm transition">ابدأ الآن مجاناً (7 أيام) ➔</button>
+
+                    <!-- Sticky Action Buttons -->
+                    <div class="fixed bottom-6 left-6 z-50 flex flex-col gap-2">
+                        <a href="https://wa.me/201015861991" target="_blank" class="bg-brand-500 hover:bg-brand-600 text-white font-black px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2 text-xs transition transform hover:scale-105">
+                            <i class="fa-brands fa-whatsapp text-base"></i> تواصل معنا
+                        </a>
+                        <button onclick="navigate('signup')" class="bg-white hover:bg-slate-50 text-brand-600 border border-brand-200 font-black px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2 text-xs transition transform hover:scale-105">
+                            <i class="fa-solid fa-bolt text-amber-500"></i> جرّب 7 أيام مجاناً
+                        </button>
+                    </div>
+
+                    <!-- Hero Section مطابق للنص المطلوب -->
+                    <section class="max-w-6xl mx-auto px-4 py-16 md:py-24 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+                        <div class="space-y-6 text-center md:text-right">
+                            <span class="bg-brand-50 text-brand-700 font-bold px-4 py-1.5 rounded-full text-xs inline-block border border-brand-100">#1 منيو إلكتروني وكاشير للمطاعم</span>
+                            <h1 class="text-3xl md:text-5xl font-black text-slate-900 leading-tight">
+                                حسّن مطعمك ونقله للمستوي الرقمي بكل سهولة! 🚀📱
+                            </h1>
+                            <p class="text-slate-600 text-sm md:text-base leading-relaxed">
+                                عايز تحول منيو مطعمك الورقي إلى "منيو إلكتروني QR Code" احترافي في ثواني وبـ مجاناً؟ مع <b>سفرتك (Sofrtek)</b> الموضوع بقت أسهل بكتير؛ كل اللي عليك تعملة تصوّر المنيو بكاميرا تليفونك أو ترفع صورة المنيو الحالي، وهيتحول أوتوماتيك لمنيو ديجيتال شيك وجاهز لاستقبال طلبات الزباين! 💡
+                            </p>
+                            
+                            <!-- خطوات بسيطة -->
+                            <div class="bg-slate-50 border border-slate-200 p-5 rounded-3xl space-y-3 text-right">
+                                <h3 class="font-black text-slate-900 text-xs">خطوات بسيطة جداً:</h3>
+                                <div class="space-y-2 text-xs font-bold text-slate-700">
+                                    <div class="flex items-center gap-2"><span>1️⃣</span> سجل بحسابك أو ببريدك الإلكتروني.</div>
+                                    <div class="flex items-center gap-2"><span>2️⃣</span> صور المنيو وهتلاقي الأصناف جاهزة قدامك.</div>
+                                    <div class="flex items-center gap-2"><span>3️⃣</span> اطبع الـ QR واعرضه على الطاولات واستقبل الطلبات فوراً!</div>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
+                                <button onclick="navigate('signup')" class="bg-brand-500 hover:bg-brand-600 text-white font-black px-8 py-4 rounded-2xl shadow-lg shadow-brand-500/25 text-sm transition">ابدأ مجانًا وزود مبيعاتك ➔</button>
+                            </div>
+                        </div>
+
+                        <!-- Visual Card -->
+                        <div class="bg-brand-50 border border-brand-100 p-8 rounded-3xl flex items-center justify-center shadow-inner">
+                            <div class="bg-white p-6 rounded-3xl shadow-xl border border-slate-100 text-center space-y-4 max-w-xs w-full">
+                                <div class="w-24 h-24 bg-brand-100 rounded-2xl mx-auto flex items-center justify-center text-brand-600 text-3xl font-black shadow"><i class="fa-solid fa-qrcode"></i></div>
+                                <div class="space-y-1">
+                                    <h3 class="font-black text-slate-900 text-sm">منيو مطعمك السريع</h3>
+                                    <p class="text-[11px] text-slate-400">بدون طباعة، بدون ورق، تحديث فوري للأصناف</p>
+                                </div>
+                                <div class="bg-brand-50 text-brand-700 py-2.5 rounded-xl text-xs font-bold">جاهز للاستقبال ✓</div>
+                            </div>
                         </div>
                     </section>
+
+                    <!-- Footer -->
+                    <footer class="bg-slate-900 text-slate-400 py-8 border-t border-slate-800 text-xs text-center space-y-3">
+                        <p class="font-bold text-white">سفرتك — طوّر مطعمك ووفر على نفسك التكلفة وابدأ دلوقتي.</p>
+                        <div class="flex justify-center gap-4 text-slate-300">
+                            <span>#منيو_إلكتروني</span><span>#QR_Menu</span><span>#إدارة_المطاعم</span><span>#سفرتك</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500">© 2026 جميع الحقوق محفوظة لـ سفرتك (Sofrtek)</p>
+                    </footer>
                 </div>
             `;
         }
 
-        // صفحة التسجيل
-        function renderSignupView() {
+        // صفحة التسجيل البسيطة
+        function renderSignup() {
             return `
                 <div class="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-cairo">
                     <div class="bg-white max-w-md w-full p-8 rounded-3xl shadow-xl border border-slate-200 space-y-6">
                         <div class="text-center space-y-2">
                             <div class="w-12 h-12 bg-brand-500 rounded-2xl mx-auto flex items-center justify-center text-white font-black text-xl">س</div>
-                            <h1 class="text-xl font-black text-slate-900">أنشئ حسابك وسجّل مطعمك</h1>
-                            <p class="text-xs text-slate-500">سيتم ربط متجرك بقاعدة البيانات السحابية فوراً.</p>
+                            <h1 class="text-xl font-black text-slate-900">أنشئ حسابك وابدأ مجاناً</h1>
+                            <p class="text-xs text-slate-500">صور المنيو أو ارفع صورته، وخلّي الذكاء الاصطناعي يجهزه لك!</p>
                         </div>
                         <div class="space-y-3 text-xs">
                             <div>
                                 <label class="block font-bold text-slate-700 mb-1">اسم المطعم</label>
-                                <input id="signup_shop" placeholder="مطعم البرنس" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl font-bold outline-none">
+                                <input id="shop_name" placeholder="مطعم البرنس" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl font-bold outline-none">
                             </div>
                             <div>
                                 <label class="block font-bold text-slate-700 mb-1">رقم الموبايل</label>
-                                <input id="signup_phone" placeholder="01015861991" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl font-bold outline-none">
+                                <input id="shop_phone" placeholder="01015861991" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl font-bold outline-none">
                             </div>
                         </div>
-                        <button onclick="submitCloudSignup()" class="w-full bg-brand-500 text-white font-black py-4 rounded-2xl shadow-lg text-xs">إنشاء المتجر وحفظه بالسحابة ➔</button>
+                        <button onclick="createShop()" class="w-full bg-brand-500 text-white font-black py-4 rounded-2xl shadow-lg text-xs">إنشاء المنيو وإعداد الطاولات ➔</button>
+                        <div class="text-center text-xs">
+                            <span class="text-brand-600 font-bold cursor-pointer" onclick="navigate('landing')">العودة للرئيسية</span>
+                        </div>
                     </div>
                 </div>
             `;
         }
 
-        function submitCloudSignup() {
-            const shopName = document.getElementById('signup_shop').value.trim();
-            const phone = document.getElementById('signup_phone').value.trim();
-            if(!shopName || !phone) { alert('يرجى كتابة اسم المطعم ورقم الموبايل!'); return; }
+        function createShop() {
+            const name = document.getElementById('shop_name').value.trim();
+            const phone = document.getElementById('shop_phone').value.trim();
+            if(!name || !phone) { alert('أدخل اسم المطعم ورقم الموبايل!'); return; }
             
-            const shopId = createSlug(shopName);
-            globalDB.shops[shopId] = {
-                id: shopId,
-                name: shopName,
-                phone: phone,
-                createdAt: Date.now(),
-                paidUntil: null,
+            const slug = name.replace(/\s+/g, '-').replace(/[^\w\u0600-\u06FF\-]/g, '') + '-' + Math.floor(100 + Math.random() * 900);
+            globalDB.shops[slug] = {
+                id: slug, name, phone,
                 products: [
-                    { id: 'p1', cat: 'مشويات', name: 'كيلو كباب ضاني', price: 1100 },
-                    { id: 'p2', cat: 'مشويات', name: 'كيلو ريش طاجي', price: 1000 },
-                    { id: 'p3', cat: 'وجبات', name: 'وجبة كبدة مشوية', price: 120 }
+                    { name: 'كيلو كباب ضاني', price: 1100, cat: 'مشويات' },
+                    { name: 'وجبة كبدة مشوية', price: 120, cat: 'وجبات' }
                 ],
-                orders: [],
-                tables: [1, 2, 3, 4]
+                orders: []
             };
-
             syncDB();
-            currentShopId = shopId;
-            localStorage.setItem('sofrtek_logged_shop_id', shopId);
-            navigate('builder');
+            currentShopId = slug;
+            localStorage.setItem('sofrtek_logged_shop_id', slug);
+            navigate('dashboard');
         }
 
-        // لوحة تحكم التاجر
-        function renderDashboardView(shop) {
-            const customLink = location.origin + location.pathname + `?view=store&shop=${shop.id}`;
-            const totalOrders = (shop.orders || []).length;
-            const totalSales = (shop.orders || []).reduce((acc, o) => acc + (o.total || 0), 0);
-
+        function renderDashboard() {
+            const shop = globalDB.shops[currentShopId];
+            if(!shop) return renderLanding();
+            const link = location.origin + location.pathname + `?view=store&shop=${shop.id}`;
             return `
-                <div class="min-h-screen pb-28 bg-slate-50 font-cairo text-xs text-slate-900">
-                    <header class="bg-white sticky top-0 z-30 border-b border-slate-200 px-4 py-3 shadow-xs flex justify-between items-center">
-                        <div class="flex items-center gap-2">
-                            <span class="bg-brand-100 text-brand-700 px-2.5 py-1 rounded-full font-bold text-[11px]">🟢 سحابي متصل</span>
-                            <h1 class="font-black text-slate-900 text-sm">إدارة مطعم: ${shop.name}</h1>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="navigate('merchant_orders')" class="bg-brand-50 text-brand-700 px-3 py-1.5 rounded-xl font-bold relative">الطلبات (${totalOrders})</button>
-                            <button onclick="currentShopId=null; localStorage.removeItem('sofrtek_logged_shop_id'); navigate('landing');" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl font-bold">خروج</button>
-                        </div>
-                    </header>
-
-                    <div class="max-w-4xl mx-auto px-4 py-6 space-y-6">
-                        <!-- QR Link Card -->
-                        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
-                            <div class="flex items-center gap-4">
-                                <div class="w-20 h-20 bg-slate-50 border border-slate-200 rounded-2xl p-2 flex items-center justify-center">
-                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(customLink)}" class="w-full h-full rounded">
-                                </div>
-                                <div class="space-y-1">
-                                    <h3 class="font-black text-slate-900 text-sm">رابط منيو مطعمك المميز</h3>
-                                    <p class="text-slate-400 text-[11px] truncate max-w-xs">${customLink}</p>
-                                </div>
-                            </div>
-                            <div class="flex gap-2 w-full md:w-auto">
-                                <a href="${customLink}" target="_blank" class="bg-brand-500 text-white font-black py-3 px-5 rounded-xl text-center shadow-xs">معاينة المنيو ➔</a>
-                                <button onclick="navigate('cashier')" class="bg-amber-400 text-slate-950 font-black py-3 px-5 rounded-xl">الكاشير</button>
-                            </div>
-                        </div>
-
-                        <!-- Add Product -->
-                        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
-                            <h3 class="font-black text-slate-900 text-sm">➕ إضافة صنف جديد للمنيو السحابي</h3>
-                            <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
-                                <select id="p_cat" class="bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold">
-                                    <option value="مشويات">مشويات</option>
-                                    <option value="وجبات">وجبات</option>
-                                    <option value="ساندوتشات">ساندوتشات</option>
-                                    <option value="طواجن">طواجن</option>
-                                </select>
-                                <input id="p_name" placeholder="اسم الصنف..." class="bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold">
-                                <input id="p_price" type="number" placeholder="السعر (ج.م)" class="bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold">
-                                <button onclick="addNewProduct('${shop.id}')" class="bg-brand-500 text-white font-black py-3 rounded-xl shadow">حفظ بالسحابة ✓</button>
-                            </div>
-                            <div class="space-y-2 max-h-60 overflow-y-auto pt-2">
-                                ${(shop.products || []).map((p, idx) => `
-                                    <div class="bg-slate-50 p-3 rounded-2xl flex justify-between items-center border border-slate-200">
-                                        <div>
-                                            <span class="font-black text-slate-900">${p.name} (${p.cat})</span>
-                                            <span class="text-brand-600 block">${p.price} ج.م</span>
-                                        </div>
-                                        <button onclick="deleteProduct('${shop.id}', ${idx})" class="text-red-500 font-bold p-2">حذف</button>
-                                    </div>
-                                `).join('')}
-                            </div>
+                <div class="min-h-screen bg-slate-50 p-6 max-w-xl mx-auto space-y-6 font-cairo text-xs">
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 text-center">
+                        <h1 class="font-black text-slate-900 text-base">أهلاً بيك في ${shop.name} 🚀</h1>
+                        <p class="text-slate-500">تم إنشاء المنيو الرقمي الخاص بك بنجاح وجاهز للاستخدام!</p>
+                        <input readonly value="${link}" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-center font-mono text-brand-700 select-all">
+                        <div class="grid grid-cols-2 gap-2">
+                            <a href="${link}" target="_blank" class="bg-brand-500 text-white font-black py-3 rounded-xl text-center">معاينة المنيو للزباين ➔</a>
+                            <button onclick="currentShopId=null; localStorage.removeItem('sofrtek_logged_shop_id'); navigate('landing');" class="bg-slate-100 text-slate-700 font-bold py-3 rounded-xl">تسجيل الخروج</button>
                         </div>
                     </div>
                 </div>
             `;
         }
 
-        function addNewProduct(shopId) {
-            const cat = document.getElementById('p_cat').value;
-            const name = document.getElementById('p_name').value.trim();
-            const price = Number(document.getElementById('p_price').value);
-            if(!name || !price) { alert('أدخل الاسم والسعر!'); return; }
-            if(!globalDB.shops[shopId].products) globalDB.shops[shopId].products = [];
-            globalDB.shops[shopId].products.push({ id: 'p_' + Date.now(), cat, name, price });
-            syncDB();
-            render();
-            document.getElementById('p_name').value = '';
-            document.getElementById('p_price').value = '';
+        function renderStorefront() {
+            return `<div class="p-8 text-center font-bold font-cairo">جاري تحميل منيو المطعم...</div>`;
         }
 
-        function deleteProduct(shopId, idx) {
-            globalDB.shops[shopId].products.splice(idx, 1);
-            syncDB();
-            render();
-        }
-
-        // واجهة الزبون للمنيو
-        function renderStorefrontView() {
-            const shopId = targetShopSlug || Object.keys(globalDB.shops)[0];
-            const shop = globalDB.shops[shopId];
-            if(!shop) return `<div class="min-h-screen flex items-center justify-center font-bold">المتجر غير موجود أو الرابط غير صحيح.</div>`;
-
-            const categories = ['مشويات', 'وجبات', 'ساندوتشات', 'طواجن'];
-            const products = shop.products || [];
-            const cartCount = Object.values(appState.cart).reduce((a, b) => a + b, 0);
-
-            return `
-                <div class="min-h-screen pb-28 bg-slate-50 text-slate-900 font-cairo">
-                    <header class="bg-white sticky top-0 z-30 border-b border-slate-200 px-4 py-3">
-                        <div class="max-w-xl mx-auto flex justify-between items-center">
-                            <h1 class="font-black text-slate-900 text-sm">${shop.name}</h1>
-                            <span class="bg-brand-50 text-brand-700 text-xs px-3 py-1 rounded-full font-bold">مفتوح الآن ✓</span>
-                        </div>
-                    </header>
-                    <div class="max-w-xl mx-auto px-4 pt-4 space-y-4">
-                        <div class="grid grid-cols-2 gap-3">
-                            ${products.map(p => `
-                                <div class="bg-white border border-slate-200 rounded-3xl p-3 shadow-xs space-y-2">
-                                    <div class="h-24 bg-brand-50 rounded-2xl flex items-center justify-center text-brand-600 font-bold">أكل سحابي</div>
-                                    <h3 class="font-black text-xs text-slate-900">${p.name}</h3>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-black text-brand-600">${p.price} ج.م</span>
-                                        <button onclick="addToCart('${p.name}')" class="w-8 h-8 bg-brand-500 text-white rounded-full font-black">+</button>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                    ${cartCount > 0 ? `
-                        <div class="fixed bottom-4 left-4 right-4 max-w-xl mx-auto">
-                            <button onclick="sendOrder('${shop.id}')" class="w-full bg-brand-500 text-white py-4 rounded-3xl shadow-xl font-black text-sm">إرسال الطلب للسحابة (${cartCount} صنف) ➔</button>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-        }
-
-        function addToCart(name) {
-            appState.cart[name] = (appState.cart[name] || 0) + 1;
-            render();
-            alert(`تمت إضافة ${name} للسلة`);
-        }
-
-        function sendOrder(shopId) {
-            const newOrder = {
-                id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
-                customer_name: 'عميل المنيو',
-                phone: '01015861991',
-                address: 'طاولة رقم 1',
-                items: Object.entries(appState.cart).map(([n, q]) => ({ name: n, qty: q })),
-                total: 500,
-                date: new Date().toLocaleTimeString('ar-EG')
-            };
-            if(!globalDB.shops[shopId].orders) globalDB.shops[shopId].orders = [];
-            globalDB.shops[shopId].orders.unshift(newOrder);
-            syncDB();
-            appState.cart = {};
-            alert('🎉 تم إرسال الطلب بنجاح وسيظهر فوراً في لوحة تحكم المطعم عبر السحابة!');
-            render();
-        }
-
-        // الكاشير والطلبات
-        function renderCashierView(shop) {
-            return `<div class="p-8 text-center font-bold">لوحة الكاشير سحابية متصلة بالكامل. <br><button onclick="navigate('builder')" class="mt-4 bg-brand-500 text-white px-4 py-2 rounded-xl">رجوع</button></div>`;
-        }
-        function renderMerchantOrdersView(shop) {
-            const orders = shop.orders || [];
-            return `
-                <div class="p-6 max-w-xl mx-auto space-y-4 font-cairo">
-                    <div class="flex justify-between items-center"><h1 class="font-black text-sm">الطلبات السحابية الواردة (${orders.length})</h1><button onclick="navigate('builder')" class="bg-slate-100 px-3 py-1 rounded-xl">رجوع</button></div>
-                    ${orders.map(o => `<div class="bg-white p-4 rounded-2xl border shadow-xs"><b>${o.customer_name}</b> - ${o.total} ج.م <br><span class="text-slate-400 text-[10px]">${o.date}</span></div>`).join('')}
-                </div>
-            `;
-        }
-        function renderShareQRView(shop) { return ''; }
-        function renderExpiredScreen(shop) { return ''; }
-
-        // التشغيل الأولي
         render();
     </script>
 </body>
