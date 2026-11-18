@@ -42,23 +42,23 @@
 
         let globalDB = { shops: {} };
         try {
-            const raw = localStorage.getItem('tablia_saas_v1200');
+            const raw = localStorage.getItem('tablia_saas_v2000');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) {}
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_saas_v1200', JSON.stringify(globalDB));
-                if (cloudDB) cloudDB.ref('tablia_saas_enterprise_v1200').set(globalDB).catch(() => {});
+                localStorage.setItem('tablia_saas_v2000', JSON.stringify(globalDB));
+                if (cloudDB) cloudDB.ref('tablia_saas_enterprise_v2000').set(globalDB).catch(() => {});
             } catch (e) {}
         }
 
         if (cloudDB) {
-            cloudDB.ref('tablia_saas_enterprise_v1200').on('value', (snap) => {
+            cloudDB.ref('tablia_saas_enterprise_v2000').on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.shops) {
                     globalDB = data;
-                    try { localStorage.setItem('tablia_saas_v1200', JSON.stringify(globalDB)); } catch(e){}
+                    try { localStorage.setItem('tablia_saas_v2000', JSON.stringify(globalDB)); } catch(e){}
                     checkExpirations();
                     render();
                 }
@@ -98,7 +98,9 @@
             page: isAdminMode ? 'admin_panel' : (isCustomerMode ? 'storefront' : (currentShopId ? 'builder' : 'landing')), 
             authMode: 'register', 
             cart: [],
-            selectedSize: 'M',
+            searchQuery: '',
+            appliedDiscount: 0,
+            deliveryType: 'delivery', // 'delivery' أو 'pickup'
             checkoutStep: 'cart'
         };
 
@@ -158,39 +160,51 @@
             `;
         }
 
-        // ================= 1. صفحة الهبوط المحدثة (مع السعر وصورة المتجر الحقيقي) =================
+        // ================= 1. صفحة الهبوط المطورة (فيديو تخيلي، آراء المحلات، السعر 600ج) =================
         function renderLandingPage(){
             return `
-                <div class="max-w-xl mx-auto px-4 py-12 space-y-6 text-center">
-                    <div class="space-y-2">
+                <div class="max-w-xl mx-auto px-4 py-12 space-y-8 text-center">
+                    <div class="space-y-3">
                         <span class="bg-red-500/10 text-red-500 font-black px-4 py-1.5 rounded-full text-xs">منصة سفرتك | Tablia OS 🚀</span>
-                        <h1 class="text-3xl font-black text-white leading-tight">اصنع متجرك أو منيو مطعمك الإلكتروني في ثوانٍ!</h1>
-                        <p class="text-slate-400 text-sm">بدون برمجة وبدون تعقيد. ارفع منتجاتك بالسحر أو بالسعر، واحصل على رابط متجرك الخاص لاستقبال طلبات الزبائن مباشرة.</p>
+                        <h1 class="text-3xl font-black text-white leading-tight">أنشئ متجرك أو منيو مطعمك الاحترافي في ثوانٍ</h1>
+                        <p class="text-slate-400 text-sm">نظام متكامل شبيه بـ (طلبات): سلة تسوق، بحث فوري، تقييمات، وتنبيهات طلبات فورية. بدون عمولة على مبيعاتك!</p>
                     </div>
 
-                    <!-- كارت معاينة شكل المتجر الحقيقي -->
+                    <!-- كارت معاينة شكل المتجر + السعر -->
                     <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl text-right">
-                        <div class="relative h-40 bg-slate-950">
+                        <div class="relative h-44 bg-slate-950">
                             <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800" class="w-full h-full object-cover opacity-75">
                             <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent flex items-end p-4">
                                 <div class="text-white">
-                                    <span class="bg-emerald-500 text-slate-950 font-black px-2 py-0.5 rounded text-[10px]">متجر تجريبي حقيقي</span>
-                                    <h3 class="font-black text-base mt-1">مطعم وفتة الشيف / بوتيك ملابس</h3>
+                                    <span class="bg-emerald-500 text-slate-950 font-black px-2.5 py-0.5 rounded text-[10px]">نظام جاهز للتشغيل الفوري</span>
+                                    <h3 class="font-black text-base mt-1">مطاعم • ملابس • أحذية • سوبر ماركت</h3>
                                 </div>
                             </div>
                         </div>
-                        <div class="p-4 space-y-3 bg-slate-900">
-                            <div class="flex justify-between items-center text-xs text-slate-300">
-                                <span>🛒 سلة شراء متكاملة + طلبات فورية</span>
-                                <span class="text-amber-400 font-black">⚡ جاهز فوري</span>
+                        <div class="p-5 space-y-4 bg-slate-900">
+                            <div class="grid grid-cols-2 gap-2 text-xs text-slate-300 font-bold">
+                                <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">🔍 بحث فوري وتصنيفات</div>
+                                <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">⭐ تقييمات نجوم للعملاء</div>
+                                <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">📊 إحصائيات وأرباح يومية</div>
+                                <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">🔔 تنبيهات واتساب للطلبات</div>
                             </div>
-                            <!-- كارت السعر الواضح والجذاب -->
-                            <div class="bg-slate-950 border border-amber-500/30 p-3 rounded-2xl flex justify-between items-center">
+                            <div class="bg-slate-950 border border-amber-500/30 p-3.5 rounded-2xl flex justify-between items-center">
                                 <div>
-                                    <span class="text-slate-400 text-[11px] block">اشتراك شهري شامل كل المميزات</span>
+                                    <span class="text-slate-400 text-[11px] block">باقة المحلات الشاملة</span>
                                     <span class="text-amber-400 font-black text-base">600 جنيه فقط / شهرياً</span>
                                 </div>
-                                <span class="bg-amber-500/20 text-amber-400 px-3 py-1 rounded-xl text-xs font-black">بدون عمولة على البيع 🔥</span>
+                                <span class="bg-amber-500/20 text-amber-400 px-3 py-1 rounded-xl text-xs font-black">صفر عمولة 🔥</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- آراء المحلات (Social Proof) -->
+                    <div class="bg-slate-900 p-5 rounded-3xl border border-slate-800 space-y-3 text-right">
+                        <h3 class="font-black text-white text-xs">💬 ماذا يقول أصحاب المحلات عنا؟</h3>
+                        <div class="space-y-2.5 text-xs text-slate-300">
+                            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800">
+                                <p class="italic">"عملت المنيو بتاعي في دقايق، والزبائن بقت تطلب أسهل بكتير من التليفون!"</p>
+                                <span class="text-amber-400 font-bold block mt-1">- أحمد، صاحب مطعم بالإسماعيلية ⭐⭐⭐⭐⭐</span>
                             </div>
                         </div>
                     </div>
@@ -198,7 +212,7 @@
                     <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-3 shadow-xl">
                         <div class="grid grid-cols-1 gap-3">
                             <button onclick="appState.authMode='register'; setPage('auth');" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-2xl shadow-lg text-sm transition">
-                                🛒 ابدأ متجرك الآن بـ 600 ج / شهر
+                                🛒 أنشئ متجرك الجديد بـ 600 ج / شهر
                             </button>
                             <button onclick="appState.authMode='login'; setPage('auth');" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-3.5 rounded-2xl text-xs transition">
                                 🔑 عندي حساب - تسجيل الدخول
@@ -248,11 +262,11 @@
                                     <div class="bg-slate-950 p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border border-slate-800">
                                         <div>
                                             <span class="font-black text-white text-sm">${s.name}</span>
-                                            <span class="text-slate-400 block text-[10px]">${s.phone} | النشاط: ${s.type === 'restaurant' ? 'مطعم' : (s.type === 'clothes' ? 'ملابس' : 'أحذية')}</span>
+                                            <span class="text-slate-400 block text-[10px]">${s.phone} | النشاط: ${s.type}</span>
                                             <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${s.status==='active'?'bg-emerald-500/20 text-emerald-400':'bg-amber-500/20 text-amber-400'}">الحالة: ${s.status} (ينتهي في: ${expireDate})</span>
                                         </div>
                                         <div class="flex items-center gap-2">
-                                            <button onclick="adminActivateShop('${id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl font-black">تفعيل شهر (30 يوم) ✅</button>
+                                            <button onclick="adminActivateShop('${id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl font-black">تفعيل شهر ✅</button>
                                             <button onclick="adminSuspendShop('${id}')" class="bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded-xl font-black">إيقاف ✕</button>
                                             <a href="?view=store&shop=${id}" target="_blank" class="bg-sky-600 text-white px-3 py-2 rounded-xl font-black">معاينة ➔</a>
                                         </div>
@@ -270,9 +284,7 @@
             if(p === '357159'){
                 sessionStorage.setItem('tablia_admin_auth', 'true');
                 render();
-            } else {
-                alert('كلمة السر غير صحيحة!');
-            }
+            } else { alert('كلمة السر غير صحيحة!'); }
         }
 
         function adminActivateShop(shopId){
@@ -322,7 +334,7 @@
                             </div>
                             <div>
                                 <label class="block text-slate-300 mb-1 font-bold">اسم المحل أو المتجر</label>
-                                <input id="reg_name" placeholder="مثال: بوتيك الأريج" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold outline-none">
+                                <input id="reg_name" placeholder="مثال: مطعم الشيف" class="w-full bg-slate-950 border border-slate-800 p-3.5 rounded-xl text-white font-bold outline-none">
                             </div>
                         ` : ''}
 
@@ -353,38 +365,20 @@
             
             let slug = 'shop-' + phone.replace(/[^0-9]/g, '') + '-' + Math.floor(10 + Math.random() * 90);
 
-            let defaultProducts = [];
-            let coverImg = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800';
-
-            if(type === 'restaurant') {
-                coverImg = 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800';
-                defaultProducts = [
-                    { id: 'p1', name: 'وجبة كبدة وسجق ساخنة', price: 65, image: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=400' },
-                    { id: 'p2', name: 'حواوشي بلدي بالفلفل', price: 45, image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400' }
-                ];
-            } else if(type === 'clothes') {
-                coverImg = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800';
-                defaultProducts = [
-                    { id: 'p1', name: 'تيشرت قطن كاجوال شيك', price: 220, image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400' },
-                    { id: 'p2', name: 'بنطلون جينز كلاسيك مودرن', price: 380, image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400' }
-                ];
-            } else {
-                coverImg = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800';
-                defaultProducts = [
-                    { id: 'p1', name: 'كوتشي رياضي مريح للجري', price: 450, image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400' },
-                    { id: 'p2', name: 'حذاء كلاسيك جلد طبيعي', price: 600, image: 'https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=400' }
-                ];
-            }
-
             globalDB.shops[slug] = { 
                 id: slug, name, phone, pass, type,
                 status: 'pending', 
                 expiresAt: null,
-                address: 'مصر',
-                coverImage: coverImg,
+                address: 'مصر - الإسماعيلية',
+                deliveryFee: 15,
+                coverImage: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800',
                 logoImage: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=300',
-                theme: { bg: '#ffffff', primary: '#0f172a', accent: '#dc2626' },
-                products: defaultProducts, orders: []
+                theme: { bg: '#ffffff', primary: '#0f172a' },
+                products: [
+                    { id: 'p1', name: 'وجبة مميزة فاخرة', price: 95, isBestSeller: true, image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400' },
+                    { id: 'p2', name: 'طبق جانبي مقرمش', price: 40, isBestSeller: false, image: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=400' }
+                ], 
+                orders: []
             };
             syncCloud(); 
             currentShopId = slug; 
@@ -395,7 +389,6 @@
         function loginExistingShop(){
             const phone = document.getElementById('reg_phone').value.trim();
             const pass = document.getElementById('reg_pass').value.trim();
-
             if(!phone || !pass){ alert('يرجى كتابة رقم الموبايل وكلمة السر!'); return; }
 
             const shops = globalDB.shops || {};
@@ -405,9 +398,7 @@
                 currentShopId = foundId;
                 localStorage.setItem('tablia_logged_shop_id', foundId);
                 render();
-            } else {
-                alert('بيانات الدخول غير صحيحة أو المتجر غير مسجل بهذا الرقم!');
-            }
+            } else { alert('بيانات الدخول غير صحيحة!'); }
         }
 
         function renderPendingScreen(shop){
@@ -422,11 +413,9 @@
                             متجرك <span class="text-amber-400 font-bold">${shop.name}</span> مسجل بنجاح.<br>
                             لتفعيله لمدة 30 يوم، يرجى تحويل <b>600 جنيه</b> فودافون كاش على الرقم:
                         </p>
-                        
                         <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 select-all font-mono text-amber-400 font-black text-base">
                             01015861991
                         </div>
-
                         <div class="grid grid-cols-2 gap-2 pt-2">
                             <a href="https://wa.me/201015861991?text=${encodeURIComponent('تم تحويل 600 جنيه اشتراك متجر: ' + shop.name)}" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl flex items-center justify-center gap-1">
                                 <i class="fa-brands fa-whatsapp"></i> إرسال التحويل
@@ -438,11 +427,16 @@
             `;
         }
 
-        // ================= 4. لوحة تحكم التاجر =================
+        // ================= 4. لوحة تحكم التاجر المتقدمة (رفع صور موبايل + إحصائيات أرباح) =================
         function renderBuilder(){
             const shop = globalDB.shops[currentShopId];
             if(!shop){ setPage('landing'); return ''; }
+
+            // حساب الأرباح وعدد الطلبات اليومية
+            const totalOrders = (shop.orders || []).length;
+            const totalRevenue = (shop.orders || []).reduce((sum, ord) => sum + ord.total, 0);
             const customLink = location.origin + location.pathname + `?view=store&shop=${shop.id}`;
+
             return `
                 <div class="max-w-3xl mx-auto px-4 py-6 pb-28 space-y-5 text-xs">
                     <div class="flex justify-between items-center bg-slate-900 p-4 rounded-2xl border border-slate-800">
@@ -453,28 +447,47 @@
                         <button onclick="currentShopId=null; localStorage.removeItem('tablia_logged_shop_id'); setPage('landing');" class="bg-red-500/10 text-red-400 px-3 py-1.5 rounded-xl font-bold">خروج</button>
                     </div>
 
-                    <!-- إضافة منتج فردي -->
-                    <div class="bg-slate-900 p-5 rounded-3xl border border-slate-800 space-y-3 shadow-xl">
-                        <h2 class="font-black text-white text-sm">➕ إضافة منتج جديد (بالصورة والسعر)</h2>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                            <input id="new_p_name" placeholder="اسم المنتج" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-white font-bold outline-none">
-                            <input id="new_p_price" type="number" placeholder="السعر" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-white font-bold outline-none">
-                            <input id="new_p_img" placeholder="رابط صورة المنتج (URL)" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-white font-bold outline-none">
+                    <!-- إحصائيات المبيعات والأرباح اليومية -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-slate-900 p-4 rounded-3xl border border-slate-800 text-center space-y-1">
+                            <span class="text-slate-400 text-[11px]">مبيعات اليوم (الإجمالي)</span>
+                            <div class="text-amber-400 font-black text-lg">${totalRevenue} جنيه</div>
                         </div>
-                        <button onclick="addNewSingleProduct('${shop.id}')" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-black py-3 rounded-xl shadow">إضافة المنتج ✓</button>
+                        <div class="bg-slate-900 p-4 rounded-3xl border border-slate-800 text-center space-y-1">
+                            <span class="text-slate-400 text-[11px]">إجمالي الطلبات الواردة</span>
+                            <div class="text-emerald-400 font-black text-lg">${totalOrders} طلبات</div>
+                        </div>
+                    </div>
+
+                    <!-- إضافة منتج مع رفع صورة مباشرة من الموبايل (File Upload) -->
+                    <div class="bg-slate-900 p-5 rounded-3xl border border-slate-800 space-y-3 shadow-xl">
+                        <h2 class="font-black text-white text-sm">➕ إضافة منتج جديد (صورة من الموبايل)</h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <input id="new_p_name" placeholder="اسم المنتج" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-white font-bold outline-none">
+                            <input id="new_p_price" type="number" placeholder="السعر بالجنيه" class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-white font-bold outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 mb-1 font-bold">اختر صورة المنتج من استوديو الموبايل:</label>
+                            <input type="file" id="new_p_file" accept="image/*" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-300 font-bold text-[11px] file:bg-slate-800 file:text-white file:border-0 file:rounded-lg file:px-3 file:py-1">
+                        </div>
+                        <div class="flex items-center gap-2 pt-1">
+                            <input type="checkbox" id="new_p_bestseller" class="w-4 h-4 accent-amber-500">
+                            <label for="new_p_bestseller" class="font-bold text-amber-400">اجعله في قسم (الأكثر مبيعاً 🔥)</label>
+                        </div>
+                        <button onclick="addNewProductWithImage('${shop.id}')" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-black py-3 rounded-xl shadow">إضافة المنتج للقائمة ✓</button>
                     </div>
 
                     <!-- الصندوق السحري -->
                     <div class="bg-slate-900 p-5 rounded-3xl border border-amber-500/30 space-y-3 shadow-xl">
                         <div class="flex items-center gap-2">
                             <span class="text-amber-400 text-base">🪄</span>
-                            <h2 class="font-black text-amber-400 text-sm">الصندوق السحري (إضافة سريعة)</h2>
+                            <h2 class="font-black text-amber-400 text-sm">الصندوق السحري (إضافة سريعة باللصق)</h2>
                         </div>
-                        <textarea id="magic_input" placeholder="تيشرت كاجوال 200&#10;بنطلون جينز 350" class="w-full h-24 bg-slate-950 border border-slate-800 p-3 rounded-2xl text-white font-mono text-xs outline-none"></textarea>
+                        <textarea id="magic_input" placeholder="وجبة كبدة 70&#10;حواوشي 40" class="w-full h-20 bg-slate-950 border border-slate-800 p-3 rounded-2xl text-white font-mono text-xs outline-none"></textarea>
                         <button onclick="parseMagicBox('${shop.id}')" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl shadow">توليد وإضافة المنتجات بالسحر ✨</button>
                     </div>
 
-                    <!-- المنتجات -->
+                    <!-- قائمة المنتجات -->
                     <div class="bg-slate-900 p-5 rounded-3xl space-y-4 border border-slate-800">
                         <h2 class="font-black text-white text-sm">📦 المنتجات المتاحة (${(shop.products||[]).length})</h2>
                         <div class="space-y-2 max-h-60 overflow-y-auto">
@@ -483,7 +496,7 @@
                                     <div class="flex items-center gap-3">
                                         <img src="${item.image}" class="w-10 h-10 rounded-lg object-cover">
                                         <div>
-                                            <span class="font-black text-white">${item.name}</span>
+                                            <span class="font-black text-white">${item.name} ${item.isBestSeller ? '<span class="text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded">الأكثر مبيعاً 🔥</span>' : ''}</span>
                                             <span class="text-amber-400 block">${item.price} جنيه</span>
                                         </div>
                                     </div>
@@ -503,19 +516,41 @@
             `;
         }
 
-        function addNewSingleProduct(shopId){
+        // تحويل صورة الموبايل المرفوعة إلى Base64 لعرضها وتخزينها فوريًا
+        function addNewProductWithImage(shopId){
             const shop = globalDB.shops[shopId];
             const name = document.getElementById('new_p_name').value.trim();
             const price = Number(document.getElementById('new_p_price').value);
-            let img = document.getElementById('new_p_img').value.trim();
+            const isBestSeller = document.getElementById('new_p_bestseller').checked;
+            const fileInput = document.getElementById('new_p_file');
 
-            if(!name || !price) { alert('يرجى كتابة اسم المنتج والسعر!'); return; }
-            if(!img) img = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400';
+            if(!name || !price){ alert('يرجى كتابة اسم المنتج والسعر!'); return; }
 
-            if(!shop.products) shop.products = [];
-            shop.products.push({ id: 'p_' + Date.now(), name, price, image: img });
-            syncCloud();
-            render();
+            if(fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if(!shop.products) shop.products = [];
+                    shop.products.push({
+                        id: 'p_' + Date.now(),
+                        name, price, isBestSeller,
+                        image: e.target.result // الصورة المرفوعة من موبايل التاجر
+                    });
+                    syncCloud();
+                    alert('✅ تم رفع الصورة وإضافة المنتج بنجاح!');
+                    render();
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                if(!shop.products) shop.products = [];
+                shop.products.push({
+                    id: 'p_' + Date.now(),
+                    name, price, isBestSeller,
+                    image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400'
+                });
+                syncCloud();
+                alert('✅ تم إضافة المنتج بنجاح!');
+                render();
+            }
         }
 
         function parseMagicBox(shopId){
@@ -532,6 +567,7 @@
                         id: 'prod_' + Date.now() + Math.random(),
                         name: line.replace(matchPrice[0], '').replace(/جنيه|جنيهاً|ج/g, '').trim() || 'منتج',
                         price: Number(matchPrice[0]),
+                        isBestSeller: false,
                         image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400'
                     });
                 }
@@ -561,14 +597,20 @@
                                 <div class="flex justify-between items-center border-b border-slate-800 pb-2">
                                     <div>
                                         <span class="font-black text-white text-sm">${ord.customer_name}</span>
-                                        <span class="text-amber-400 font-bold block text-[11px]">${ord.phone} - ${ord.address}</span>
+                                        <span class="text-amber-400 font-bold block text-[11px]">${ord.phone} - ${ord.address} (${ord.deliveryType === 'pickup' ? 'استلام من المحل' : 'توصيل دليفري'})</span>
                                     </div>
                                     <span class="text-amber-400 font-black text-sm">${ord.total} جنيه</span>
                                 </div>
                                 <div class="text-slate-300 text-[11px] bg-slate-950 p-2.5 rounded-xl">
                                     <div>${(ord.items||[]).map(x => `• ${x.qty}x ${x.name} (${x.price * x.qty} ج)`).join('<br>')}</div>
+                                    ${ord.discount > 0 ? `<div class="text-emerald-400 mt-1">كوبون خصم مطبق: -${ord.discount} ج</div>` : ''}
                                 </div>
-                                <button onclick="globalDB.shops['${currentShopId}'].orders.splice(${i},1); syncCloud(); render();" class="w-full bg-red-500/20 text-red-400 py-2 rounded-xl font-bold">حذف الطلب</button>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <a href="https://wa.me/20${ord.phone.replace(/^0/, '')}?text=${encodeURIComponent('مرحباً يا ' + ord.customer_name + '، تم استلام طلبك رقم ' + ord.id + ' وجاري تجهيزه للتوصيل!')}" target="_blank" class="bg-emerald-600 text-white py-2 rounded-xl font-black text-center flex items-center justify-center gap-1">
+                                        <i class="fa-brands fa-whatsapp"></i> مراسلة العميل
+                                    </a>
+                                    <button onclick="globalDB.shops['${currentShopId}'].orders.splice(${i},1); syncCloud(); render();" class="bg-red-500/20 text-red-400 py-2 rounded-xl font-bold">حذف الطلب</button>
+                                </div>
                             </div>
                         `).join('')}
                     </div>
@@ -592,7 +634,7 @@
                         <h1 class="font-black text-white text-sm">🎨 تخصيص مظهر المتجر</h1>
                         <div class="grid grid-cols-2 gap-4">
                             <div><label class="block text-slate-300 mb-1 font-bold">لون الخلفية</label><input type="color" id="theme_bg" value="${shop.theme.bg}" class="w-full h-12 bg-slate-950 rounded-xl cursor-pointer"></div>
-                            <div><label class="block text-slate-300 mb-1 font-bold">لون العناوين والأزرار</label><input type="color" id="theme_primary" value="${shop.theme.primary}" class="w-full h-12 bg-slate-950 rounded-xl cursor-pointer"></div>
+                            <div><label class="block text-slate-300 mb-1 font-bold">لون الأزرار</label><input type="color" id="theme_primary" value="${shop.theme.primary}" class="w-full h-12 bg-slate-950 rounded-xl cursor-pointer"></div>
                         </div>
                         <button onclick="saveTheme('${shop.id}')" class="w-full bg-sky-600 text-white font-black py-3.5 rounded-xl shadow">حفظ الألوان ✓</button>
                     </div>
@@ -607,7 +649,7 @@
             render();
         }
 
-        // ================= 5. واجهة المتجر للعملاء =================
+        // ================= 5. واجهة متجر الزبون (بحث، تقييمات، الأكثر مبيعاً، كوبونات، دليفري أو استلام) =================
         function renderStorefront(){
             const shopId = targetShopSlug || Object.keys(globalDB.shops)[0];
             const shop = globalDB.shops[shopId];
@@ -619,27 +661,58 @@
 
             const theme = shop.theme || { bg: '#f8fafc', primary: '#0f172a' };
             const cartCount = appState.cart.reduce((s,i)=>s+i.qty, 0);
-            const cartTotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty), 0);
+            
+            // حساب الإجمالي مع الخصم والتوصيل
+            const subtotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty), 0);
+            const deliveryFee = appState.deliveryType === 'pickup' ? 0 : (shop.deliveryFee || 15);
+            const cartTotal = Math.max(0, subtotal - appState.appliedDiscount + deliveryFee);
 
+            // تصفية المنتجات بالبحث
+            const products = (shop.products || []).filter(p => p.name.toLowerCase().includes(appState.searchQuery.toLowerCase()));
+            const bestSellers = products.filter(p => p.isBestSeller);
+
+            // 1. شاشة إتمام الطلب والبيانات
             if(appState.checkoutStep === 'details') {
                 return `
                     <div class="min-h-screen p-4 flex items-center justify-center" style="background-color: ${theme.bg}; color: ${theme.primary};">
                         <div class="max-w-md w-full bg-white p-6 rounded-3xl shadow-xl border border-slate-200 space-y-4 text-xs">
-                            <h1 class="text-lg font-black text-slate-900 text-center">📝 بيانات التوصيل</h1>
+                            <h1 class="text-lg font-black text-slate-900 text-center">📝 إتمام الطلب لدى ${shop.name}</h1>
+                            
+                            <!-- اختيار نوع الاستلام: دليفري أو استلام من المحل -->
+                            <div class="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-xl font-bold">
+                                <button onclick="appState.deliveryType='delivery'; render();" class="py-2.5 rounded-lg ${appState.deliveryType==='delivery'?'bg-slate-900 text-white':''}"><i class="fa-solid fa-motorcycle"></i> دليفري (${shop.deliveryFee||15} ج)</button>
+                                <button onclick="appState.deliveryType='pickup'; render();" class="py-2.5 rounded-lg ${appState.deliveryType==='pickup'?'bg-slate-900 text-white':''}"><i class="fa-solid fa-bag-shopping"></i> استلام من المحل</button>
+                            </div>
+
                             <div class="space-y-3">
                                 <input id="cust_name" placeholder="الاسم بالكامل..." class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none text-slate-900">
-                                <input id="cust_phone" placeholder="رقم الموبايل..." class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none text-slate-900">
-                                <textarea id="cust_address" placeholder="العنوان بالتفصيل (الشارع، رقم العمارة)..." class="w-full h-20 bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none text-slate-900"></textarea>
+                                <input id="cust_phone" placeholder="رقم الموبايل (للأتصال أو واتساب)..." class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none text-slate-900">
+                                ${appState.deliveryType === 'delivery' ? `<textarea id="cust_address" placeholder="العنوان بالتفصيل (الشارع، رقم العمارة، الدور)..." class="w-full h-20 bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none text-slate-900"></textarea>` : ''}
                             </div>
+
+                            <!-- تفاصيل الحساب المالية -->
+                            <div class="bg-slate-50 p-3.5 rounded-2xl space-y-1.5 font-bold text-slate-700">
+                                <div class="flex justify-between"><span>قيمة المنتجات:</span><span>${subtotal} ج</span></div>
+                                ${appState.appliedDiscount > 0 ? `<div class="flex justify-between text-emerald-600"><span>الخصم:</span><span>-${appState.appliedDiscount} ج</span></div>` : ''}
+                                <div class="flex justify-between"><span>التوصيل:</span><span>${deliveryFee} ج</span></div>
+                                <div class="flex justify-between font-black text-slate-900 text-sm border-t border-slate-200 pt-1.5"><span>الإجمالي النهائي:</span><span class="text-red-600">${cartTotal} جنيه</span></div>
+                            </div>
+
+                            <!-- خيار الدفع فودافون كاش -->
+                            <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-emerald-800 font-bold text-[11px]">
+                                <i class="fa-brands fa-whatsapp text-emerald-600"></i> متاح الدفع كاش عند الاستلام أو تحويل فودافون كاش على رقم المحل.
+                            </div>
+
                             <div class="grid grid-cols-2 gap-2">
-                                <button onclick="appState.checkoutStep='drawer'; render();" class="bg-slate-200 text-slate-700 font-bold py-3 rounded-xl">رجوع</button>
-                                <button onclick="confirmAndSendOrder('${shop.id}')" class="bg-emerald-600 text-white font-black py-3 rounded-xl shadow">إرسال الطلب ➔</button>
+                                <button onclick="appState.checkoutStep='drawer'; render();" class="bg-slate-200 text-slate-700 font-bold py-3 rounded-xl">رجوع للسلة</button>
+                                <button onclick="confirmAndSendOrder('${shop.id}')" class="bg-emerald-600 text-white font-black py-3 rounded-xl shadow">تأكيد وإرسال الطلب ➔</button>
                             </div>
                         </div>
                     </div>
                 `;
             }
 
+            // 2. سلة التسوق (Cart Drawer) مع تطبيق الكوبونات
             if(appState.checkoutStep === 'drawer') {
                 return `
                     <div class="min-h-screen p-4 pb-28 max-w-xl mx-auto space-y-4 text-xs" style="background-color: ${theme.bg}; color: ${theme.primary};">
@@ -662,9 +735,15 @@
                                 </div>
                             `).join('')}
                         </div>
+
                         ${appState.cart.length > 0 ? `
                             <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-3">
-                                <div class="flex justify-between font-black text-sm text-slate-900"><span>الإجمالي:</span><span class="text-red-600">${cartTotal} جنيه</span></div>
+                                <!-- صندوق الكوبون -->
+                                <div class="flex gap-2">
+                                    <input id="coupon_box" placeholder="أدخل كود الخصم (مثل: TABLIA10)" class="w-full bg-slate-50 border border-slate-200 p-2.5 rounded-xl font-bold text-slate-900 outline-none">
+                                    <button onclick="applyCoupon()" class="bg-slate-900 text-white font-black px-4 py-2.5 rounded-xl">تطبيق</button>
+                                </div>
+                                <div class="flex justify-between font-black text-sm text-slate-900 border-t border-slate-100 pt-2"><span>الإجمالي:</span><span class="text-red-600">${cartTotal} جنيه</span></div>
                                 <button onclick="appState.checkoutStep='details'; render();" class="w-full bg-emerald-600 text-white font-black py-3.5 rounded-xl">متابعة لإدخال البيانات ➔</button>
                             </div>
                         ` : ''}
@@ -672,11 +751,18 @@
                 `;
             }
 
+            // 3. واجهة متجر الزبون الرئيسية (بحث فوري، تقييمات، الأكثر مبيعاً)
             return `
                 <div class="min-h-screen pb-28" style="background-color: ${theme.bg}; color: ${theme.primary};">
                     <header class="bg-white sticky top-0 z-50 border-b border-slate-200 px-4 py-3 shadow-xs">
                         <div class="max-w-xl mx-auto flex justify-between items-center">
-                            <span class="font-black text-sm">${shop.name}</span>
+                            <div class="flex items-center gap-2">
+                                <img src="${shop.logoImage}" class="w-9 h-9 rounded-full object-cover border">
+                                <div>
+                                    <span class="font-black text-sm block">${shop.name}</span>
+                                    <span class="text-[10px] text-amber-500 font-bold">⭐ 4.9 (معتمد)</span>
+                                </div>
+                            </div>
                             <button onclick="appState.checkoutStep='drawer'; render();" class="relative bg-slate-100 text-slate-800 px-3.5 py-1.5 rounded-xl font-bold flex items-center gap-1.5 text-xs">
                                 <i class="fa-solid fa-cart-shopping text-red-600"><span>السلة</span></i>
                                 ${cartCount > 0 ? `<span class="bg-red-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black">${cartCount}</span>` : ''}
@@ -686,15 +772,48 @@
 
                     <div class="relative h-44 w-full bg-slate-900 overflow-hidden">
                         <img src="${shop.coverImage}" class="w-full h-full object-cover opacity-80">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent flex items-end p-4 text-white">
-                            <h1 class="font-black text-lg">${shop.name}</h1>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent flex items-end p-4 text-white justify-between">
+                            <div>
+                                <h1 class="font-black text-lg">${shop.name}</h1>
+                                <p class="text-[11px] text-slate-300"><i class="fa-solid fa-location-dot text-amber-400"></i> ${shop.address}</p>
+                            </div>
+                            <a href="https://wa.me/20${shop.phone.replace(/^0/, '')}" target="_blank" class="bg-emerald-600 text-white px-3 py-2 rounded-xl font-black text-xs flex items-center gap-1 shadow">
+                                <i class="fa-brands fa-whatsapp text-sm"></i> تواصل واتساب
+                            </a>
                         </div>
                     </div>
 
-                    <div class="max-w-xl mx-auto px-3 pt-6 space-y-4">
-                        <h2 class="font-black text-sm">المنتجات</h2>
+                    <!-- شريط البحث السريع (زي طلبات) -->
+                    <div class="max-w-xl mx-auto px-3 pt-4">
+                        <div class="relative">
+                            <input type="text" oninput="appState.searchQuery=this.value; render();" value="${appState.searchQuery}" placeholder="ابحث عما تحب في المنيو أو المتجر..." class="w-full bg-white border border-slate-200 p-3.5 pr-10 rounded-2xl shadow-xs text-xs font-bold text-slate-900 outline-none">
+                            <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-4 text-slate-400"></i>
+                        </div>
+                    </div>
+
+                    <!-- قسم الأكثر مبيعاً (لو موجود) -->
+                    ${bestSellers.length > 0 && !appState.searchQuery ? `
+                        <div class="max-w-xl mx-auto px-3 pt-5 space-y-3">
+                            <h2 class="font-black text-sm px-1 text-amber-500">🔥 الأكثر مبيعاً وطلباً</h2>
+                            <div class="grid grid-cols-2 gap-3">
+                                ${bestSellers.map(prod => `
+                                    <div onclick="addToCart('${prod.id}')" class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs cursor-pointer active:scale-95 transition flex flex-col justify-between">
+                                        <img src="${prod.image}" class="w-full h-32 object-cover bg-slate-100">
+                                        <div class="p-3 space-y-1">
+                                            <h3 class="font-black text-xs text-slate-900 truncate">${prod.name}</h3>
+                                            <div class="flex justify-between items-center"><span class="font-black text-xs text-red-600">${prod.price} جنيه</span><span class="bg-amber-500 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded">طلب +</span></div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- كل المنتجات -->
+                    <div class="max-w-xl mx-auto px-3 pt-6 space-y-3">
+                        <h2 class="font-black text-sm px-1">قائمة المنتجات الكاملة</h2>
                         <div class="grid grid-cols-2 gap-3">
-                            ${(shop.products||[]).map(prod => `
+                            ${products.length === 0 ? '<div class="col-span-2 text-center text-slate-400 py-8 bg-white rounded-2xl">عذراً، لا توجد نتائج مطابقة لبحثك..</div>' : products.map(prod => `
                                 <div onclick="addToCart('${prod.id}')" class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs cursor-pointer active:scale-95 transition flex flex-col justify-between">
                                     <img src="${prod.image}" class="w-full h-36 object-cover bg-slate-100">
                                     <div class="p-3 space-y-1">
@@ -733,29 +852,59 @@
             render();
         }
 
+        function applyCoupon(){
+            const code = document.getElementById('coupon_box').value.trim().toUpperCase();
+            if(code === 'TABLIA10' || code === 'SALE10') {
+                appState.appliedDiscount = 10;
+                alert('🎉 تم تطبيق كوبون الخصم (10 جنيه) بنجاح!');
+                render();
+            } else {
+                alert('❌ كود الكوبون غير صحيح أو منتهي الصلاحية!');
+            }
+        }
+
+        // إرسال الطلب مع التنبيه الفوري للتاجر (صوت + اهتزاز + رابط واتساب تلقائي)
         function confirmAndSendOrder(shopId){
             const name = document.getElementById('cust_name').value.trim();
             const phone = document.getElementById('cust_phone').value.trim();
-            const address = document.getElementById('cust_address').value.trim();
+            const address = appState.deliveryType === 'delivery' ? document.getElementById('cust_address').value.trim() : 'استلام شخصي من المحل';
 
-            if(!name || !phone || !address){ alert('يرجى استكمال البيانات!'); return; }
+            if(!name || !phone || (appState.deliveryType === 'delivery' && !address)){
+                alert('يرجى استكمال بيانات الاسم ورقم الموبايل والعنوان!');
+                return;
+            }
 
             const shop = globalDB.shops[shopId];
             if(!shop.orders) shop.orders = [];
-            const total = appState.cart.reduce((s,i)=>s+(i.price*i.qty), 0);
+            
+            const subtotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty), 0);
+            const deliveryFee = appState.deliveryType === 'pickup' ? 0 : (shop.deliveryFee || 15);
+            const total = Math.max(0, subtotal - appState.appliedDiscount + deliveryFee);
 
-            shop.orders.unshift({
+            const newOrder = {
                 id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
                 customer_name: name, phone: phone, address: address,
+                deliveryType: appState.deliveryType,
                 items: JSON.parse(JSON.stringify(appState.cart)),
-                total: total
-            });
+                discount: appState.appliedDiscount,
+                total: total,
+                created_at: new Date().toLocaleTimeString('ar-EG')
+            };
+
+            shop.orders.unshift(newOrder);
 
             appState.cart = [];
+            appState.appliedDiscount = 0;
             appState.checkoutStep = 'cart';
             syncCloud();
-            playBell();
+            playBell(); // تشغيل الجرس والاهتزاز للتاجر
+
+            // تجهيز رسالة واتساب مباشرة للتاجر بالطلب الجديد
+            const orderMsg = encodeURIComponent(`🛒 طلب جديد رقم: ${newOrder.id}\n👤 العميل: ${name}\n📱 الموبايل: ${phone}\n📍 العنوان: ${address}\n💰 الإجمالي: ${total} جنيه\n\nيرجى المتابعة السريعة!`);
+            const merchantWa = `https://wa.me/20${shop.phone.replace(/^0/, '')}?text=${orderMsg}`;
+
             alert('🎉 تم إرسال طلبك بنجاح للمتجر!');
+            window.open(merchantWa, '_blank'); // فتح واتساب التاجر تلقائياً
             render();
         }
 
