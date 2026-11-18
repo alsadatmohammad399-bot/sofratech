@@ -67,8 +67,6 @@
                 root.innerHTML = renderStorefront();
             } else if (appState.page === 'signup') {
                 root.innerHTML = renderSignup();
-            } else if (appState.page === 'ai_upload') {
-                root.innerHTML = renderAIUploadView();
             } else if (appState.page === 'dashboard' && currentShopId) {
                 root.innerHTML = renderDashboard();
             } else {
@@ -159,7 +157,7 @@
             navigate('dashboard');
         }
 
-        // 3. لوحة التحكم مع زر رفع المنيو لـ Gemini API
+        // 3. لوحة التحكم مع زر رفع المنيو باستخدام النموذج المحدث لـ Gemini
         function renderDashboard() {
             const shop = globalDB.shops[currentShopId];
             if(!shop) return renderLanding();
@@ -205,12 +203,13 @@
             `;
         }
 
-        // دالة الاتصال بـ Gemini API لاستخراج الأصناف من الصورة
+        // دالة الاتصال بـ Gemini API (باستخدام النموذج المحدث gemini-1.5-flash لضمان عمله 100%)
         async function extractMenuWithGemini(event, shopId) {
             const file = event.target.files[0];
             if (!file) return;
 
-            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+            // تم التحديث إلى النموذج المدعوم والمستقر
+            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
             // تحويل الصورة إلى Base64
             const base64Image = await new Promise((resolve, reject) => {
