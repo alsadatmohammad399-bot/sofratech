@@ -42,23 +42,23 @@
 
         let globalDB = { shops: {} };
         try {
-            const raw = localStorage.getItem('tablia_saas_v600');
+            const raw = localStorage.getItem('tablia_saas_v800');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) {}
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_saas_v600', JSON.stringify(globalDB));
-                if (cloudDB) cloudDB.ref('tablia_saas_enterprise_v600').set(globalDB).catch(() => {});
+                localStorage.setItem('tablia_saas_v800', JSON.stringify(globalDB));
+                if (cloudDB) cloudDB.ref('tablia_saas_enterprise_v800').set(globalDB).catch(() => {});
             } catch (e) {}
         }
 
         if (cloudDB) {
-            cloudDB.ref('tablia_saas_enterprise_v600').on('value', (snap) => {
+            cloudDB.ref('tablia_saas_enterprise_v800').on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.shops) {
                     globalDB = data;
-                    try { localStorage.setItem('tablia_saas_v600', JSON.stringify(globalDB)); } catch(e){}
+                    try { localStorage.setItem('tablia_saas_v800', JSON.stringify(globalDB)); } catch(e){}
                     render();
                 }
             });
@@ -85,9 +85,8 @@
             tempRegData: null,
             generatedOtp: null,
             cart: [],
-            orderType: 'delivery',
             selectedSize: 'M',
-            selectedColor: 'أسود'
+            checkoutStep: 'cart' // 'cart' أو 'details'
         };
 
         function setPage(p){ appState.page = p; render(); window.scrollTo(0,0); }
@@ -144,7 +143,7 @@
             `;
         }
 
-        // ================= 1. لوحة تحكم الأدمن (عبر رابط ?admin=true) =================
+        // ================= 1. لوحة تحكم الأدمن =================
         function renderAdminDashboard(){
             const isAuth = sessionStorage.getItem('tablia_admin_auth') === 'true';
             if(!isAuth) {
@@ -506,7 +505,11 @@
                         ${shop.orders.length === 0 ? `<div class="bg-slate-900 p-12 text-center text-slate-500 rounded-3xl border border-slate-800">لا توجد طلبات جديدة..</div>` : shop.orders.map((ord, i) => `
                             <div class="bg-slate-900 p-4 rounded-3xl space-y-3 border border-slate-800">
                                 <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-                                    <div><span class="font-black text-white text-sm">${ord.customer_name}</span><span class="text-slate-400 text-[10px] block">${ord.phone} ${ord.meta ? '| المقاس: ' + ord.meta.size + ' | اللون: ' + ord.meta.color : ''}</span></div>
+                                    <div>
+                                        <span class="font-black text-white text-sm">${ord.customer_name}</span>
+                                        <span class="text-amber-400 font-bold block text-[11px]"><i class="fa-solid fa-phone"></i> ${ord.phone}</span>
+                                        <span class="text-slate-300 block text-[10px]"><i class="fa-solid fa-location-dot"></i> ${ord.address} ${ord.meta ? '| المقاس: ' + ord.meta.size : ''}</span>
+                                    </div>
                                     <div class="text-left"><span class="text-amber-400 font-black text-sm">${ord.total} جنيه</span></div>
                                 </div>
                                 <div class="text-slate-300 text-[11px] bg-slate-950 p-2.5 rounded-xl">
@@ -520,46 +523,13 @@
             `;
         }
 
-        function renderDesignCustomizer(){
-            const shop = globalDB.shops[currentShopId];
-            if(!shop) return '';
-            if(!shop.theme) shop.theme = { bg: '#ffffff', primary: '#0f172a', accent: '#dc2626' };
-
-            return `
-                <div class="max-w-3xl mx-auto px-4 py-6 pb-28 space-y-5 text-xs">
-                    <div class="bg-slate-900 p-5 rounded-3xl border border-slate-800 space-y-4">
-                        <h1 class="font-black text-white text-sm">🎨 تخصيص مظهر المتجر</h1>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-slate-300 mb-1 font-bold">لون الخلفية</label>
-                                <input type="color" id="theme_bg" value="${shop.theme.bg || '#ffffff'}" class="w-full h-12 bg-slate-950 rounded-xl cursor-pointer">
-                            </div>
-                            <div>
-                                <label class="block text-slate-300 mb-1 font-bold">لون العناوين والأزرار</label>
-                                <input type="color" id="theme_primary" value="${shop.theme.primary || '#0f172a'}" class="w-full h-12 bg-slate-950 rounded-xl cursor-pointer">
-                            </div>
-                        </div>
-                        <button onclick="saveTheme('${shop.id}')" class="w-full bg-sky-600 text-white font-black py-3.5 rounded-xl shadow">حفظ الألوان ✓</button>
-                    </div>
-                </div>
-            `;
-        }
-
-        function saveTheme(shopId){
-            const shop = globalDB.shops[shopId];
-            shop.theme = { bg: document.getElementById('theme_bg').value, primary: document.getElementById('theme_primary').value, accent: '#dc2626' };
-            syncCloud();
-            alert('🎨 تم تحديث الألوان!');
-            render();
-        }
-
         function renderQRPrint(){ 
             const shop = globalDB.shops[currentShopId];
             const base = location.origin + location.pathname + `?view=store&shop=${shop.id}&t=`;
             return `<div class="max-w-3xl mx-auto px-4 py-6 pb-28 space-y-4 text-xs"><h1 class="font-black text-amber-400 bg-slate-900 p-4 rounded-2xl">طباعة أكواد QR للطاولات</h1><div class="grid grid-cols-2 gap-3">${Array.from({length:10},(_,i)=>i+1).map(n=>`<div class="bg-slate-900 p-4 rounded-2xl text-center space-y-2"><div class="font-bold">طاولة ${n}</div><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(base+'طاولة '+n)}" class="mx-auto rounded bg-white p-1"></div>`).join('')}</div></div>`; 
         }
 
-        // ================= 4. واجهة عرض المتجر للعملاء (القوالب المخصصة للملابس والأحذية والمطاعم) =================
+        // ================= 4. واجهة عرض المتجر للعملاء مع صفحة إدخال البيانات =================
         function renderStorefront(){
             const shopId = targetShopSlug || Object.keys(globalDB.shops)[0];
             const shop = globalDB.shops[shopId];
@@ -573,82 +543,45 @@
             const cartCount = appState.cart.reduce((s,i)=>s+i.qty, 0);
             const cartTotal = appState.cart.reduce((s,i)=>s+(i.price*i.qty), 0);
 
-            // قالب خاص لمحلات الملابس والأحذية (يدعم المقاسات والألوان)
-            if(shop.type === 'clothes' || shop.type === 'shoes') {
+            // لو العميل ضغط إتمام الطلب تظهر له صفحة إدخال البيانات والعنوان
+            if(appState.checkoutStep === 'details') {
                 return `
-                    <div class="min-h-screen pb-28" style="background-color: ${theme.bg}; color: ${theme.primary};">
-                        <header class="bg-white sticky top-0 z-50 border-b border-slate-200 px-4 py-3 shadow-xs">
-                            <div class="max-w-xl mx-auto flex justify-between items-center">
-                                <div class="flex items-center gap-2">
-                                    <img src="${shop.logoImage}" class="w-9 h-9 rounded-full object-cover border">
-                                    <span class="font-black text-sm" style="color: ${theme.primary};">${shop.name}</span>
-                                </div>
-                                <span class="text-xs font-bold bg-slate-100 px-3 py-1 rounded-full text-slate-600">
-                                    ${shop.type === 'clothes' ? '👕 قسم الملابس والموضة' : '👟 قسم الأحذية والكوتشيات'}
-                                </span>
+                    <div class="min-h-screen p-4 flex items-center justify-center" style="background-color: ${theme.bg}; color: ${theme.primary};">
+                        <div class="max-w-md w-full bg-white p-6 rounded-3xl shadow-xl border border-slate-200 space-y-4 text-xs">
+                            <div class="text-center space-y-1">
+                                <h1 class="text-lg font-black text-slate-900">📝 بيانات التوصيل</h1>
+                                <p class="text-slate-500">أدخل اسمك ورقمك وعنوانك لتأكيد الطلب لدى ${shop.name}</p>
                             </div>
-                        </header>
 
-                        <div class="relative h-44 w-full bg-slate-900 overflow-hidden">
-                            <img src="${shop.coverImage}" class="w-full h-full object-cover opacity-80">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent flex items-end p-4">
-                                <div class="text-white">
-                                    <h1 class="font-black text-lg">${shop.name}</h1>
-                                    <p class="text-[11px] text-slate-200"><i class="fa-solid fa-location-dot text-amber-400"></i> ${shop.address}</p>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">الاسم بالكامل</label>
+                                    <input id="cust_name" placeholder="اكتب اسمك هنا..." class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none text-slate-900">
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- اختيار المقاسات والألوان العام للمتجر -->
-                        <div class="max-w-xl mx-auto px-3 pt-4">
-                            <div class="bg-white border border-slate-200 p-3 rounded-2xl shadow-xs space-y-2 text-xs">
-                                <div class="flex items-center justify-between">
-                                    <span class="font-bold text-slate-700">اختر المقاس المفضل:</span>
-                                    <div class="flex gap-1.5">
-                                        ${['S', 'M', 'L', 'XL', 'XXL'].map(sz => `
-                                            <button onclick="appState.selectedSize='${sz}'; render();" class="px-2.5 py-1 rounded-lg font-black border ${appState.selectedSize===sz?'bg-slate-900 text-white':'bg-slate-100 text-slate-700'}">${sz}</button>
-                                        `).join('')}
-                                    </div>
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">رقم الموبايل</label>
+                                    <input id="cust_phone" placeholder="010xxxxxxxx" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none text-slate-900">
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">العنوان بالتفصيل (الشارع / رقم الحائط)</label>
+                                    <textarea id="cust_address" placeholder="اسم الشارع، رقم العمارة، الدور..." class="w-full h-20 bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none text-slate-900"></textarea>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- شبكة المنتجات -->
-                        <div class="max-w-xl mx-auto px-3 pt-4 space-y-4">
-                            <h2 class="font-black text-sm px-1">المنتجات المتاحة (مقيسة بـ ${appState.selectedSize})</h2>
-                            <div class="grid grid-cols-2 gap-3">
-                                ${(shop.products||[]).length === 0 ? '<div class="col-span-2 text-center text-slate-500 py-10">لا توجد منتجات..</div>' : (shop.products||[]).map(prod => `
-                                    <div onclick="addToCart('${prod.id}')" class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs cursor-pointer active:scale-95 transition flex flex-col justify-between">
-                                        <img src="${prod.image}" class="w-full h-40 object-cover bg-slate-100">
-                                        <div class="p-3 space-y-1.5">
-                                            <h3 class="font-black text-xs text-slate-900 truncate">${prod.name}</h3>
-                                            <div class="flex justify-between items-center">
-                                                <span class="font-black text-xs text-red-600">${prod.price} جنيه</span>
-                                                <span class="text-[10px] bg-slate-100 px-2 py-0.5 rounded font-bold text-slate-600">مقاس ${appState.selectedSize}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                `).join('')}
+                            <div class="bg-slate-50 p-3 rounded-xl flex justify-between font-black text-slate-900">
+                                <span>إجمالي الطلب:</span>
+                                <span class="text-red-600">${cartTotal} جنيه</span>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="appState.checkoutStep='cart'; render();" class="bg-slate-200 text-slate-700 font-bold py-3 rounded-xl">رجوع للسلة</button>
+                                <button onclick="confirmAndSendOrder('${shop.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl shadow">إرسال الطلب الآن ➔</button>
                             </div>
                         </div>
-
-                        <!-- السلة -->
-                        ${cartCount > 0 ? `
-                            <div class="fixed bottom-3 left-3 right-3 max-w-xl mx-auto z-50">
-                                <button onclick="submitShopOrder('${shop.id}')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3.5 px-5 rounded-2xl shadow-xl flex items-center justify-between font-black text-xs transition">
-                                    <div class="flex items-center gap-2">
-                                        <span class="bg-white/20 px-2 py-0.5 rounded-lg text-xs">${cartCount}</span>
-                                        <span>إتمام الطلب (${cartTotal} جنيه - مقاس ${appState.selectedSize})</span>
-                                    </div>
-                                    <span class="flex items-center gap-1">أكد الآن <i class="fa-solid fa-arrow-left"></i></span>
-                                </button>
-                            </div>
-                        ` : ''}
                     </div>
                 `;
             }
 
-            // قالب المطاعم والكافيهات (الافتراضي السريع)
             return `
                 <div class="min-h-screen pb-28" style="background-color: ${theme.bg}; color: ${theme.primary};">
                     <header class="bg-white sticky top-0 z-50 border-b border-slate-200 px-4 py-3 shadow-xs">
@@ -656,10 +589,6 @@
                             <div class="flex items-center gap-2">
                                 <img src="${shop.logoImage}" class="w-9 h-9 rounded-full object-cover border">
                                 <span class="font-black text-sm" style="color: ${theme.primary};">${shop.name}</span>
-                            </div>
-                            <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-xl text-xs font-bold">
-                                <button onclick="appState.orderType='dine-in'; render();" class="px-3 py-1 rounded-lg ${appState.orderType==='dine-in'?'bg-white shadow':''}">🍽️ صالة</button>
-                                <button onclick="appState.orderType='delivery'; render();" class="px-3 py-1 rounded-lg ${appState.orderType==='delivery'?'bg-white shadow':''}">🛵 دليفري</button>
                             </div>
                         </div>
                     </header>
@@ -674,10 +603,25 @@
                         </div>
                     </div>
 
+                    ${shop.type === 'clothes' || shop.type === 'shoes' ? `
+                        <div class="max-w-xl mx-auto px-3 pt-4">
+                            <div class="bg-white border border-slate-200 p-3 rounded-2xl shadow-xs space-y-2 text-xs">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-slate-700">اختر المقاس:</span>
+                                    <div class="flex gap-1.5">
+                                        ${['S', 'M', 'L', 'XL', 'XXL'].map(sz => `
+                                            <button onclick="appState.selectedSize='${sz}'; render();" class="px-2.5 py-1 rounded-lg font-black border ${appState.selectedSize===sz?'bg-slate-900 text-white':'bg-slate-100 text-slate-700'}">${sz}</button>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+
                     <div class="max-w-xl mx-auto px-3 pt-6 space-y-4">
-                        <h2 class="font-black text-sm px-1">قائمة المنيو والأكلات</h2>
+                        <h2 class="font-black text-sm px-1">المنتجات المعروضة</h2>
                         <div class="grid grid-cols-2 gap-3">
-                            ${(shop.products||[]).length === 0 ? '<div class="col-span-2 text-center text-slate-500 py-10">لا توجد منتجات..</div>' : (shop.products||[]).map(prod => `
+                            ${(shop.products||[]).map(prod => `
                                 <div onclick="addToCart('${prod.id}')" class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs cursor-pointer active:scale-95 transition flex flex-col justify-between">
                                     <img src="${prod.image}" class="w-full h-36 object-cover bg-slate-100">
                                     <div class="p-3 space-y-1">
@@ -691,12 +635,12 @@
 
                     ${cartCount > 0 ? `
                         <div class="fixed bottom-3 left-3 right-3 max-w-xl mx-auto z-50">
-                            <button onclick="submitShopOrder('${shop.id}')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3.5 px-5 rounded-2xl shadow-xl flex items-center justify-between font-black text-xs transition">
+                            <button onclick="appState.checkoutStep='details'; render();" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3.5 px-5 rounded-2xl shadow-xl flex items-center justify-between font-black text-xs transition">
                                 <div class="flex items-center gap-2">
                                     <span class="bg-white/20 px-2 py-0.5 rounded-lg text-xs">${cartCount}</span>
                                     <span>إتمام الطلب (${cartTotal} جنيه)</span>
                                 </div>
-                                <span class="flex items-center gap-1">أكد الآن <i class="fa-solid fa-arrow-left"></i></span>
+                                <span class="flex items-center gap-1">أدخل البيانات <i class="fa-solid fa-arrow-left"></i></span>
                             </button>
                         </div>
                     ` : ''}
@@ -713,23 +657,36 @@
             render();
         }
 
-        function submitShopOrder(shopId){
+        function confirmAndSendOrder(shopId){
+            const name = document.getElementById('cust_name').value.trim();
+            const phone = document.getElementById('cust_phone').value.trim();
+            const address = document.getElementById('cust_address').value.trim();
+
+            if(!name || !phone || !address){
+                alert('يرجى استكمال الاسم ورقم الموبايل والعنوان بالتفصيل!');
+                return;
+            }
+
             const shop = globalDB.shops[shopId];
             if(!shop.orders) shop.orders = [];
             const total = appState.cart.reduce((s,i)=>s+(i.price*i.qty), 0);
+
             shop.orders.unshift({
                 id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
-                customer_name: 'عميل المتجر',
-                phone: '01000000000',
-                meta: { size: appState.selectedSize, type: appState.orderType },
+                customer_name: name,
+                phone: phone,
+                address: address,
+                meta: { size: appState.selectedSize },
                 items: JSON.parse(JSON.stringify(appState.cart)),
                 total: total,
                 created_at: new Date().toLocaleTimeString('ar-EG')
             });
+
             appState.cart = [];
+            appState.checkoutStep = 'cart';
             syncCloud();
             playBell();
-            alert('🎉 تم إرسال طلبك بنجاح للمتجر!');
+            alert('🎉 تم إرسال طلبك بنجاح للمتجر وسيتم التواصل معك قريباً!');
             render();
         }
 
