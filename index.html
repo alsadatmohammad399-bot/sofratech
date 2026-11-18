@@ -1,553 +1,105 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سفرتك | Sofratech - النسخة النهائية المستقرة</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { cairo: ['Cairo', 'sans-serif'] }
-                }
-            }
-        }
-    </script>
-    <style>
-        body { font-family: 'Cairo', sans-serif; font-weight: 700; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    </style>
-</head>
-<body class="antialiased min-h-screen bg-[#f8faf7] text-slate-900 selection:bg-emerald-600 selection:text-white">
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>سفرتك — منصة المنيو الإلكتروني</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F6FBF7;--c:#fff;--t:#14201A;--m:#4B5B52;--b:#CFE3D5;--g:#15803D;--l:#DCFCE7;--lt:#14532D;--y:#FACC15;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--t);font:800 16px Cairo,system-ui,sans-serif}
+h1,h2,h3{margin:0;font-weight:800}h1{font-size:30px;line-height:1.35}h2{font-size:22px}
+.w{max-width:560px;margin:auto;padding:14px 16px 130px;display:flex;flex-direction:column;gap:14px}
+header{position:sticky;top:0;z-index:20;background:var(--c);border-bottom:1px solid var(--b)}
+.hi{max-width:560px;margin:auto;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.r{display:flex;gap:8px;align-items:center}.wr{flex-wrap:wrap}.f{flex:1}
+.c{background:var(--c);border-radius:24px;padding:16px;box-shadow:0 1px 4px #0002;display:flex;flex-direction:column;gap:8px}
+.m{color:var(--m);font-size:14px;font-weight:600}
+.b{display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:16px;border:1.5px solid var(--b);background:var(--c);color:var(--t);font:800 16px Cairo,sans-serif;padding:0 16px;gap:6px;cursor:pointer;text-decoration:none}
+.g{background:var(--g);color:#fff;border-color:var(--g)}.y{background:var(--y);border-color:var(--y);color:#14201A}.lg{background:var(--l);color:var(--lt);border-color:#86EFAC}
+.in{min-height:48px;border:1.5px solid var(--b);border-radius:16px;background:var(--c);padding:0 14px;font:700 15px Cairo,sans-serif;color:var(--t);width:100%}
+.gr{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.ch{padding:8px 16px;border-radius:99px;background:var(--c);border:1.5px solid var(--b);color:var(--t);font:800 15px Cairo,sans-serif;cursor:pointer}
+.ch.sel{background:var(--g);color:#fff;border-color:var(--g)}
+.sc{overflow-x:auto;display:flex;gap:8px;padding-bottom:4px}
+.ph{height:90px;border-radius:16px;background:var(--l);display:flex;align-items:center;justify-content:center;color:var(--g)}
+.it{background:var(--l);border-radius:22px;padding:10px;display:flex;flex-direction:column;gap:6px;position:relative}
+.pl{width:44px;height:44px;border-radius:99px;background:var(--g);color:#fff;border:0;font:800 22px Cairo;cursor:pointer}
+.qc{display:flex;align-items:center;gap:6px;align-self:flex-start;background:var(--c);border-radius:99px}
+.qc button{width:40px;height:40px;border-radius:99px;background:var(--g);color:#fff;border:0;font:800 18px Cairo;cursor:pointer}
+.bar{position:fixed;bottom:0;left:0;right:0;padding:10px 16px;z-index:15;background:var(--c);border-top:1px solid var(--b)}
+.bar .b{max-width:528px;margin:auto;min-height:54px;width:100%}
+.ov{position:fixed;inset:0;background:#0008;z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.sh{background:var(--bg);width:100%;max-width:560px;max-height:90vh;overflow:auto;border-radius:24px 24px 0 0;padding:16px;display:flex;flex-direction:column;gap:12px}
+.tl{display:flex;justify-content:space-between;gap:8px}
+</style></head><body><div id="app"></div><div id="ts" style="display:none;position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#14201A;color:#fff;padding:10px 18px;border-radius:99px;z-index:60"></div>
+<script>
+let IT=[
+  ["مشويات","كيلو كباب ضاني بلدي",1150,"مشويات لحوم"],
+  ["مشويات","كيلو كفتة مشوية على الفحم",780,"مشويات لحوم"],
+  ["مشويات","كيلو ريش ضاني طازجة",1250,"مشويات لحوم"],
+  ["مشويات","نصف فرخة مشوية على الفحم",210,"مشويات دجاج"],
+  ["مشويات","فرخة كاملة مشوية",400,"مشويات دجاج"],
+  ["مشويات","طاجن بامية باللحمة الضاني",250,"طواجن فرن"],
+  ["مشويات","طاجن ورق عنب بالكوارع",300,"طواجن فرن"],
+  ["مشويات","سلطة طحينة بلدي",30,"مقبلات وسلطات"],
+  ["مشويات","شوربة لسان عصفور باللحمة",40,"شوربات"],
+  ["مشويات","بطاطس محمرة مقرمشة",35,"مقبلات وسلطات"]
+];
+const CATS=["مشويات","وجبات","ساندوتشات","طواجن"];
+const S={cart:{},ord:[],cat:"مشويات",q:"",step:1,co:0,pay:"نقداً"};
+const toast=t=>{const e=document.getElementById("ts");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",2500)};
+const fm=n=>n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})+" ج.م";
+const cnt=c=>Object.values(c).reduce((a,b)=>a+b,0),sub=c=>Object.entries(c).reduce((a,[i,q])=>a+IT[i][2]*q,0);
 
-    <audio id="cloud-bell" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
-    <div id="app"></div>
+function render(){
+  const h=location.hash.slice(1)||"landing";
+  let html="";
+  if(h=="landing"){
+    html=`<header><div class="hi"><span style="font-weight:800;font-size:20px">سفرتك</span><button class="b g" onclick="location.hash='#signup'">ابدأ مجاناً</button></div></header>
+    <main class="w"><div class="c" style="background:var(--l);text-align:center;padding:30px"><h1>استقبل طلباتك بدون عمولة</h1><p class="m">أنشئ منيو مطعمك الإلكتروني في ثوانٍ وشارك رابطك مع عملائك</p><button class="b g" style="margin:auto" onclick="location.hash='#signup'">جرّب الآن مجاناً</button></div></main>`;
+  } else if(h=="signup"){
+    html=`<main class="w" style="padding-top:30px"><h1>إنشاء حساب جديد</h1><input class="in" placeholder="اسم المطعم"><input class="in" placeholder="رقم الموبايل"><button class="b g" onclick="location.hash='#setup'">متابعة الإعداد</button></main>`;
+  } else if(h=="setup"){
+    html=`<main class="w" style="padding-top:30px"><h1>ارفع صورة المنيو أو تخطَّ</h1><p class="m">سيقوم النظام بإضافة الأصناف فوراً وبدون تعقيد.</p><button class="b g" onclick="alert('✓ تم استخراج المنيو كاملاً بنجاح!');location.hash='#dash'">رفع المنيو بالذكاء الاصطناعي</button><button class="b" onclick="location.hash='#dash'">تخطي والدخول لوحة التحكم</button></main>`;
+  } else if(h=="dash"){
+    html=`<header><div class="hi"><span style="font-weight:800">لوحة التحكم</span><button class="b lg" onclick="location.hash='#store'">فتح المنيو ↗</button></div></header>
+    <main class="w"><div class="c"><h2>أهلاً بك في مطعمك</h2><p class="m">الطلبات اليومية: ${S.ord.length}</p><button class="b y" onclick="location.hash='#orders'">متابعة الطلبات</button></div></main>`;
+  } else if(h=="store"){
+    const n=cnt(S.cart);
+    html=`<header><div class="hi"><span style="font-weight:800">المنيو الإلكتروني</span><button class="b" onclick="location.hash='#dash'">اللوحة</button></div></header>
+    <main class="w"><div class="sc">${CATS.map(c=>`<button class="ch ${c==S.cat?"sel":""}" onclick="S.cat='${c}';render()">${c}</button>`).join("")}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
+      ${IT.map((x,i)=>{const q=S.cart[i]||0;return `<div class="it"><div class="ph">صنف</div><b>${x[1]}</b><b style="color:var(--g)">${fm(x[2])}</b>${q?`<div class="qc"><button onclick="S.cart[i]--;if(!S.cart[i])delete S.cart[i];render()">−</button><b>${q}</b><button onclick="S.cart[i]++;render()">+</button></div>`:`<button class="pl" onclick="S.cart[i]=1;render()">+</button>`}</div>`}).join("")}
+    </div></main>${n?`<div class="bar"><button class="b g" onclick="S.co=1;render()">عرض السلة (${n} صنف) - ${fm(sub(S.cart))}</button></div>`:""}`;
+  } else if(h=="orders"){
+    html=`<header><div class="hi"><span style="font-weight:800">الطلبات</span><button class="b" onclick="location.hash='#dash'">رجوع</button></div></header>
+    <main class="w">${S.ord.length?S.ord.map(o=>`<div class="c"><b>طلب #${o.id}</b><span>الإجمالي: ${fm(o.t)}</span><span class="m">الحالة: ${o.s}</span></div>`).join(""):'<div class="c m" style="text-align:center">لا توجد طلبات جديدة بعد</div>'}</main>`;
+  }
+  
+  if(S.co==1){
+    const s=sub(S.cart), t=s*1.2;
+    html+=`<div class="ov" onclick="if(event.target===this){S.co=0;render()}"><div class="sh">
+      <div class="tl"><h2>إتمام الطلب</h2><button class="b" onclick="S.co=0;render()">✕</button></div>
+      ${Object.keys(S.cart).map(i=>`<div class="tl"><span>${IT[i][1]} (x${S.cart[i]})</span><span>${fm(IT[i][2]*S.cart[i])}</span></div>`).join("")}
+      <hr style="border:0;border-top:1px solid var(--b)">
+      <div class="tl"><b>الإجمالي بالخدمة</b><b>${fm(t)}</b></div>
+      <input class="in" id="cn" placeholder="اسمك الكريم">
+      <input class="in" id="cp" placeholder="رقم الموبايل">
+      <button class="b g" onclick="submitOrder(${t})">تأكيد الطلب ✓</button>
+    </div></div>`;
+  }
+  document.getElementById("app").innerHTML=html;
+}
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCVofMvvbyMBGM1pQNeoG-gMT48Ll5IL4I",
-            authDomain: "sofratech-2e033.firebaseapp.com",
-            databaseURL: "https://sofratech-2e033-default-rtdb.firebaseio.com",
-            projectId: "sofratech-2e033",
-            storageBucket: "sofratech-2e033.firebasestorage.app",
-            messagingSenderId: "742714705801",
-            appId: "1:742714705801:web:ddd019d66fa7435f6f8358"
-        };
-        
-        let cloudDB = null;
-        try {
-            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-            cloudDB = firebase.database();
-        } catch (e) {}
+function submitOrder(t){
+  const name=document.getElementById("cn")?.value||"عميل";
+  S.ord.push({id:1000+S.ord.length, t:t, s:"جديد", name:name});
+  S.cart={}; S.co=0;
+  toast("✓ تم إرسال طلبك بنجاح!");
+  location.hash="#dash";
+}
 
-        let globalDB = { shops: {} };
-        try {
-            const raw = localStorage.getItem('sofratech_v6800');
-            if (raw) globalDB = JSON.parse(raw);
-        } catch(e) {}
-
-        function syncCloud() {
-            try {
-                localStorage.setItem('sofratech_v6800', JSON.stringify(globalDB));
-                if (cloudDB) cloudDB.ref('sofratech_enterprise_v6800').set(globalDB).catch(() => {});
-            } catch (e) {}
-        }
-
-        if (cloudDB) {
-            cloudDB.ref('sofratech_enterprise_v6800').on('value', (snap) => {
-                const data = snap.val();
-                if (data && data.shops) {
-                    globalDB = data;
-                    try { localStorage.setItem('sofratech_v6800', JSON.stringify(globalDB)); } catch(e){}
-                    render();
-                }
-            });
-        }
-
-        function playBell(){
-            try {
-                const a = document.getElementById('cloud-bell');
-                if(a){ a.currentTime = 0; a.play().catch(()=>{}); }
-                if('vibrate' in navigator) navigator.vibrate([300, 150, 300]);
-            } catch(e){}
-        }
-
-        const FULL_MENUS = {
-            'مشويات': [
-                { id: 'm1', name: 'كيلو كباب ضاني بلدي', price: 1150, category: 'مشويات لحوم' },
-                { id: 'm2', name: 'كيلو كفتة مشوية على الفحم', price: 780, category: 'مشويات لحوم' },
-                { id: 'm3', name: 'كيلو ريش ضاني طازجة', price: 1250, category: 'مشويات لحوم' },
-                { id: 'm4', name: 'نصف فرخة مشوية على الفحم', price: 210, category: 'مشويات دجاج' },
-                { id: 'm5', name: 'فرخة كاملة مشوية', price: 400, category: 'مشويات دجاج' },
-                { id: 'm6', name: 'طاجن بامية باللحمة الضاني', price: 250, category: 'طواجن فرن' },
-                { id: 'm7', name: 'طاجن ورق عنب بالكوارع', price: 300, category: 'طواجن فرن' },
-                { id: 'm8', name: 'سلطة طحينة بلدي', price: 30, category: 'مقبلات وسلطات' },
-                { id: 'm9', name: 'شوربة لسان عصفور باللحمة', price: 40, category: 'شوربات' },
-                { id: 'm10', name: 'بطاطس محمرة مقرمشة', price: 35, category: 'مقبلات وسلطات' }
-            ],
-            'قهوة': [
-                { id: 'c1', name: 'قهوة تركي مضبوطة', price: 35, category: 'مشروبات ساخنة' },
-                { id: 'c2', name: 'قهوة سادة على سبرتو', price: 40, category: 'مشروبات ساخنة' },
-                { id: 'c3', name: 'شاي كشري بالنعناع', price: 25, category: 'مشروبات ساخنة' },
-                { id: 'c4', name: 'إبريق شاي أخضر', price: 45, category: 'مشروبات ساخنة' },
-                { id: 'c5', name: 'عصير ليمون نعناع فريش', price: 55, category: 'مشروبات باردة' },
-                { id: 'c6', name: 'عصير مانجو فريش', price: 65, category: 'مشروبات باردة' },
-                { id: 'c7', name: 'شيشة تفاح دوه', price: 90, category: 'شيشة وتدخين' },
-                { id: 'c8', name: 'شيشة رمان لبان', price: 95, category: 'شيشة وتدخين' }
-            ],
-            'أسماك': [
-                { id: 'f1', name: 'كيلو سمك بلطي مشوي', price: 180, category: 'أسماك طازجة' },
-                { id: 'f2', name: 'كيلو بوري مقلي', price: 220, category: 'أسماك طازجة' },
-                { id: 'f3', name: 'كيلو جمبري جامبو سنجاري', price: 650, category: 'سي فود' },
-                { id: 'f4', name: 'طاجن سي فود بالكريمة', price: 320, category: 'طواجن سي فود' },
-                { id: 'f5', name: 'أرز صيادية بالبصل', price: 45, category: 'أطباق جانبية' }
-            ]
-        };
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const isCustomerMode = urlParams.get('view') === 'store'; 
-        const targetShopSlug = urlParams.get('shop');
-        let currentShopId = localStorage.getItem('sofratech_logged_shop_id') || null;
-
-        const appState = { 
-            page: isCustomerMode ? 'storefront' : (currentShopId ? 'dashboard' : 'landing'), 
-            authMode: 'register',
-            cart: [],
-            detailsDrawerOpen: false,
-            paymentMethod: 'cash',
-            drawerOpen: false
-        };
-
-        function setPage(p){ 
-            appState.page = p; 
-            render(); 
-            window.scrollTo(0,0); 
-        }
-
-        function render(){
-            const root = document.getElementById('app');
-            if(!root) return;
-            try {
-                let html = '';
-                if(isCustomerMode) {
-                    html = renderStorefront();
-                } else if(appState.page === 'landing') {
-                    html = renderLandingPage();
-                } else if(appState.page === 'auth') {
-                    html = renderAuthScreen();
-                } else {
-                    if(!currentShopId || !globalDB.shops?.[currentShopId]) {
-                        currentShopId = null;
-                        localStorage.removeItem('sofratech_logged_shop_id');
-                        html = renderLandingPage();
-                    } else {
-                        const shop = globalDB.shops[currentShopId];
-                        
-                        // فحص الـ 7 أيام التجريبية
-                        if(shop.createdAt && (Date.now() - shop.createdAt) / (1000 * 60 * 60 * 24) > 7 && !shop.subscriptionActive) {
-                            html = renderExpired(shop);
-                        } else if(shop.onboardingComplete === false || appState.page === 'onboarding') {
-                            html = renderWizard(shop);
-                        } else if(appState.page === 'dashboard') {
-                            html = renderDashboard(shop);
-                        } else if(appState.page === 'items') {
-                            html = renderItems(shop);
-                        } else if(appState.page === 'orders') {
-                            html = renderOrders(shop);
-                        } else {
-                            html = renderDashboard(shop);
-                        }
-                    }
-                }
-                root.innerHTML = html;
-            } catch(e) { console.error(e); }
-        }
-
-        function renderExpired(shop){
-            return `
-                <div class="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
-                    <div class="max-w-md w-full bg-slate-900 border border-slate-800 p-8 rounded-3xl text-center space-y-6 shadow-2xl">
-                        <div class="w-16 h-16 bg-rose-500/20 text-rose-500 rounded-2xl flex items-center justify-center mx-auto text-2xl font-black">
-                            <i class="fa-solid fa-lock"></i>
-                        </div>
-                        <h1 class="text-2xl font-black">انتهت الفترة التجريبية (7 أيام)</h1>
-                        <p class="text-xs text-slate-400">يرجى تحويل الاشتراك (249 ج.م) على فودافون كاش (01015861991) وتفعيل الحساب.</p>
-                        <button onclick="globalDB.shops['${shop.id}'].subscriptionActive=true; syncCloud(); render();" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-2xl text-sm shadow-md">
-                            تفعيل الحساب الآن ✓
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderLandingPage(){
-            return `
-                <div class="min-h-screen bg-[#f8faf7] text-slate-900 pb-24">
-                    <header class="sticky top-0 z-50 border-b bg-white/95 border-slate-200 px-4 py-3.5">
-                        <div class="max-w-5xl mx-auto flex justify-between items-center">
-                            <div class="flex items-center gap-2.5">
-                                <div class="w-10 h-10 rounded-2xl bg-emerald-600 text-white font-black text-xl flex items-center justify-center">س</div>
-                                <span class="font-black text-xl">سفرتك</span>
-                            </div>
-                            <button onclick="setPage('auth')" class="bg-emerald-600 text-white px-5 py-2.5 rounded-2xl text-xs font-black shadow-sm">ابدأ 7 أيام مجاناً</button>
-                        </div>
-                    </header>
-                    <section class="max-w-4xl mx-auto px-4 pt-20 text-center space-y-6">
-                        <h1 class="text-3xl sm:text-5xl font-black leading-tight">المنيو الإلكتروني الذكي وكاشير POS</h1>
-                        <p class="text-slate-600 font-bold max-w-xl mx-auto">ارفع صورة المنيو أو الـ PDF واستخرج كافة الأصناف مع نظام تحويل آمن لفودافون كاش.</p>
-                        <button onclick="setPage('auth')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-8 py-4 rounded-2xl text-base shadow-xl">إنشاء حسابك الآن ➔</button>
-                    </section>
-                </div>
-            `;
-        }
-
-        function renderAuthScreen(){
-            return `
-                <div class="min-h-screen bg-white text-slate-900 flex items-center justify-center p-4">
-                    <div class="max-w-md w-full space-y-5 bg-white p-6 rounded-3xl border border-slate-200 shadow-lg">
-                        <div class="flex justify-between items-center">
-                            <button onclick="setPage('landing')" class="text-slate-600 font-black text-sm"><i class="fa-solid fa-arrow-right ml-1"></i> الرئيسية</button>
-                            <div class="w-9 h-9 rounded-2xl bg-emerald-600 text-white font-black flex items-center justify-center">س</div>
-                        </div>
-                        <h1 class="text-xl font-black text-center">إنشاء مطعمك (7 أيام تجريبية)</h1>
-                        <div class="space-y-3 text-sm font-bold">
-                            <input id="r_name" placeholder="اسمك الكامل" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl outline-none focus:border-emerald-600">
-                            <input id="r_shop" placeholder="اسم المطعم (مثال: مطعم البرنس)" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl outline-none focus:border-emerald-600">
-                            <select id="r_ind" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl outline-none focus:border-emerald-600">
-                                <option value="مشويات">مشويات وكباب وكفتة</option>
-                                <option value="قهوة">قهوة وكافيه ومشروبات</option>
-                                <option value="أسماك">أسماك وسي فود</option>
-                            </select>
-                            <input id="r_phone" placeholder="رقم الهاتف (010xxxxxxxx)" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl outline-none focus:border-emerald-600">
-                            <input id="r_pass" type="password" placeholder="كلمة المرور" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl outline-none focus:border-emerald-600">
-                            <button onclick="handleRegisterSubmit()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-2xl text-base shadow-md">بدء التجربة مجاناً ➔</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function handleRegisterSubmit(){
-            const name = document.getElementById('r_name').value.trim();
-            const shop = document.getElementById('r_shop').value.trim();
-            const ind = document.getElementById('r_ind').value;
-            const phone = document.getElementById('r_phone').value.trim();
-            const pass = document.getElementById('r_pass').value.trim();
-            if(!name || !shop || !phone || !pass){ alert('يرجى ملء جميع الحانات!'); return; }
-
-            const slug = 'shop-' + Date.now();
-            globalDB.shops[slug] = {
-                id: slug, ownerName: name, name: shop, industry: ind, phone: phone, pass: pass,
-                createdAt: Date.now(), subscriptionActive: false, onboardingComplete: false,
-                products: JSON.parse(JSON.stringify(FULL_MENUS[ind] || FULL_MENUS['مشويات'])),
-                orders: []
-            };
-            syncCloud();
-            currentShopId = slug;
-            localStorage.setItem('sofratech_logged_shop_id', slug);
-            setPage('onboarding');
-        }
-
-        // ================= معالج استخراج المنيو والتخطي (شغال تماماً) =================
-        function renderWizard(shop){
-            return `
-                <div class="min-h-screen bg-[#f8faf7] text-slate-900 pb-16">
-                    <div class="bg-white border-b border-slate-200 px-4 py-4 sticky top-0 z-40">
-                        <div class="max-w-xl mx-auto flex justify-between items-center text-xs font-black">
-                            <span class="text-emerald-700">استخراج المنيو الكامل بالذكاء الاصطناعي</span>
-                            <button onclick="skipOnboarding('${shop.id}')" class="text-slate-500 underline font-black">تخطي للوحة التحكم ➔</button>
-                        </div>
-                    </div>
-
-                    <div class="max-w-xl mx-auto px-4 pt-6">
-                        <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-6 text-center">
-                            <div class="w-14 h-14 rounded-2xl bg-emerald-600 text-white font-black text-2xl flex items-center justify-center mx-auto shadow-sm">
-                                <i class="fa-solid fa-cloud-arrow-up"></i>
-                            </div>
-                            <h2 class="text-xl font-black">ارفع منيو (${shop.industry}) لاستخراج كافة الأصناف</h2>
-                            <p class="text-xs text-slate-500">اختر صورة المنيو أو ملف PDF وسيقوم النظام باستخراج كل الأصناف والأسعار فوراً.</p>
-
-                            <label class="border-2 border-dashed border-emerald-500 bg-emerald-50/60 hover:bg-emerald-50 p-8 rounded-3xl block cursor-pointer transition">
-                                <span class="block text-sm font-black text-emerald-950">اضغط هنا لاختيار ملف المنيو</span>
-                                <input type="file" accept="image/*,.pdf" onchange="triggerMenuUpload('${shop.id}')" class="hidden">
-                            </label>
-
-                            <button onclick="skipOnboarding('${shop.id}')" class="w-full bg-slate-900 text-white font-black py-3.5 rounded-2xl text-xs shadow-md">
-                                تخطي والدخول للوحة التحكم مباشرة
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function triggerMenuUpload(shopId){
-            const shop = globalDB.shops[shopId];
-            shop.products = JSON.parse(JSON.stringify(FULL_MENUS[shop.industry] || FULL_MENUS['مشويات']));
-            shop.onboardingComplete = true;
-            syncCloud();
-            alert('✓ تم استخراج المنيو الشامل بكافة الأصناف بنجاح!');
-            setPage('dashboard');
-        }
-
-        function skipOnboarding(shopId){
-            const shop = globalDB.shops[shopId];
-            shop.onboardingComplete = true;
-            syncCloud();
-            setPage('dashboard');
-        }
-
-        // ================= لوحة التحكم =================
-        function renderHeader(shop, title){
-            return `
-                <header class="bg-white border-b border-slate-200 px-4 py-3.5 sticky top-0 z-40">
-                    <div class="max-w-4xl mx-auto flex justify-between items-center">
-                        <div class="flex items-center gap-2.5">
-                            <button onclick="appState.drawerOpen=true; render();" class="border border-slate-200 px-3 py-2 rounded-2xl text-xs font-black shadow-2xs"><i class="fa-solid fa-bars"></i> القائمة</button>
-                            <span class="font-black text-base">${title}</span>
-                        </div>
-                        <button onclick="setPage('orders')" class="relative w-10 h-10 rounded-2xl border border-slate-200 flex items-center justify-center shadow-2xs">
-                            <i class="fa-regular fa-bell"></i>
-                            <span class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-600 text-white text-[10px] font-black flex items-center justify-center">${(shop.orders||[]).length}</span>
-                        </button>
-                    </div>
-                </header>
-                ${appState.drawerOpen ? `
-                    <div onclick="appState.drawerOpen=false; render();" class="fixed inset-0 z-50 bg-black/40 flex justify-start">
-                        <div onclick="event.stopPropagation()" class="w-72 bg-white h-full p-5 space-y-3 font-black text-sm shadow-2xl">
-                            <div class="flex justify-between items-center pb-2 border-b border-slate-100">
-                                <span>${shop.name}</span>
-                                <button onclick="appState.drawerOpen=false; render();"><i class="fa-solid fa-xmark"></i></button>
-                            </div>
-                            <button onclick="appState.drawerOpen=false; setPage('dashboard');" class="block w-full text-right p-3 rounded-xl hover:bg-emerald-50">الرئيسية</button>
-                            <button onclick="appState.drawerOpen=false; setPage('items');" class="block w-full text-right p-3 rounded-xl hover:bg-emerald-50">إدارة واستخراج المنيو</button>
-                            <button onclick="appState.drawerOpen=false; setPage('orders');" class="block w-full text-right p-3 rounded-xl hover:bg-emerald-50">متابعة الطلبات (${(shop.orders||[]).length})</button>
-                            <button onclick="currentShopId=null; localStorage.removeItem('sofratech_logged_shop_id'); setPage('landing');" class="block w-full text-right p-3 rounded-xl bg-slate-900 text-white mt-6">تسجيل الخروج</button>
-                        </div>
-                    </div>
-                ` : ''}
-            `;
-        }
-
-        function renderDashboard(shop){
-            const storeUrl = location.origin + location.pathname + `?view=store&shop=${shop.id}`;
-            return `
-                <div class="min-h-screen bg-[#f8faf7] text-slate-900 pb-24">
-                    ${renderHeader(shop, 'لوحة التحكم')}
-                    <div class="max-w-3xl mx-auto px-4 pt-6 space-y-4">
-                        <div class="bg-white p-6 rounded-3xl border border-slate-200 space-y-4 text-center shadow-xs">
-                            <h2 class="text-xl font-black">أهلاً بيك يا ${shop.ownerName}</h2>
-                            <a href="${storeUrl}" target="_blank" class="block bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3.5 rounded-2xl shadow-md">فتح المنيو الإلكتروني للعملاء ↗</a>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3 text-xs font-black">
-                            <button onclick="setPage('items')" class="bg-white border border-slate-200 p-4 rounded-2xl shadow-2xs">استخراج وإدارة الأصناف (${(shop.products||[]).length})</button>
-                            <button onclick="setPage('orders')" class="bg-white border border-slate-200 p-4 rounded-2xl shadow-2xs">متابعة الطلبات (${(shop.orders||[]).length})</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderItems(shop){
-            return `
-                <div class="min-h-screen bg-[#f8faf7] text-slate-900 pb-24">
-                    ${renderHeader(shop, 'إدارة واستخراج المنيو')}
-                    <div class="max-w-3xl mx-auto px-4 pt-6 space-y-4">
-                        <div class="bg-white p-6 rounded-3xl border border-slate-200 space-y-3 text-center">
-                            <h2 class="text-base font-black">إعادة استخراج المنيو الكامل</h2>
-                            <button onclick="shop.onboardingComplete=false; syncCloud(); setPage('onboarding');" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-6 py-3 rounded-2xl text-xs shadow-sm">رفع صورة المنيو الجديدة</button>
-                        </div>
-                        <div class="bg-white p-6 rounded-3xl border border-slate-200 space-y-3">
-                            <h3 class="font-black text-base">الأصناف الحالية (${(shop.products||[]).length})</h3>
-                            ${(shop.products||[]).map((p, i) => `
-                                <div class="bg-slate-50 p-3 rounded-xl flex justify-between text-xs font-black">
-                                    <span>${p.name} - ${p.price} ج.م (${p.category})</span>
-                                    <button onclick="shop.products.splice(${i},1); syncCloud(); render();" class="text-rose-600 underline">حذف</button>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderOrders(shop){
-            const orders = shop.orders || [];
-            return `
-                <div class="min-h-screen bg-[#f8faf7] text-slate-900 pb-24">
-                    ${renderHeader(shop, 'الطلبات والتحويلات')}
-                    <div class="max-w-3xl mx-auto px-4 pt-6 space-y-3">
-                        ${orders.length === 0 ? '<p class="text-center text-slate-400 py-10 font-black">لا توجد طلبات بعد</p>' : orders.map((o, idx) => `
-                            <div class="bg-white p-4 rounded-3xl border border-slate-200 space-y-2 text-xs font-black shadow-2xs">
-                                <div class="flex justify-between text-sm">
-                                    <span>طلب #${o.id} • ${o.customerName}</span>
-                                    <span class="text-emerald-700">${o.total} ج.م</span>
-                                </div>
-                                <p class="text-slate-500">الهاتف: ${o.phone} | الطريقة: ${o.paymentMethod==='vodafone'?'فودافون كاش':'نقداً'}</p>
-                                ${o.paymentMethod==='vodafone' ? `<p class="text-amber-700 bg-amber-50 p-2 rounded-xl font-mono">رقم التحويل من العميل: <b>${o.vodafoneRef}</b></p>` : ''}
-                                <p>الحالة: <span class="text-emerald-600">${o.status}</span></p>
-                                ${o.status === 'بانتظار تأكيد التحويل' ? `
-                                    <button onclick="shop.orders[${idx}].status='مؤكد وجاري التحضير'; syncCloud(); render();" class="w-full bg-emerald-600 text-white py-2.5 rounded-xl text-xs shadow-sm">تأكيد استلام التحويل واعتماد الأوردر ✓</button>
-                                ` : ''}
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        // ================= المتجر الإلكتروني للعميل =================
-        function renderStorefront(){
-            const shop = globalDB.shops[targetShopSlug || Object.keys(globalDB.shops)[0]] || { name: 'المتجر', products: [] };
-            const products = shop.products || [];
-
-            const subtotal = appState.cart.reduce((s, i) => s + (i.price * i.qty), 0);
-            const serviceFee = +(subtotal * 0.12).toFixed(2);
-            const vatFee = +((subtotal + serviceFee) * 0.14).toFixed(2);
-            const grandTotal = +(subtotal + serviceFee + vatFee).toFixed(2);
-
-            return `
-                <div class="min-h-screen bg-[#f8faf7] text-slate-900 pb-28">
-                    <div class="bg-emerald-600 text-white p-6 text-center space-y-1">
-                        <h1 class="text-xl font-black">${shop.name}</h1>
-                        <p class="text-xs text-emerald-100">المنيو الإلكتروني الشامل</p>
-                    </div>
-
-                    <div class="max-w-xl mx-auto px-4 pt-5 space-y-4">
-                        <h2 class="text-lg font-black">أصناف المنيو (${products.length})</h2>
-                        <div class="grid grid-cols-2 gap-3">
-                            ${products.map(p => {
-                                const item = appState.cart.find(c => c.id === p.id);
-                                return `
-                                    <div class="bg-white border border-slate-200 rounded-3xl p-4 flex flex-col justify-between space-y-2 shadow-2xs">
-                                        <div>
-                                            <h3 class="font-black text-sm leading-snug">${p.name}</h3>
-                                            <span class="text-[10px] text-emerald-700 block mt-0.5">${p.category}</span>
-                                        </div>
-                                        <div class="flex justify-between items-center pt-2">
-                                            <span class="font-black text-sm text-emerald-700">${p.price} ج.م</span>
-                                            ${!item ? `
-                                                <button onclick="appState.cart.push({id:'${p.id}', name:'${p.name}', price:${p.price}, qty:1}); render();" class="w-8 h-8 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center text-xs font-black shadow-xs"><i class="fa-solid fa-plus"></i></button>
-                                            ` : `
-                                                <div class="flex items-center gap-1.5 bg-slate-100 rounded-full px-2.5 py-1 text-xs font-black">
-                                                    <button onclick="appState.cart.find(x=>x.id==='${p.id}').qty++; render();">+</button>
-                                                    <span class="px-1">${item.qty}</span>
-                                                    <button onclick="const it=appState.cart.find(x=>x.id==='${p.id}'); it.qty--; if(it.qty<=0) appState.cart=appState.cart.filter(x=>x.id!=='${p.id}'); render();">-</button>
-                                                </div>
-                                            `}
-                                        </div>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    </div>
-
-                    ${appState.cart.length > 0 ? `
-                        <div class="fixed bottom-3 left-3 right-3 max-w-xl mx-auto z-40">
-                            <button onclick="appState.detailsDrawerOpen=true; render();" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 px-5 rounded-3xl shadow-xl flex justify-between items-center font-black text-sm">
-                                <span>عرض السلة وإتمام الطلب - ${grandTotal} ج.م</span>
-                                <i class="fa-solid fa-chevron-left"></i>
-                            </button>
-                        </div>
-                    ` : ''}
-
-                    ${appState.detailsDrawerOpen ? `
-                        <div class="fixed inset-0 z-50 bg-black/50 flex items-end justify-center">
-                            <div class="w-full max-w-xl bg-white text-slate-900 rounded-t-3xl p-5 max-h-[92vh] overflow-y-auto space-y-4 shadow-2xl">
-                                <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-                                    <h2 class="text-lg font-black">تأكيد الطلب والدفع</h2>
-                                    <button onclick="appState.detailsDrawerOpen=false; render();" class="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-                                </div>
-
-                                <div class="space-y-2 font-black text-xs">
-                                    <label class="block">طريقة الدفع</label>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <button onclick="appState.paymentMethod='cash'; render();" class="py-3 rounded-2xl border-2 ${appState.paymentMethod==='cash'?'bg-emerald-50 border-emerald-600 text-emerald-900':'bg-white border-slate-200'}">نقداً عند الاستلام</button>
-                                        <button onclick="appState.paymentMethod='vodafone'; render();" class="py-3 rounded-2xl border-2 ${appState.paymentMethod==='vodafone'?'bg-emerald-50 border-emerald-600 text-emerald-900':'bg-white border-slate-200'}">فودافون كاش (إلزامي التحويل)</button>
-                                    </div>
-                                </div>
-
-                                ${appState.paymentMethod === 'vodafone' ? `
-                                    <div class="bg-amber-50 border border-amber-300 p-4 rounded-2xl space-y-2 text-xs font-black text-amber-950">
-                                        <p>📲 برجاء تحويل الإجمالي <span class="text-emerald-700 font-extrabold text-sm">${grandTotal} ج.م</span> إلى محفظة فودافون كاش:</p>
-                                        <div class="bg-white p-2.5 rounded-xl text-center font-mono text-base text-emerald-700 font-black border border-amber-200">01015861991</div>
-                                        <p class="text-[11px] text-rose-600">⚠️ تنبيه: لن يتم اعتماد الطلب إلا بعد إدخال رقم العملية أو رقم المحفظة هنا:</p>
-                                        <input id="ord_v_ref" placeholder="اكتب رقم العملية أو رقمك المحول منه..." class="w-full bg-white border border-amber-400 p-3 rounded-xl font-bold mt-1 outline-none">
-                                    </div>
-                                ` : ''}
-
-                                <div class="space-y-2.5 text-sm font-bold">
-                                    <input id="ord_name" placeholder="اسمك الكريم" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl outline-none">
-                                    <input id="ord_phone" type="tel" placeholder="رقم الهاتف" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl outline-none">
-                                    <input id="ord_addr" placeholder="عنوان التوصيل بالتفصيل" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-2xl outline-none">
-                                </div>
-
-                                <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-1 text-xs font-black">
-                                    <div class="flex justify-between"><span>الإجمالي النهائي</span><span class="text-emerald-700 text-sm">${grandTotal} ج.م</span></div>
-                                </div>
-
-                                <button onclick="submitOrder('${shop.id}', ${grandTotal})" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-2xl text-base shadow-md">
-                                    ${appState.paymentMethod === 'vodafone' ? 'إرسال الطلب بعد تحويل فودافون كاش ➔' : 'تأكيد الطلب نقداً ✓'}
-                                </button>
-                            </div>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-        }
-
-        function submitOrder(shopId, grandTotal){
-            const name = document.getElementById('ord_name').value.trim();
-            const phone = document.getElementById('ord_phone').value.trim();
-            const addr = document.getElementById('ord_addr').value.trim();
-            if(!name || !phone || !addr){ alert('يرجى استكمال البيانات (الاسم، الهاتف، العنوان)!'); return; }
-
-            let vRef = '';
-            let status = 'مؤكد';
-
-            if(appState.paymentMethod === 'vodafone'){
-                const refInput = document.getElementById('ord_v_ref');
-                vRef = refInput ? refInput.value.trim() : '';
-                if(!vRef){
-                    alert('⚠️ ممنوع تأكيد الطلب! يجب تحويل المبلغ على فودافون كاش أولاً وكتابة رقم التحويل.');
-                    return;
-                }
-                status = 'بانتظار تأكيد التحويل';
-            }
-
-            const newOrd = {
-                id: Math.floor(1000 + Math.random() * 9000),
-                paymentMethod: appState.paymentMethod,
-                vodafoneRef: vRef,
-                status: status,
-                customerName: name,
-                phone: phone,
-                address: addr,
-                items: JSON.parse(JSON.stringify(appState.cart)),
-                total: grandTotal
-            };
-
-            const shop = globalDB.shops[shopId];
-            if(shop){
-                if(!shop.orders) shop.orders = [];
-                shop.orders.unshift(newOrd);
-                syncCloud();
-            }
-
-            appState.cart = [];
-            appState.detailsDrawerOpen = false;
-            playBell();
-            alert(appState.paymentMethod === 'vodafone' ? '✓ تم إرسال طلبك! بانتظار مراجعة تحويل فودافون كاش من المطعم.' : '✓ تم تأكيد طلبك بنجاح!');
-            render();
-        }
-
-        render();
-    </script>
-</body>
-</html>
+window.addEventListener("hashchange",render);
+if(!location.hash)location.hash="#landing";
+render();
+</script></body></html>
