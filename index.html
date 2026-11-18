@@ -42,26 +42,26 @@
 
         let globalDB = { shops: {} };
         try {
-            const raw = localStorage.getItem('tablia_saas_v1020');
+            const raw = localStorage.getItem('tablia_saas_v1025');
             if (raw) globalDB = JSON.parse(raw);
-        } catch(e) {}
+        } catch(e) { globalDB = { shops: {} }; }
 
         function syncCloud() {
             try {
-                localStorage.setItem('tablia_saas_v1020', JSON.stringify(globalDB));
-                if (cloudDB) cloudDB.ref('tablia_saas_enterprise_v1020').set(globalDB).catch(() => {});
+                localStorage.setItem('tablia_saas_v1025', JSON.stringify(globalDB));
+                if (cloudDB) cloudDB.ref('tablia_saas_enterprise_v1025').set(globalDB).catch(() => {});
             } catch (e) {}
         }
 
         if (cloudDB) {
-            cloudDB.ref('tablia_saas_enterprise_v1020').on('value', (snap) => {
+            cloudDB.ref('tablia_saas_enterprise_v1025').on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.shops) {
                     globalDB = data;
-                    try { localStorage.setItem('tablia_saas_v1000', JSON.stringify(globalDB)); } catch(e){}
+                    try { localStorage.setItem('tablia_saas_v1025', JSON.stringify(globalDB)); } catch(e){}
                     render();
                 }
-            });
+            }, (err) => { console.error(err); });
         }
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -84,8 +84,8 @@
 
         function setPage(p){ appState.page = p; render(); window.scrollTo(0,0); }
 
-        // حساب حالة اشتراك المتجر (7 أيام تجريبي ثم 600 ج شهرياً)
         function getShopSubscriptionStatus(shop) {
+            if (!shop) return { active: false };
             const now = Date.now();
             const createdAt = shop.createdAt || now;
             const trialDays = 7;
@@ -134,9 +134,13 @@
                         }
                     }
                 }
-                const bottomNav = (isCustomerMode || !currentShopId || !getShopSubscriptionStatus(globalDB.shops[currentShopId]).active) ? '' : renderBottomNav();
+                const shopActive = currentShopId && globalDB.shops[currentShopId] ? getShopSubscriptionStatus(globalDB.shops[currentShopId]).active : true;
+                const bottomNav = (isCustomerMode || !currentShopId || !shopActive) ? '' : renderBottomNav();
                 root.innerHTML = content + bottomNav;
-            } catch(err) { console.error("Render Error:", err); }
+            } catch(err) { 
+                console.error("Render Error:", err); 
+                root.innerHTML = `<div class="p-8 text-center text-red-600 font-bold">حدث خطأ في العرض، يرجى تحديث الصفحة.</div>`;
+            }
         }
 
         function renderBottomNav(){
@@ -212,7 +216,6 @@
             
             if(!name || !phone || !pass){ alert('يرجى استكمال جميع البيانات!'); return; }
             
-            // توليد Slug احترافي برابط اسم المطعم (نظيف وآمن)
             let cleanSlug = name.replace(/\s+/g, '-').replace(/[^\w\u0600-\u06FF\-]/g, '') + '-' + Math.floor(100 + Math.random() * 900);
 
             globalDB.shops[cleanSlug] = { 
@@ -297,7 +300,6 @@
             const shop = globalDB.shops[currentShopId];
             if(!shop){ setPage('auth'); return ''; }
             const sub = getShopSubscriptionStatus(shop);
-            // بناء الرابط الاحترافي باسم المطعم
             const customLink = location.origin + location.pathname + `?view=store&shop=${shop.id}`;
 
             return `
@@ -323,7 +325,6 @@
                         </div>
                     </div>
 
-                    <!-- رابط المطعم المخصص المميز -->
                     <div class="bg-white p-6 rounded-3xl space-y-3 border border-emerald-200 text-center shadow-2xl">
                         <h2 class="font-black text-emerald-600 text-sm">🔗 رابط منيو مطعمك المميز (ابعته للزبائن)</h2>
                         <input readonly value="${customLink}" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-emerald-700 font-mono text-center text-xs select-all">
@@ -424,7 +425,6 @@
             return `<div class="max-w-3xl mx-auto px-4 py-6 pb-28 space-y-4 text-xs"><h1 class="font-black text-emerald-600 bg-white p-4 rounded-2xl shadow-xs">طباعة أكواد QR للطاولات</h1><div class="grid grid-cols-2 gap-3">${Array.from({length:10},(_,i)=>i+1).map(n=>`<div class="bg-white p-4 rounded-2xl text-center space-y-2 border border-slate-200 shadow-xs"><div class="font-bold">طاولة ${n}</div><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(base+'طاولة '+n)}" class="mx-auto rounded bg-white p-1"></div>`).join('')}</div></div>`; 
         }
 
-        // ================= واجهة عرض المنيو للعملاء =================
         function renderStorefront(){
             const shopId = targetShopSlug || Object.keys(globalDB.shops)[0];
             const shop = globalDB.shops[shopId];
