@@ -30,14 +30,17 @@
     <div id="app"></div>
 
     <script>
+        // مفتاح Gemini API الجديد والصحيح
+        const GEMINI_API_KEY = "AIzaSyCQw8v7QdIi0E5DvR0wbSwNzTyzLnQ6w3hJsm"; // تم ضبط المفتاح الصحيح
+
         let globalDB = { shops: {} };
         try {
-            const raw = localStorage.getItem('sofrtek_stable_db_2026');
+            const raw = localStorage.getItem('sofrtek_gemini_db_v2026');
             if (raw) globalDB = JSON.parse(raw);
         } catch(e) {}
 
         function syncDB() {
-            try { localStorage.setItem('sofrtek_stable_db_2026', JSON.stringify(globalDB)); } catch(e) {}
+            try { localStorage.setItem('sofrtek_gemini_db_v2026', JSON.stringify(globalDB)); } catch(e) {}
         }
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -89,7 +92,7 @@
 
                     <section class="max-w-6xl mx-auto px-4 py-16 md:py-24 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
                         <div class="space-y-6 text-center md:text-right">
-                            <span class="bg-brand-50 text-brand-700 font-bold px-4 py-1.5 rounded-full text-xs inline-block border border-brand-100">مدعوم بالذكاء الاصطناعي</span>
+                            <span class="bg-brand-50 text-brand-700 font-bold px-4 py-1.5 rounded-full text-xs inline-block border border-brand-100">مدعوم بالذكاء الاصطناعي Gemini</span>
                             <h1 class="text-3xl md:text-5xl font-black text-slate-900 leading-tight">
                                 حسّن مطعمك ونقله للمستوي الرقمي بكل سهولة! 🚀📱
                             </h1>
@@ -113,7 +116,7 @@
                             <div class="bg-white p-6 rounded-3xl shadow-xl border border-slate-100 text-center space-y-4 max-w-xs w-full">
                                 <div class="w-24 h-24 bg-brand-100 rounded-2xl mx-auto flex items-center justify-center text-brand-600 text-3xl font-black shadow"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
                                 <h3 class="font-black text-slate-900 text-sm">قراءة المنيو بالذكاء الاصطناعي</h3>
-                                <p class="text-[11px] text-slate-400">ارفع الصورة لاستخراج الأصناف والأسعار فوراً</p>
+                                <p class="text-[11px] text-slate-400">ارفع الصورة ودع Gemini يستخرج الأصناف والأسعار</p>
                             </div>
                         </div>
                     </section>
@@ -165,11 +168,11 @@
                         <p class="text-slate-500">الأصناف المسجلة حالياً: <b class="text-brand-600">${productsCount} صنف</b></p>
                         
                         <div class="bg-brand-50 border border-brand-200 p-5 rounded-3xl space-y-3">
-                            <h3 class="font-black text-brand-900 text-sm"><i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i> ارفع صورة المنيو بالذكاء الاصطناعي</h3>
-                            <p class="text-[11px] text-slate-600">اختر صورة المنيو الورقي وسيقوم النظام بقراءتها وإضافتها فوراً</p>
+                            <h3 class="font-black text-brand-900 text-sm"><i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i> ارفع صورة المنيو (Gemini AI)</h3>
+                            <p class="text-[11px] text-slate-600">اختر صورة المنيو الورقي وسيقوم الذكاء الاصطناعي بقراءتها وإضافتها فوراً</p>
                             <label class="bg-brand-500 hover:bg-brand-600 text-white font-black py-3 px-6 rounded-2xl shadow cursor-pointer inline-block transition">
                                 <span>اختر صورة المنيو للرفع</span>
-                                <input type="file" accept="image/*" onchange="extractMenuSmartAI(event, '${shop.id}')" class="hidden">
+                                <input type="file" accept="image/*" onchange="extractMenuWithGemini(event, '${shop.id}')" class="hidden">
                             </label>
                         </div>
 
@@ -195,37 +198,76 @@
             `;
         }
 
-        // دالة الذكاء الاصطناعي الذكية والمستقرة 100%
-        function extractMenuSmartAI(event, shopId) {
+        async function extractMenuWithGemini(event, shopId) {
             const file = event.target.files[0];
             if (!file) return;
 
-            alert("⏳ جاري تحليل صورة المنيو واستخراج الأقسام والأصناف والأسعار بدقة...");
+            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-            setTimeout(() => {
-                const sampleItems = [
-                    { cat: 'مشويات', name: 'كيلو كباب ضاني', price: 1100 },
-                    { cat: 'مشويات', name: 'كيلو ريش طاجي', price: 1000 },
-                    { cat: 'وجبات', name: 'وجبة كبدة مشوية', price: 120 },
-                    { cat: 'ساندوتشات', name: 'ساندوتش سجق بلدي', price: 45 },
-                    { cat: 'طواجن', name: 'طاجن لحم بالبصل', price: 160 }
-                ];
+            const base64Image = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+
+            alert("⏳ جاري إرسال الصورة إلى Gemini AI لاستخراج الأقسام والأسعار بدقة...");
+
+            const payload = {
+                contents: [{
+                    parts: [
+                        { text: "اقرأ صورة المنيو المرفقة بدقة، واستخرج كل الأصناف مع تحديد القسم الخاص بكل صنف (مثل: مشويات، وجبات، ساندوتشات، طواجن، مشروبات) والسعر كرقم فقط بالجنيه. أرجع النتيجة بصيغة JSON." },
+                        { inline_data: { mime_type: file.type, data: base64Image } }
+                    ]
+                }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                cat: { type: "STRING" },
+                                name: { type: "STRING" },
+                                price: { type: "NUMBER" }
+                            },
+                            required: ["cat", "name", "price"]
+                        }
+                    }
+                }
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error?.message || "خطأ في الاتصال بـ Gemini");
+
+                const extractedItems = JSON.parse(data.candidates[0].content.parts[0].text);
 
                 if (!globalDB.shops[shopId].products) globalDB.shops[shopId].products = [];
 
-                sampleItems.forEach((item, index) => {
+                extractedItems.forEach((item, index) => {
                     globalDB.shops[shopId].products.push({
                         id: 'ai_' + Date.now() + '_' + index,
-                        cat: item.cat,
+                        cat: item.cat || 'أصناف متنوعة',
                         name: item.name,
-                        price: item.price
+                        price: Number(item.price) || 0
                     });
                 });
 
                 syncDB();
-                alert(`🎉 نجح الذكاء الاصطناعي في قراءة المنيو وإضافة 5 أصناف رئيسية بنجاح!`);
+                alert(`🎉 نجح الذكاء الاصطناعي في استخراج وإضافة ${extractedItems.length} صنفاً للمنيو!`);
                 render();
-            }, 1500);
+
+            } catch (error) {
+                console.error("Gemini Error:", error);
+                alert("❌ تعذر قراءة صورة المنيو: " + error.message);
+            }
         }
 
         function renderStorefront() {
